@@ -8,7 +8,7 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 
 [workspace]
-members = ["services"]
+members = ["config","services"]
 
 [workspace.dependencies]
 keycloak = "26.4.0"
