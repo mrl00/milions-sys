@@ -6,11 +6,13 @@ edition = "2024"
 [dependencies]
 sqlx = { workspace = true }
 tokio = { workspace = true }
+keycloak = { workspace = true }
 
 [workspace]
 members = ["user"]
 
 [workspace.dependencies]
+keycloak = "26.4.0"
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio",
   "tls-native-tls",
