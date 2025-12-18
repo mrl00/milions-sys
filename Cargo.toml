@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 sqlx = { workspace = true }
 tokio = { workspace = true }
-keycloak = { workspace = true }
 
 [workspace]
 members = ["user"]
