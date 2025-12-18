@@ -1,12 +1,12 @@
 services:
   postgres-default:
-    container_name: postgres-default
+    container_name: milions-postgres-default
     image: postgres:17
     restart: always
     environment:
       POSTGRES_PASSWORD: qwerty
     ports:
-      - 5432:5432
+      - 5433:5432
     networks:
       - milions-network
 
