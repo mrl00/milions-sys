@@ -8,9 +8,12 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 
 [workspace]
-members = ["config","services"]
+members = ["config", "services"]
 
 [workspace.dependencies]
+secrecy = { version = "0.10.0", features = ["serde"] }
+serde-aux = "4.7.0"
+serde = { version = "1.0.183", features = ["derive"] }
 keycloak = "26.4.0"
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio",
