@@ -26,22 +26,14 @@ pub struct CreateContact {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct CreateContactAddress {
+    pub fk_contact: Uuid,
+    pub addresses: Vec<CreateLocation>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct UpdateContact {
     pub tx_email: String,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct CreatePartialPhone {
-    pub pk_phone: Uuid,
-    pub tx_phone: String,
-    pub fk_contact: Option<Uuid>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct CreatePartialAddress {
-    pub pk_address: Uuid,
-    pub idx_address: i64,
-    pub fk_contact: Option<Uuid>,
 }
 
 pub struct ContactNested {
@@ -50,6 +42,21 @@ pub struct ContactNested {
     pub tx_email: Option<String>,
     pub ts_contact_created_at: NaiveDateTime,
     pub ts_contact_updated_at: NaiveDateTime,
+
     pub phones: Vec<Phone>,
     pub addresses: Vec<Address>,
+}
+
+impl From<Contact> for ContactNested {
+    fn from(c: Contact) -> Self {
+        Self {
+            pk_contact: c.pk_contact,
+            idx_contact: c.idx_contact,
+            tx_email: c.tx_email,
+            ts_contact_created_at: c.ts_contact_created_at,
+            ts_contact_updated_at: c.ts_contact_updated_at,
+            phones: vec![],
+            addresses: vec![],
+        }
+    }
 }
