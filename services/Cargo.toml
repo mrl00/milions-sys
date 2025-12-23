@@ -6,7 +6,9 @@ edition = "2024"
 [dependencies]
 sqlx = { workspace = true }
 tokio = { workspace = true }
-
+uuid = { workspace = true }
+secrecy = { workspace = true }
+argon2 = { workspace = true }
 
 [lints.rust]
 dead_code = "allow"

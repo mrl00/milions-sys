@@ -5,8 +5,11 @@ services:
     restart: always
     environment:
       POSTGRES_PASSWORD: qwerty
+      POSTGRES_DB: milions_db
     ports:
       - 5433:5432
+    volumes:
+      - ./psqldata01:/var/lib/postgresql/data
     networks:
       - milions-network
 
