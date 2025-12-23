@@ -6,7 +6,7 @@ use crate::locations::models::location::Location;
 pub struct LocationQuery;
 
 impl LocationQuery {
-    pub async fn get_by_id(pool: &PgPool, uuid: Uuid) -> Result<Option<Location>, sqlx::Error> {
+    pub async fn get_by_uuid(pool: &PgPool, uuid: Uuid) -> Result<Option<Location>, sqlx::Error> {
         let r: Option<Location> = sqlx::query_as!(
             Location,
             r#"

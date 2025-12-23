@@ -6,20 +6,17 @@ use crate::{
         contact_query::{ContactQuery, PhoneQuery},
         models::{
             address::Address,
-            contact::{Contact, CreateContact, UpdateContact},
+            contact::{Contact, ContactNested, CreateContact, UpdateContact},
             phone::{CreatePhone, Phone, UpdatePhone},
         },
     },
-    locations::{
-        location_mutation::LocationMutation,
-        models::location::{CreateLocation, UpdateLocation},
-    },
+    locations::{location_mutation::LocationMutation, models::location::CreateLocation},
 };
 
 pub struct ContactMutation;
 
 impl ContactMutation {
-    pub async fn create(pool: &PgPool, c: CreateContact) -> Result<Contact, sqlx::Error> {
+    pub async fn create(pool: &PgPool, c: CreateContact) -> Result<ContactNested, sqlx::Error> {
         let contact = sqlx::query_as!(
             Contact,
             r#"
@@ -33,20 +30,17 @@ impl ContactMutation {
         .fetch_one(pool)
         .await?;
 
-        let mut addresses = vec![];
-        for address in c.addresses {
-            let mut address = AddressMutation::create(pool, address).await?;
-            address.fk_contact = contact.pk_contact;
-            addresses.push(address);
-        }
+        let phones: Vec<Phone> =
+            ContactMutation::add_phones(pool, contact.pk_contact, c.phones).await?;
 
-        let mut phones = vec![];
-        for phone in c.phones {
-            let location = PhoneMutation::create(pool, phone).await?;
-            phones.push(location);
-        }
+        let addresses: Vec<Address> =
+            ContactMutation::add_addresses(pool, contact.pk_contact, c.addresses).await?;
 
-        Ok(contact)
+        let mut nested_contact = ContactNested::from(contact);
+        nested_contact.phones = phones;
+        nested_contact.addresses = addresses;
+
+        Ok(nested_contact)
     }
 
     pub async fn update(
@@ -76,6 +70,57 @@ impl ContactMutation {
             }
             None => Err(sqlx::Error::RowNotFound),
         }
+    }
+
+    async fn add_phones(
+        pool: &PgPool,
+        uuid: Uuid,
+        phones: Vec<CreatePhone>,
+    ) -> Result<Vec<Phone>, sqlx::Error> {
+        let mut created_phones = vec![];
+        for phone in phones {
+            let p = PhoneMutation::create(
+                pool,
+                CreatePhone {
+                    pk_phone: phone.pk_phone,
+                    tx_phone: phone.tx_phone,
+                    fk_contact: uuid,
+                },
+            )
+            .await?;
+
+            created_phones.push(p);
+        }
+        Ok(created_phones)
+    }
+
+    async fn add_addresses(
+        pool: &PgPool,
+        uuid: Uuid,
+        locations: Vec<CreateLocation>,
+    ) -> Result<Vec<Address>, sqlx::Error> {
+        let mut created_addresses = vec![];
+
+        for location in locations {
+            let mut created_location = LocationMutation::create(pool, location).await?;
+
+            let created_address = sqlx::query_as!(
+                Address,
+                r#"
+                INSERT INTO contacts.tb_address (pk_address, fk_contact)
+                VALUES ($1, $2)
+                RETURNING *
+                "#,
+                created_location.pk_location,
+                uuid,
+            )
+            .fetch_one(pool)
+            .await?;
+
+            created_addresses.push(created_address);
+        }
+
+        Ok(created_addresses)
     }
 
     pub async fn delete(pool: &PgPool, uuid: Uuid) -> Result<Contact, sqlx::Error> {
@@ -168,34 +213,5 @@ impl PhoneMutation {
             }
             None => Err(sqlx::Error::RowNotFound),
         }
-    }
-}
-
-pub struct AddressMutation;
-impl AddressMutation {
-    pub async fn create(pool: &PgPool, c: CreateLocation) -> Result<Address, sqlx::Error> {
-        let location = LocationMutation::create(pool, c).await?;
-        Ok(location.into())
-    }
-
-    pub async fn update(
-        pool: &PgPool,
-        uuid: Uuid,
-        c: UpdateLocation,
-    ) -> Result<Address, sqlx::Error> {
-        let location = LocationMutation::update(pool, uuid, c).await?;
-        Ok(location.into())
-    }
-
-    pub async fn delete(pool: &PgPool, uuid: Uuid) -> Result<Address, sqlx::Error> {
-        let location = LocationMutation::delete(pool, uuid).await?;
-        Ok(location.into())
-    }
-
-    pub async fn create_batch(
-        _pool: &PgPool,
-        _c: Vec<CreateLocation>,
-    ) -> Result<Vec<Address>, sqlx::Error> {
-        todo!()
     }
 }

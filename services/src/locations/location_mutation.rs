@@ -30,6 +30,7 @@ impl LocationMutation {
 
         Ok(r)
     }
+
     pub async fn update(
         pool: &PgPool,
         uuid: Uuid,
@@ -55,6 +56,7 @@ impl LocationMutation {
 
         Ok(r)
     }
+
     pub async fn delete(pool: &PgPool, uuid: Uuid) -> Result<Location, sqlx::Error> {
         let r: Location = sqlx::query_as!(
             Location,
