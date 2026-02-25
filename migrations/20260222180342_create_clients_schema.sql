@@ -15,7 +15,9 @@ CREATE TABLE "clients"."tb_job"(
   "tx_name" VARCHAR(64) NOT NULL,
   "tx_status" VARCHAR NOT NULL,
   "fk_address" UUID NOT NULL,
-  "fk_client" UUID NOT NULL
+  "fk_client" UUID NOT NULL,
+  "ts_job_created_at" TIMESTAMP NOT NULL,
+  "ts_job_updated_at" TIMESTAMP NOT NULL
 );
 ALTER TABLE "clients"."tb_job" ADD FOREIGN KEY("fk_address") REFERENCES "locations"."tb_location"("pk_location");
 ALTER TABLE "clients"."tb_job" ADD FOREIGN KEY("fk_client") REFERENCES "clients"."tb_client"("pk_client");
@@ -28,4 +30,5 @@ CREATE TABLE "clients"."tb_allocated_collaborator"(
 );
 ALTER TABLE "clients"."tb_allocated_collaborator" ADD FOREIGN KEY("fk_job") REFERENCES "clients"."tb_job"("pk_clients");
 ALTER TABLE "clients"."tb_allocated_collaborator" ADD FOREIGN KEY("pk_allocated_collaborator") REFERENCES "collaborators"."tb_collaborator"("pk_collaborator");
+
 
