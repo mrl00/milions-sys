@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::contacts::{
     models::{
         contact::{Contact, CreateContact},
-        phone::{CreatePhone, Phone},
+        phone::Phone,
     },
     phone_mutation::PhoneMutation,
 };
@@ -11,10 +11,10 @@ use crate::contacts::{
 pub struct ContactMutation;
 
 impl ContactMutation {
-    pub async fn create(
-        pool: &sqlx::PgPool,
-        contact: CreateContact,
-    ) -> Result<Contact, sqlx::Error> {
+    pub async fn create<'a, E>(executor: E, contact: CreateContact) -> Result<Contact, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let created_contact = sqlx::query_as!(
             Contact,
             r#"
@@ -25,17 +25,20 @@ impl ContactMutation {
             Uuid::now_v7(),
             &contact.tx_email,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(created_contact)
     }
 
-    pub async fn update_email(
-        pool: &sqlx::PgPool,
+    pub async fn update_email<'a, E>(
+        executor: E,
         uuid: Uuid,
         email: String,
-    ) -> Result<Contact, sqlx::Error> {
+    ) -> Result<Contact, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let updated_contact = sqlx::query_as!(
             Contact,
             r#"
@@ -47,13 +50,20 @@ impl ContactMutation {
             &email,
             &uuid,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(updated_contact)
     }
 
-    pub async fn add_phone(pool: &sqlx::PgPool, phone: CreatePhone) -> Result<Phone, sqlx::Error> {
-        PhoneMutation::create(pool, phone).await
+    pub async fn add_phone<'a, E>(
+        executor: E,
+        contact_uuid: Uuid,
+        phone: String,
+    ) -> Result<Phone, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
+        PhoneMutation::create(executor, contact_uuid, phone).await
     }
 }
