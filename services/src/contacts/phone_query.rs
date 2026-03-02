@@ -5,7 +5,10 @@ use crate::contacts::models::phone::Phone;
 pub struct PhoneQuery;
 
 impl PhoneQuery {
-    pub async fn get_by_uuid(pool: &sqlx::PgPool, uuid: Uuid) -> Result<Phone, sqlx::Error> {
+    pub async fn find_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Phone>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let phone = sqlx::query_as!(
             Phone,
             r#"
@@ -15,16 +18,19 @@ impl PhoneQuery {
             "#,
             &uuid,
         )
-        .fetch_one(pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(phone)
     }
 
-    pub async fn get_by_contact(
-        pool: &sqlx::PgPool,
+    pub async fn get_by_contact<'a, E>(
+        executor: E,
         contact: Uuid,
-    ) -> Result<Vec<Phone>, sqlx::Error> {
+    ) -> Result<Vec<Phone>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let phones = sqlx::query_as!(
             Phone,
             r#"
@@ -34,13 +40,19 @@ impl PhoneQuery {
             "#,
             &contact,
         )
-        .fetch_all(pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(phones)
     }
 
-    pub async fn check_phone(pool: &sqlx::PgPool, phone: String) -> Result<bool, sqlx::Error> {
+    pub async fn check_by_phone_number<'a, E>(
+        executor: E,
+        phone: String,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let exists = sqlx::query_scalar!(
             r#"
             SELECT EXISTS (
@@ -51,7 +63,7 @@ impl PhoneQuery {
             "#,
             &phone,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(exists.unwrap_or(false))

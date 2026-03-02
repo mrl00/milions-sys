@@ -5,7 +5,10 @@ use crate::contacts::models::contact::Contact;
 pub struct ContactQuery;
 
 impl ContactQuery {
-    pub async fn get_by_uuid(pool: &sqlx::PgPool, uuid: Uuid) -> Result<Contact, sqlx::Error> {
+    pub async fn get_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Contact>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
         let contact = sqlx::query_as!(
             Contact,
             r#"
@@ -15,16 +18,19 @@ impl ContactQuery {
             "#,
             &uuid,
         )
-        .fetch_one(pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(contact)
     }
 
-    pub async fn get_by_email(
-        pool: &sqlx::PgPool,
+    pub async fn get_by_email<'a, E>(
+        executor: E,
         email: String,
-    ) -> Result<Option<Contact>, sqlx::Error> {
+    ) -> Result<Option<Contact>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
         let contact = sqlx::query_as!(
             Contact,
             r#"
@@ -34,7 +40,7 @@ impl ContactQuery {
             "#,
             &email,
         )
-        .fetch_optional(pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(contact)
@@ -55,4 +61,3 @@ impl ContactQuery {
         Ok(contacts)
     }
 }
-
