@@ -1,5 +1,4 @@
 use crate::locations::models::location::{CreateLocation, Location, UpdateLocation};
-use sqlx::PgPool;
 use uuid::Uuid;
 
 pub struct LocationMutation;
@@ -10,7 +9,10 @@ pub struct Test {
 }
 
 impl LocationMutation {
-    pub async fn create(pool: &PgPool, c: CreateLocation) -> Result<Location, sqlx::Error> {
+    pub async fn create<'a, E>(executor: E, c: CreateLocation) -> Result<Location, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let r: Location = sqlx::query_as!(
             Location,
             r#"
@@ -18,24 +20,27 @@ impl LocationMutation {
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
             "#,
-            Uuid::new_v4(),
+            Uuid::now_v7(),
             &c.tx_street,
             &c.tx_number,
             &c.tx_city,
             &c.tx_state,
             &c.tx_zipcode,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(r)
     }
 
-    pub async fn update(
-        pool: &PgPool,
+    pub async fn update<'a, E>(
+        executor: E,
         uuid: Uuid,
         c: UpdateLocation,
-    ) -> Result<Location, sqlx::Error> {
+    ) -> Result<Location, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let r: Location = sqlx::query_as!(
             Location,
             r#"
@@ -51,7 +56,7 @@ impl LocationMutation {
             c.tx_zipcode,
             &uuid,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(r)

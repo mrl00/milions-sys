@@ -11,7 +11,7 @@ sqlx = { workspace = true }
 members = ["config", "services"]
 
 [workspace.dependencies]
-testcontainers = "0.26.2"
+testcontainers = "0.27.1"
 argon2 = "0.5.3"
 snafu = { version = "0.8.9", features = ["futures", "default", "std"] }
 thiserror = "2.0.17"

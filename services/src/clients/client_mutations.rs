@@ -56,9 +56,3 @@ impl ClientMutation {
 }
 
 pub struct ClientContactMutation;
-
-impl ClientContactMutation {
-    pub async fn create(pool: &PgPool, client: Uuid, contact: Uuid) -> Result<Uuid, sqlx::Error> {
-        todo!()
-    }
-}
