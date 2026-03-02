@@ -5,10 +5,13 @@ use crate::clients::models::projects;
 pub struct ProjectMutation;
 
 impl ProjectMutation {
-    pub async fn create(
-        pool: &sqlx::PgPool,
+    pub async fn create<'a, E>(
+        executor: E,
         project: projects::CreateProject,
-    ) -> Result<projects::Project, sqlx::Error> {
+    ) -> Result<projects::Project, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let created_project = sqlx::query_as!(
             projects::Project,
             r#"
@@ -22,7 +25,7 @@ impl ProjectMutation {
             &project.fk_address,
             &project.fk_client,
         )
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(created_project)
