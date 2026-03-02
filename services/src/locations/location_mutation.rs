@@ -56,20 +56,4 @@ impl LocationMutation {
 
         Ok(r)
     }
-
-    pub async fn delete(pool: &PgPool, uuid: Uuid) -> Result<Location, sqlx::Error> {
-        let r: Location = sqlx::query_as!(
-            Location,
-            r#"
-            DELETE FROM locations.tb_location
-            WHERE pk_location = $1
-            RETURNING * 
-            "#,
-            &uuid,
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(r)
-    }
 }

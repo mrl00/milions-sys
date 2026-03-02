@@ -1,7 +1,7 @@
-use sqlx::{PgPool, PgTransaction};
+use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::clients::models::client::{Client, CreateClient};
+use crate::clients::models::client::{Client, ClientStatus, CreateClient};
 
 pub struct ClientMutation;
 
@@ -10,13 +10,13 @@ impl ClientMutation {
         let client = sqlx::query_as!(
             Client,
             r#"
-            INSERT INTO clients.tb_client (pk_client, tx_name, tx_email)
+            INSERT INTO clients.tb_client (pk_client, tx_name, tx_status)
             VALUES ($1, $2, $3)
             RETURNING *
             "#,
-            Uuid::new_v4(),
+            Uuid::now_v7(),
             &c.tx_name,
-            &c.tx_email,
+            &c.tx_status.to_string(),
         )
         .fetch_one(pool)
         .await?;
@@ -24,39 +24,41 @@ impl ClientMutation {
         Ok(client)
     }
 
-    pub async fn update(pool: &PgPool, uuid: Uuid, c: CreateClient) -> Result<Client, sqlx::Error> {
-        let mut tx: PgTransaction = pool.begin().await?;
+    pub async fn activate(pool: &PgPool, uuid: Uuid) -> Result<Client, sqlx::Error> {
+        ClientMutation::update_status(pool, uuid, ClientStatus::Active).await
+    }
 
-        let client: Option<Client> = sqlx::query_as!(
+    pub async fn deactivate(pool: &PgPool, uuid: Uuid) -> Result<Client, sqlx::Error> {
+        ClientMutation::update_status(pool, uuid, ClientStatus::Inactive).await
+    }
+
+    async fn update_status(
+        pool: &PgPool,
+        uuid: Uuid,
+        status: ClientStatus,
+    ) -> Result<Client, sqlx::Error> {
+        let client = sqlx::query_as!(
             Client,
             r#"
-            SELECT * FROM clients.tb_client WHERE pk_client = $1
+            UPDATE clients.tb_client
+            SET tx_status = $1
+            WHERE pk_client = $2
+            RETURNING *
             "#,
+            &status.to_string(),
             &uuid,
         )
-        .fetch_optional(&mut *tx)
+        .fetch_one(pool)
         .await?;
 
-        match client {
-            Some(_) => {
-                let client = sqlx::query_as!(
-                    Client,
-                    r#"
-                    UPDATE clients.tb_client
-                    SET tx_name = $1, tx_email = $2
-                    WHERE pk_client = $3
-                    RETURNING *
-                    "#,
-                    &c.tx_name,
-                    &c.tx_email,
-                    &uuid,
-                )
-                .fetch_one(&mut *tx)
-                .await?;
+        Ok(client)
+    }
+}
 
-                Ok(client)
-            }
-            None => Err(sqlx::Error::RowNotFound),
-        }
+pub struct ClientContactMutation;
+
+impl ClientContactMutation {
+    pub async fn create(pool: &PgPool, client: Uuid, contact: Uuid) -> Result<Uuid, sqlx::Error> {
+        todo!()
     }
 }
