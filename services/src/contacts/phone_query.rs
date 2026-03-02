@@ -41,18 +41,19 @@ impl PhoneQuery {
     }
 
     pub async fn check_phone(pool: &sqlx::PgPool, phone: String) -> Result<bool, sqlx::Error> {
-        let phone = sqlx::query_as!(
-            Phone,
+        let exists = sqlx::query_scalar!(
             r#"
-            SELECT *
-            FROM contacts.tb_phone
-            WHERE tx_phone = $1
+            SELECT EXISTS (
+                SELECT 1
+                FROM contacts.tb_phone
+                WHERE tx_phone = $1
+            )
             "#,
             &phone,
         )
-        .fetch_optional(pool)
+        .fetch_one(pool)
         .await?;
 
-        Ok(phone.is_some())
+        Ok(exists.unwrap_or(false))
     }
 }
