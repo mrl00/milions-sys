@@ -21,7 +21,7 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     pub fn with_db(&self) -> PgConnectOptions {
-        todo!()
+        DatabaseSettings::without_db(self)
     }
 
     pub fn without_db(&self) -> PgConnectOptions {
@@ -78,7 +78,7 @@ impl TryFrom<String> for Environment {
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
     let base_path = std::env::current_dir().expect("Failed to get current directory");
-    let config_path = base_path.join("..").join("files").join("app_config");
+    let config_path = base_path.join("files").join("app_config");
 
     let environment: Environment = std::env::var("APP_ENVIRONMENT")
         .unwrap_or_else(|_| "development".into())
