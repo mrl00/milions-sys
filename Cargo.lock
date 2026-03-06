@@ -921,6 +921,10 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 name = "milions-sys"
 version = "0.1.0"
 dependencies = [
+ "config 0.1.0",
+ "rand",
+ "rsa",
+ "services",
  "sqlx",
  "tokio",
 ]
@@ -1318,9 +1322,9 @@ dependencies = [
 
 [[package]]
 name = "rsa"
-version = "0.9.9"
+version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40a0376c50d0358279d9d643e4bf7b7be212f1f4ff1da9070a7b54d22ef75c88"
+checksum = "b8573f03f5883dcaebdfcf4725caa1ecb9c15b2ef50c43a07b816e06799bb12d"
 dependencies = [
  "const-oid",
  "digest",
@@ -1530,6 +1534,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "secrecy",
+ "serde",
  "sqlx",
  "thiserror",
  "tokio",
