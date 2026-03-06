@@ -1,31 +1,54 @@
 use crate::locations::models::location::{CreateLocation, Location, UpdateLocation};
+use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
 pub struct LocationMutation;
 
-#[derive(Debug)]
-pub struct Test {
-    tx_street: String,
-}
-
 impl LocationMutation {
     pub async fn create<'a, E>(executor: E, c: CreateLocation) -> Result<Location, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: Executor<'a, Database = Postgres>,
     {
-        let r: Location = sqlx::query_as!(
+        let r = sqlx::query_as!(
             Location,
-            r#"
-            INSERT INTO locations.tb_location (pk_location, tx_street, tx_number, tx_city, tx_state, tx_zipcode)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-            "#,
+            r#"INSERT INTO locations.tb_location (
+            pk_location, 
+            tx_street, 
+            tx_number, 
+            tx_city, 
+            tx_state, 
+            tx_zipcode,  
+            tx_public_space, 
+            tx_address_complement,
+            tx_unit, 
+            tx_neighborhood, 
+            tx_locality, 
+            tx_region, 
+            tx_ibge, 
+            tx_gia, 
+            tx_ddd, 
+            tx_siafi, 
+            uin_hash
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            RETURNING *"#,
             Uuid::now_v7(),
             &c.tx_street,
             &c.tx_number,
             &c.tx_city,
             &c.tx_state,
             &c.tx_zipcode,
+            &c.tx_public_space,
+            &c.tx_address_complement,
+            &c.tx_unit,
+            &c.tx_neighborhood,
+            &c.tx_locality,
+            &c.tx_region,
+            c.tx_ibge,
+            c.tx_gia,
+            &c.tx_ddd,
+            c.tx_siafi,
+            c.gen_hash() as i64,
         )
         .fetch_one(executor)
         .await?;
@@ -123,32 +146,57 @@ impl LocationMutation {
 
         Ok(r)
     }
+
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
         c: UpdateLocation,
     ) -> Result<Location, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: Executor<'a, Database = Postgres>,
     {
-        let r: Location = sqlx::query_as!(
+        let r = sqlx::query_as!(
             Location,
-            r#"
-            UPDATE locations.tb_location
-            SET tx_street = $1, tx_number = $2, tx_city = $3, tx_state = $4, tx_zipcode = $5
-            WHERE pk_location = $6
-            RETURNING *
-            "#,
+            r#"UPDATE locations.tb_location
+            SET 
+            tx_public_space = $1, 
+            tx_address_complement = $2, 
+            tx_unit = $3, 
+            tx_neighborhood = $4, 
+            tx_locality = $5, 
+            tx_region = $6, 
+            tx_ibge = $7, 
+            tx_gia = $8, 
+            tx_ddd = $9, 
+            tx_siafi = $10, 
+            tx_street = $11, 
+            tx_number = $12, 
+            tx_city = $13, 
+            tx_state = $14, 
+            tx_zipcode = $15, 
+            ts_location_updated_at = NOW()
+            WHERE pk_location = $16
+            RETURNING *"#,
+            c.tx_public_space,
+            c.tx_address_complement,
+            c.tx_unit,
+            c.tx_neighborhood,
+            c.tx_locality,
+            c.tx_region,
+            c.tx_ibge,
+            c.tx_gia,
+            c.tx_ddd,
+            c.tx_siafi,
             c.tx_street,
             c.tx_number,
             c.tx_city,
             c.tx_state,
             c.tx_zipcode,
-            &uuid,
+            uuid,
         )
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await?;
 
-        Ok(r)
+        Ok(r.unwrap())
     }
 }
