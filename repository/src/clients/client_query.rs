@@ -5,13 +5,7 @@ use crate::clients::models::client::Client;
 pub struct ClientQuery;
 
 impl ClientQuery {
-    /// Busca um cliente pelo seu identificador (`pk_client`) na tabela `clients.tb_client`.
-    ///
-    /// - **executor**: executor de conexões Postgres usado para executar a consulta.
-    /// - **uuid**: identificador UUID do cliente.
-    ///
-    /// Retorna `Ok(Some(Client))` quando encontrado, `Ok(None)` quando não houver registro
-    /// correspondente e `Err(sqlx::Error)` em caso de erro de banco.
+    /// Obtém um cliente por `pk_client` em `clients.tb_client`.
     pub async fn get_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Client>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -29,11 +23,7 @@ impl ClientQuery {
         Ok(r)
     }
 
-    /// Retorna todos os clientes cadastrados na tabela `clients.tb_client`.
-    ///
-    /// - **executor**: executor de conexões Postgres usado para executar a consulta.
-    ///
-    /// Retorna um vetor com todos os clientes ou erro de banco.
+    /// Lista todos os clientes de `clients.tb_client`.
     pub async fn get_all<'a, E>(executor: E) -> Result<Vec<Client>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,

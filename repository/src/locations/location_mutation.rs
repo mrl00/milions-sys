@@ -5,13 +5,7 @@ use uuid::Uuid;
 pub struct LocationMutation;
 
 impl LocationMutation {
-    /// Cria uma nova localização na tabela `locations.tb_location`.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
-    /// - **c**: dados para criação (`CreateLocation`), incluindo endereço completo.
-    ///
-    /// Gera um novo `pk_location` e um hash (`uin_hash`) a partir do conteúdo,
-    /// insere o registro e retorna a localização criada.
+    /// Cria uma localização em `locations.tb_location`.
     pub async fn create<'a, E>(executor: E, c: CreateLocation) -> Result<Location, sqlx::Error>
     where
         E: Executor<'a, Database = Postgres>,
@@ -63,13 +57,7 @@ impl LocationMutation {
         Ok(r)
     }
 
-    /// Cria várias localizações de uma vez utilizando `UNNEST` para inserção em lote.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
-    /// - **c**: vetor de `CreateLocation` contendo os endereços a serem cadastrados.
-    ///
-    /// Para cada localização gera um `pk_location` e um `uin_hash`, insere todas em uma única
-    /// operação SQL e retorna o vetor de localizações criadas.
+    /// Cria múltiplas localizações em `locations.tb_location` via inserção em lote.
     pub async fn create_many<'a, E>(
         executor: E,
         c: Vec<CreateLocation>,
@@ -161,14 +149,7 @@ impl LocationMutation {
         Ok(r)
     }
 
-    /// Atualiza os campos de endereço de uma localização existente.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
-    /// - **uuid**: identificador UUID da localização (`pk_location`).
-    /// - **c**: dados atualizados (`UpdateLocation`).
-    ///
-    /// Retorna a localização atualizada; se não houver registro para o UUID informado,
-    /// o `unwrap()` atual lançará pânico (comportamento atual da função).
+    /// Atualiza campos de endereço de uma localização em `locations.tb_location`.
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
