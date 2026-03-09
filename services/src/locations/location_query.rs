@@ -1,4 +1,3 @@
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::locations::models::location::Location;
@@ -6,7 +5,13 @@ use crate::locations::models::location::Location;
 pub struct LocationQuery;
 
 impl LocationQuery {
-    pub async fn get_by_uuid(pool: &PgPool, uuid: Uuid) -> Result<Option<Location>, sqlx::Error> {
+    pub async fn get_by_uuid<'a, E>(
+        executor: E,
+        uuid: Uuid,
+    ) -> Result<Option<Location>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
         let r: Option<Location> = sqlx::query_as!(
             Location,
             r#"
@@ -16,21 +21,7 @@ impl LocationQuery {
             "#,
             &uuid,
         )
-        .fetch_optional(pool)
-        .await?;
-
-        Ok(r)
-    }
-
-    pub async fn get_all(pool: &PgPool) -> Result<Vec<Location>, sqlx::Error> {
-        let r: Vec<Location> = sqlx::query_as!(
-            Location,
-            r#"
-            SELECT *
-            FROM locations.tb_location
-            "#,
-        )
-        .fetch_all(pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(r)
