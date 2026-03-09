@@ -24,7 +24,7 @@ impl fmt::Display for ProjectStatus {
 }
 
 #[derive(Debug, sqlx::FromRow)]
-pub struct Project {
+pub struct ClientProject {
     pub pk_project: uuid::Uuid,
     pub idx_project: i64,
     pub tx_name: String,
@@ -36,7 +36,7 @@ pub struct Project {
 }
 
 #[derive(Debug)]
-pub struct CreateProject {
+pub struct CreateClientProject {
     pub tx_name: String,
     pub tx_status: ProjectStatus,
     pub fk_address: uuid::Uuid,
