@@ -5,14 +5,7 @@ use crate::collaborators::models::collaborator::Collaborator;
 pub struct CollaboratorQuery;
 
 impl CollaboratorQuery {
-    /// Busca um colaborador pelo seu identificador (`pk_collaborator`)
-    /// na tabela `collaborators.tb_collaborator`.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar a query.
-    /// - **uuid**: identificador UUID do colaborador.
-    ///
-    /// Retorna `Ok(Some(Collaborator))` quando encontrado, `Ok(None)` quando não houver registro
-    /// correspondente e `Err(sqlx::Error)` em caso de erro de banco.
+    /// Obtém um colaborador por `pk_collaborator` em `collaborators.tb_collaborator`.
     pub async fn find_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
@@ -35,13 +28,7 @@ impl CollaboratorQuery {
         Ok(collaborator)
     }
 
-    /// Busca um colaborador pelo CPF (`tx_cpf`) na tabela `collaborators.tb_collaborator`.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar a query.
-    /// - **cpf**: CPF do colaborador em formato texto.
-    ///
-    /// Retorna `Ok(Some(Collaborator))` quando encontrado, `Ok(None)` quando não houver registro
-    /// correspondente e `Err(sqlx::Error)` em caso de erro de banco.
+    /// Obtém um colaborador por `tx_cpf` em `collaborators.tb_collaborator`.
     pub async fn find_by_cpf<'a, E>(
         executor: E,
         cpf: String,

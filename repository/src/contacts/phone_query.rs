@@ -5,13 +5,7 @@ use crate::contacts::models::phone::Phone;
 pub struct PhoneQuery;
 
 impl PhoneQuery {
-    /// Busca um telefone pelo seu identificador (`pk_phone`) na tabela `contacts.tb_phone`.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar a query.
-    /// - **uuid**: identificador UUID do telefone.
-    ///
-    /// Retorna `Ok(Some(Phone))` quando encontrado, `Ok(None)` quando não houver registro
-    /// correspondente e `Err(sqlx::Error)` em caso de erro de banco.
+    /// Obtém um telefone por `pk_phone` em `contacts.tb_phone`.
     pub async fn find_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Phone>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -31,12 +25,7 @@ impl PhoneQuery {
         Ok(phone)
     }
 
-    /// Lista todos os telefones associados a um contato específico (`fk_contact`).
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar a query.
-    /// - **contact**: identificador UUID do contato.
-    ///
-    /// Retorna um vetor com todos os telefones do contato ou erro de banco.
+    /// Lista telefones de um contato (`fk_contact`) em `contacts.tb_phone`.
     pub async fn get_by_contact<'a, E>(
         executor: E,
         contact: Uuid,
@@ -59,13 +48,7 @@ impl PhoneQuery {
         Ok(phones)
     }
 
-    /// A partir de uma lista de números de telefone, retorna quais **não** existem
-    /// na tabela `contacts.tb_phone`.
-    ///
-    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar a query.
-    /// - **phones**: lista de números de telefone que serão verificados.
-    ///
-    /// Retorna um vetor apenas com os números ausentes no banco.
+    /// Retorna os números da lista que não existem em `contacts.tb_phone`.
     pub async fn find_nonexistent_phones<'a, E>(
         executor: E,
         phones: Vec<String>,
