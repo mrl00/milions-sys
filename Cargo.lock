@@ -1353,6 +1353,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
+name = "repository"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "argon2",
+ "secrecy",
+ "serde",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "ron"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1577,14 +1591,7 @@ dependencies = [
 name = "services"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "argon2",
- "secrecy",
- "serde",
- "sqlx",
- "thiserror",
- "tokio",
- "uuid",
+ "repository",
 ]
 
 [[package]]
