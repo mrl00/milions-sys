@@ -19,7 +19,7 @@ impl ContactMutation {
     /// Gera um novo `pk_contact` (`Uuid::now_v7()`), insere o registro e retorna o contato criado.
     pub async fn create<'a, E>(executor: E, contact: CreateContact) -> Result<Contact, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let created_contact = sqlx::query_as!(
             Contact,
@@ -50,7 +50,7 @@ impl ContactMutation {
         email: String,
     ) -> Result<Contact, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let updated_contact = sqlx::query_as!(
             Contact,
@@ -82,7 +82,7 @@ impl ContactMutation {
         phone: String,
     ) -> Result<Phone, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         PhoneMutation::create(executor, contact_uuid, phone).await
     }

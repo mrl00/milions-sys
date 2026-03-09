@@ -1,12 +1,9 @@
 use uuid::Uuid;
 
-use crate::collaborators::{
-    collaborator_query::CollaboratorQuery,
-    models::{
-        collaborator::{Collaborator, CollaboratorStatus, CreateCollaborator, UpdateCollaborator},
-        collaborator_contact::CollaboratorContact,
-        collaborator_location::CollaboratorAddress,
-    },
+use crate::collaborators::models::{
+    collaborator::{Collaborator, CollaboratorStatus, CreateCollaborator, UpdateCollaborator},
+    collaborator_contact::CollaboratorContact,
+    collaborator_location::CollaboratorAddress,
 };
 
 pub struct CollaboratorMutation;
@@ -24,14 +21,9 @@ impl CollaboratorMutation {
         c: CreateCollaborator,
     ) -> Result<Collaborator, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let opt_collaborator = CollaboratorQuery::find_by_cpf(executor, c.tx_cpf.clone()).await?;
-
-        match opt_collaborator {
-            Some(_) => Err(sqlx::Error::RowNotFound),
-            None => {
-                let r: Collaborator = sqlx::query_as!(
+        let r: Collaborator = sqlx::query_as!(
                     Collaborator,
                     r#"
                     INSERT INTO collaborators.tb_collaborator (pk_collaborator, tx_name, tx_cpf, tx_level, tx_status)
@@ -47,9 +39,7 @@ impl CollaboratorMutation {
                 .fetch_one(executor)
                 .await?;
 
-                Ok(r)
-            }
-        }
+        Ok(r)
     }
 
     /// Atualiza os dados principais de um colaborador existente.
@@ -65,7 +55,7 @@ impl CollaboratorMutation {
         c: UpdateCollaborator,
     ) -> Result<Collaborator, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r: Collaborator = sqlx::query_as!(
             Collaborator,
@@ -96,17 +86,9 @@ impl CollaboratorMutation {
     /// Caso exista, atualiza o status e retorna o registro atualizado.
     pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let collaborator_exist = CollaboratorQuery::find_by_uuid(executor, uuid).await?;
-
-        match collaborator_exist {
-            Some(_) => {
-                CollaboratorMutation::update_status(executor, uuid, CollaboratorStatus::Active)
-                    .await
-            }
-            None => Err(sqlx::Error::RowNotFound),
-        }
+        CollaboratorMutation::update_status(executor, uuid, CollaboratorStatus::Active).await
     }
 
     /// Desativa um colaborador, alterando seu status para `Inactive`.
@@ -118,17 +100,9 @@ impl CollaboratorMutation {
     /// Caso exista, atualiza o status e retorna o registro atualizado.
     pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let collaborator_exist = CollaboratorQuery::find_by_uuid(executor, uuid).await?;
-
-        match collaborator_exist {
-            Some(_) => {
-                CollaboratorMutation::update_status(executor, uuid, CollaboratorStatus::Inactive)
-                    .await
-            }
-            None => Err(sqlx::Error::RowNotFound),
-        }
+        CollaboratorMutation::update_status(executor, uuid, CollaboratorStatus::Inactive).await
     }
 
     /// Atualiza apenas o status (`tx_status`) de um colaborador para o valor informado.
@@ -145,30 +119,23 @@ impl CollaboratorMutation {
         status: CollaboratorStatus,
     ) -> Result<Collaborator, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let opt_collaborator = CollaboratorQuery::find_by_uuid(executor, uuid).await?;
-
-        match opt_collaborator {
-            Some(_) => {
-                let r: Collaborator = sqlx::query_as!(
-                    Collaborator,
-                    r#"
+        let r: Collaborator = sqlx::query_as!(
+            Collaborator,
+            r#"
                     UPDATE collaborators.tb_collaborator
                     SET tx_status = $1
                     WHERE pk_collaborator = $2
                     RETURNING *
                     "#,
-                    status.to_string(),
-                    &uuid,
-                )
-                .fetch_one(executor)
-                .await?;
+            status.to_string(),
+            &uuid,
+        )
+        .fetch_one(executor)
+        .await?;
 
-                Ok(r)
-            }
-            None => Err(sqlx::Error::RowNotFound),
-        }
+        Ok(r)
     }
 }
 
@@ -188,7 +155,7 @@ impl CollaboratorContactMutation {
         contact_uuid: Uuid,
     ) -> Result<CollaboratorContact, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
             CollaboratorContact,
@@ -223,7 +190,7 @@ impl CollaboratorAddressMutation {
         location_uuid: Uuid,
     ) -> Result<CollaboratorAddress, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
             CollaboratorAddress,

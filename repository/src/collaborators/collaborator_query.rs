@@ -18,7 +18,7 @@ impl CollaboratorQuery {
         uuid: Uuid,
     ) -> Result<Option<Collaborator>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let collaborator = sqlx::query_as!(
             Collaborator,
@@ -47,7 +47,7 @@ impl CollaboratorQuery {
         cpf: String,
     ) -> Result<Option<Collaborator>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let collaborator = sqlx::query_as!(
             Collaborator,

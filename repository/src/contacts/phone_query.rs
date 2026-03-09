@@ -14,7 +14,7 @@ impl PhoneQuery {
     /// correspondente e `Err(sqlx::Error)` em caso de erro de banco.
     pub async fn find_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Phone>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phone = sqlx::query_as!(
             Phone,
@@ -42,7 +42,7 @@ impl PhoneQuery {
         contact: Uuid,
     ) -> Result<Vec<Phone>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phones = sqlx::query_as!(
             Phone,
@@ -71,7 +71,7 @@ impl PhoneQuery {
         phones: Vec<String>,
     ) -> Result<Vec<String>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_scalar!(
             r#"SELECT input.tx_phone

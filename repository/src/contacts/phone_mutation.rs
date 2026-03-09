@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::contacts::{contact_query::ContactQuery, models::phone::Phone};
+use crate::contacts::models::phone::Phone;
 
 pub struct PhoneMutation;
 
@@ -18,7 +18,7 @@ impl PhoneMutation {
         phone: String,
     ) -> Result<Phone, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let created_phone = sqlx::query_as!(
             Phone,
@@ -51,13 +51,8 @@ impl PhoneMutation {
         phones: Vec<String>,
     ) -> Result<Vec<Phone>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let contact = ContactQuery::get_by_uuid(executor, contact_uuid).await?;
-        if contact.is_none() {
-            return Err(sqlx::Error::RowNotFound);
-        }
-
         let pks: Vec<Uuid> = phones.iter().map(|_| Uuid::now_v7()).collect();
         let fks: Vec<Uuid> = std::iter::repeat_n(contact_uuid, phones.len()).collect();
 
@@ -94,30 +89,23 @@ impl PhoneMutation {
         phone: String,
     ) -> Result<Phone, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let contact = ContactQuery::get_by_uuid(executor, contact_uuid).await?;
-
-        match contact {
-            Some(_) => {
-                let updated_phone = sqlx::query_as!(
-                    Phone,
-                    r#"
+        let updated_phone = sqlx::query_as!(
+            Phone,
+            r#"
                     UPDATE contacts.tb_phone
                     SET tx_phone = $1
                     WHERE pk_phone = $2
                     RETURNING *
                     "#,
-                    &phone,
-                    &contact_uuid,
-                )
-                .fetch_one(executor)
-                .await?;
+            &phone,
+            &contact_uuid,
+        )
+        .fetch_one(executor)
+        .await?;
 
-                Ok(updated_phone)
-            }
-            None => Err(sqlx::Error::RowNotFound),
-        }
+        Ok(updated_phone)
     }
 
     /// Remove um telefone da tabela `contacts.tb_phone` e retorna o registro removido.
@@ -128,7 +116,7 @@ impl PhoneMutation {
     /// Retorna o telefone deletado ou erro de banco.
     pub async fn delete<'a, E>(executor: E, uuid: Uuid) -> Result<Phone, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let deleted_phone = sqlx::query_as!(
             Phone,
