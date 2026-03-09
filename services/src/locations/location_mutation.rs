@@ -173,8 +173,7 @@ impl LocationMutation {
             tx_number = $12, 
             tx_city = $13, 
             tx_state = $14, 
-            tx_zipcode = $15, 
-            ts_location_updated_at = NOW()
+            tx_zipcode = $15
             WHERE pk_location = $16
             RETURNING *"#,
             c.tx_public_space,
