@@ -1,7 +1,11 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::clients::models::client::{Client, ClientStatus, CreateClient};
+use crate::clients::models::{
+    client::{Client, ClientStatus, CreateClient},
+    client_address::ClientAddress,
+    client_contact::ClientContact,
+};
 
 pub struct ClientMutation;
 
@@ -56,3 +60,53 @@ impl ClientMutation {
 }
 
 pub struct ClientContactMutation;
+
+impl ClientContactMutation {
+    pub async fn create_contact(
+        pool: &PgPool,
+        client_uuid: Uuid,
+        contact_uuid: Uuid,
+    ) -> Result<ClientContact, sqlx::Error> {
+        let r = sqlx::query_as!(
+            ClientContact,
+            r#"
+            INSERT INTO clients.tb_client_contact (pk_client_contact, fk_client, fk_contact)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &client_uuid,
+            &contact_uuid,
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(r)
+    }
+}
+
+pub struct ClientAddressMutation;
+
+impl ClientAddressMutation {
+    pub async fn create(
+        pool: &PgPool,
+        client_uuid: Uuid,
+        location_uuid: Uuid,
+    ) -> Result<ClientAddress, sqlx::Error> {
+        let r = sqlx::query_as!(
+            ClientAddress,
+            r#"
+            INSERT INTO clients.tb_client_address(pk_client_address, fk_client, fk_address)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &client_uuid,
+            &location_uuid,
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(r)
+    }
+}
