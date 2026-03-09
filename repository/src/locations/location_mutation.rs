@@ -215,9 +215,9 @@ impl LocationMutation {
             c.tx_zipcode,
             uuid,
         )
-        .fetch_optional(executor)
+        .fetch_one(executor)
         .await?;
 
-        Ok(r.unwrap())
+        Ok(r)
     }
 }

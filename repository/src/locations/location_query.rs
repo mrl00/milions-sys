@@ -17,7 +17,7 @@ impl LocationQuery {
         uuid: Uuid,
     ) -> Result<Option<Location>, sqlx::Error>
     where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r: Option<Location> = sqlx::query_as!(
             Location,
