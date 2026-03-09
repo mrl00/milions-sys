@@ -18,7 +18,7 @@ members = ["config", "domain", "services"]
 regex = "1.12.3"
 testcontainers = "0.27.1"
 argon2 = "0.5.3"
-snafu = { version = "0.8.9", features = ["futures", "default", "std"] }
+snafu = { version = "0.9.0", features = ["futures", "default", "std"] }
 thiserror = "2.0.18"
 chrono = { version = "0.4.26", features = ["serde"] }
 uuid = { version = "1.21.0", features = ["v4", "serde", "v7"] }
