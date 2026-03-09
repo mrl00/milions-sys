@@ -46,26 +46,26 @@ impl PhoneQuery {
         Ok(phones)
     }
 
-    pub async fn check_by_phone_number<'a, E>(
+    pub async fn find_nonexistent_phones<'a, E>(
         executor: E,
-        phone: String,
-    ) -> Result<bool, sqlx::Error>
+        phones: Vec<String>,
+    ) -> Result<Vec<String>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
     {
-        let exists = sqlx::query_scalar!(
-            r#"
-            SELECT EXISTS (
-                SELECT 1
-                FROM contacts.tb_phone
-                WHERE tx_phone = $1
-            )
-            "#,
-            &phone,
+        let r = sqlx::query_scalar!(
+            r#"SELECT input.tx_phone
+            FROM UNNEST($1::text[]) AS input(tx_phone)
+            LEFT JOIN contacts.tb_phone p ON p.tx_phone = input.tx_phone
+            WHERE p.tx_phone IS NULL"#,
+            &phones as &[String],
         )
-        .fetch_one(executor)
-        .await?;
+        .fetch_all(executor)
+        .await?
+        .iter()
+        .filter_map(|p| p.clone())
+        .collect();
 
-        Ok(exists.unwrap_or(false))
+        Ok(r)
     }
 }

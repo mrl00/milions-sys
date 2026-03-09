@@ -17,34 +17,72 @@ impl PhoneMutation {
             .await?
             .is_some();
 
-        let phone_number_exists =
-            PhoneQuery::check_by_phone_number(executor, phone.clone()).await?;
-
         if !contact_exists {
-            Err(sqlx::Error::InvalidArgument(
+            return Err(sqlx::Error::InvalidArgument(
                 "Contact doesnt exists".to_string(),
-            ))
-        } else if !phone_number_exists {
-            Err(sqlx::Error::InvalidArgument(
-                "Phone number doesnt exists".to_string(),
-            ))
-        } else {
-            let created_phone = sqlx::query_as!(
-                Phone,
-                r#"
+            ));
+        }
+
+        let phone_number_exists =
+            PhoneQuery::find_nonexistent_phones(executor, Vec::from([phone.clone()])).await?;
+
+        if !phone_number_exists.is_empty() {
+            return Err(sqlx::Error::InvalidArgument(
+                "Phone number already exists".to_string(),
+            ));
+        }
+
+        let created_phone = sqlx::query_as!(
+            Phone,
+            r#"
                     INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
                     VALUES ($1, $2, $3)
                     RETURNING *
                     "#,
-                Uuid::now_v7(),
-                &phone,
-                &contact_uuid,
-            )
-            .fetch_one(executor)
-            .await?;
+            Uuid::now_v7(),
+            &phone,
+            &contact_uuid,
+        )
+        .fetch_one(executor)
+        .await?;
 
-            Ok(created_phone)
+        Ok(created_phone)
+    }
+
+    pub async fn create_many<'a, E>(
+        executor: E,
+        contact_uuid: Uuid,
+        phones: Vec<String>,
+    ) -> Result<Vec<Phone>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
+        let contact = ContactQuery::get_by_uuid(executor, contact_uuid).await?;
+        if contact.is_none() {
+            return Err(sqlx::Error::RowNotFound);
         }
+
+        let pks: Vec<Uuid> = phones.iter().map(|_| Uuid::now_v7()).collect();
+        let fks: Vec<Uuid> = std::iter::repeat_n(contact_uuid, phones.len()).collect();
+
+        let r = sqlx::query_as!(
+            Phone,
+            r#"
+            INSERT INTO contacts.tb_phone (pk_phone, fk_contact, tx_phone)
+            SELECT * FROM UNNEST(
+            $1::uuid[],
+            $2::uuid[],
+            $3::text[])
+            RETURNING *
+            "#,
+            &pks as &[Uuid],
+            &fks as &[Uuid],
+            &phones as &[String],
+        )
+        .fetch_all(executor)
+        .await?;
+
+        Ok(r)
     }
 
     pub async fn update<'a, E>(
@@ -62,11 +100,11 @@ impl PhoneMutation {
                 let updated_phone = sqlx::query_as!(
                     Phone,
                     r#"
-            UPDATE contacts.tb_phone
-            SET tx_phone = $1
-            WHERE pk_phone = $2
-            RETURNING *
-            "#,
+                    UPDATE contacts.tb_phone
+                    SET tx_phone = $1
+                    WHERE pk_phone = $2
+                    RETURNING *
+                    "#,
                     &phone,
                     &contact_uuid,
                 )
