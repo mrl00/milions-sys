@@ -12,6 +12,13 @@ use crate::collaborators::{
 pub struct CollaboratorMutation;
 
 impl CollaboratorMutation {
+    /// Cria um novo colaborador na tabela `collaborators.tb_collaborator`, garantindo unicidade de CPF.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **c**: dados para criação (`CreateCollaborator`).
+    ///
+    /// Se já existir colaborador com o mesmo CPF, retorna `sqlx::Error::RowNotFound` como sinal de conflito.
+    /// Caso contrário, insere e retorna o colaborador criado.
     pub async fn create<'a, E>(
         executor: E,
         c: CreateCollaborator,
@@ -45,6 +52,13 @@ impl CollaboratorMutation {
         }
     }
 
+    /// Atualiza os dados principais de um colaborador existente.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do colaborador.
+    /// - **c**: dados a serem atualizados (`UpdateCollaborator`).
+    ///
+    /// Retorna o colaborador atualizado ou erro de banco.
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
@@ -73,6 +87,13 @@ impl CollaboratorMutation {
         Ok(r)
     }
 
+    /// Ativa um colaborador, alterando seu status para `Active`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do colaborador.
+    ///
+    /// Verifica se o colaborador existe; se não existir retorna `sqlx::Error::RowNotFound`.
+    /// Caso exista, atualiza o status e retorna o registro atualizado.
     pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
@@ -88,6 +109,13 @@ impl CollaboratorMutation {
         }
     }
 
+    /// Desativa um colaborador, alterando seu status para `Inactive`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do colaborador.
+    ///
+    /// Verifica se o colaborador existe; se não existir retorna `sqlx::Error::RowNotFound`.
+    /// Caso exista, atualiza o status e retorna o registro atualizado.
     pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
@@ -103,6 +131,14 @@ impl CollaboratorMutation {
         }
     }
 
+    /// Atualiza apenas o status (`tx_status`) de um colaborador para o valor informado.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do colaborador.
+    /// - **status**: novo status (`CollaboratorStatus`) a ser aplicado.
+    ///
+    /// Verifica se o colaborador existe; se não existir retorna `sqlx::Error::RowNotFound`.
+    /// Caso exista, atualiza o status e retorna o registro atualizado.
     async fn update_status<'a, E>(
         executor: E,
         uuid: Uuid,
@@ -139,6 +175,13 @@ impl CollaboratorMutation {
 pub struct CollaboratorContactMutation;
 
 impl CollaboratorContactMutation {
+    /// Cria um vínculo entre colaborador e contato na tabela `collaborators.tb_collaborator_contact`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **collaborator_uuid**: identificador do colaborador (`fk_collaborator`).
+    /// - **contact_uuid**: identificador do contato (`fk_contact`).
+    ///
+    /// Retorna o registro de relação criado.
     pub async fn create_contact<'a, E>(
         executor: E,
         collaborator_uuid: Uuid,
@@ -167,6 +210,13 @@ impl CollaboratorContactMutation {
 pub struct CollaboratorAddressMutation;
 
 impl CollaboratorAddressMutation {
+    /// Cria um vínculo entre colaborador e endereço na tabela `collaborators.tb_collaborator_address`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **collaborator_uuid**: identificador do colaborador (`fk_collaborator`).
+    /// - **location_uuid**: identificador do endereço (`fk_address`).
+    ///
+    /// Gera um novo `pk_collaborator_address`, insere o registro e retorna a associação criada.
     pub async fn create<'a, E>(
         executor: E,
         collaborator_uuid: Uuid,

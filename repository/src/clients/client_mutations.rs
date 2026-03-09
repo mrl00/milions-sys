@@ -11,6 +11,12 @@ use crate::clients::models::{
 pub struct ClientMutation;
 
 impl ClientMutation {
+    /// Cria um novo cliente na tabela `clients.tb_client`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **c**: dados para criação (`CreateClient`), incluindo nome e status inicial.
+    ///
+    /// Gera um novo `pk_client`, insere o registro e retorna o cliente criado.
     pub async fn create<'a, E>(executor: E, c: CreateClient) -> Result<Client, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -32,6 +38,12 @@ impl ClientMutation {
         Ok(client)
     }
 
+    /// Ativa um cliente, alterando seu status para `Active`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do cliente.
+    ///
+    /// Delegado para `update_status` com `ClientStatus::Active`.
     pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<Client, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -39,6 +51,12 @@ impl ClientMutation {
         ClientMutation::update_status(executor, uuid, ClientStatus::Active).await
     }
 
+    /// Desativa um cliente, alterando seu status para `Inactive`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do cliente.
+    ///
+    /// Delegado para `update_status` com `ClientStatus::Inactive`.
     pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<Client, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -46,6 +64,13 @@ impl ClientMutation {
         ClientMutation::update_status(executor, uuid, ClientStatus::Inactive).await
     }
 
+    /// Atualiza apenas o status (`tx_status`) de um cliente para o valor informado.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do cliente.
+    /// - **status**: novo status (`ClientStatus`) a ser aplicado.
+    ///
+    /// Retorna o cliente com status atualizado.
     async fn update_status<'a, E>(
         executor: E,
         uuid: Uuid,
@@ -75,6 +100,13 @@ impl ClientMutation {
 pub struct ClientContactMutation;
 
 impl ClientContactMutation {
+    /// Cria o vínculo entre um cliente e um contato na tabela `clients.tb_client_contact`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **client_uuid**: identificador do cliente (`fk_client`).
+    /// - **contact_uuid**: identificador do contato (`fk_contact`).
+    ///
+    /// Gera um novo `pk_client_contact`, insere o registro e retorna a associação criada.
     pub async fn create_contact<'a, E>(
         executor: E,
         client_uuid: Uuid,
@@ -104,6 +136,13 @@ impl ClientContactMutation {
 pub struct ClientAddressMutation;
 
 impl ClientAddressMutation {
+    /// Cria o vínculo entre um cliente e um endereço na tabela `clients.tb_client_address`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **client_uuid**: identificador do cliente (`fk_client`).
+    /// - **location_uuid**: identificador do endereço (`fk_address`).
+    ///
+    /// Gera um novo `pk_client_address`, insere o registro e retorna a associação criada.
     pub async fn create<'a, E>(
         executor: E,
         client_uuid: Uuid,
@@ -133,6 +172,13 @@ impl ClientAddressMutation {
 pub struct ClientProjectMutation;
 
 impl ClientProjectMutation {
+    /// Cria um novo projeto para um cliente, associado a um endereço, na tabela `clients.tb_project`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **client_uuid**: identificador do cliente (`fk_client`).
+    /// - **location_uuid**: identificador do endereço (`fk_address`).
+    ///
+    /// Gera um novo `pk_project`, insere o registro e retorna o projeto criado.
     pub async fn create_project<'a, E>(
         executor: E,
         client_uuid: Uuid,
@@ -158,6 +204,10 @@ impl ClientProjectMutation {
         Ok(r)
     }
 
+    /// Marca um projeto como inativo (`ProjectStatus::Inactive`).
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
     pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientProject, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -165,6 +215,10 @@ impl ClientProjectMutation {
         ClientProjectMutation::update_status(executor, uuid, ProjectStatus::Inactive).await
     }
 
+    /// Marca um projeto como ativo (`ProjectStatus::Active`).
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
     pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientProject, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -172,6 +226,10 @@ impl ClientProjectMutation {
         ClientProjectMutation::update_status(executor, uuid, ProjectStatus::Active).await
     }
 
+    /// Coloca um projeto em estado parado (`ProjectStatus::Stopped`).
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
     pub async fn stop<'a, E>(executor: E, uuid: Uuid) -> Result<ClientProject, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -179,6 +237,10 @@ impl ClientProjectMutation {
         ClientProjectMutation::update_status(executor, uuid, ProjectStatus::Stopped).await
     }
 
+    /// Coloca um projeto em andamento (`ProjectStatus::InProgress`).
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
     pub async fn start<'a, E>(executor: E, uuid: Uuid) -> Result<ClientProject, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -186,6 +248,10 @@ impl ClientProjectMutation {
         ClientProjectMutation::update_status(executor, uuid, ProjectStatus::InProgress).await
     }
 
+    /// Marca um projeto como concluído (`ProjectStatus::Done`).
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
     pub async fn done<'a, E>(executor: E, uuid: Uuid) -> Result<ClientProject, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
@@ -193,6 +259,13 @@ impl ClientProjectMutation {
         ClientProjectMutation::update_status(executor, uuid, ProjectStatus::Done).await
     }
 
+    /// Atualiza o status (`tx_status`) de um projeto para o valor informado.
+    ///
+    /// - **executor**: executor SQL usado para rodar o `UPDATE`.
+    /// - **uuid**: identificador UUID do projeto.
+    /// - **status**: novo status (`ProjectStatus`) a ser aplicado.
+    ///
+    /// Retorna o projeto com status atualizado.
     async fn update_status<'a, E>(
         executor: E,
         uuid: Uuid,
@@ -221,6 +294,14 @@ impl ClientProjectMutation {
 pub struct ClientProjectCollaboratorMutation;
 
 impl ClientProjectCollaboratorMutation {
+    /// Cria a alocação de um colaborador em um projeto de cliente na tabela
+    /// `clients.tb_allocated_collaborator`.
+    ///
+    /// - **executor**: executor SQL usado para rodar o `INSERT`.
+    /// - **client_project_uuid**: identificador do projeto (`fk_project`).
+    /// - **collaborator_uuid**: identificador do colaborador (`fk_collaborator`).
+    ///
+    /// Gera um novo `pk_allocated_collaborator`, insere o registro e retorna a alocação criada.
     pub async fn create_collaborator<'a, E>(
         executor: E,
         client_project_uuid: Uuid,

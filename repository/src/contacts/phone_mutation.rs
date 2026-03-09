@@ -5,6 +5,13 @@ use crate::contacts::{contact_query::ContactQuery, models::phone::Phone};
 pub struct PhoneMutation;
 
 impl PhoneMutation {
+    /// Cria um novo telefone associado a um contato na tabela `contacts.tb_phone`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **contact_uuid**: identificador UUID do contato (`fk_contact`).
+    /// - **phone**: número de telefone a ser cadastrado.
+    ///
+    /// Gera um novo `pk_phone`, insere o registro e retorna o telefone criado.
     pub async fn create<'a, E>(
         executor: E,
         contact_uuid: Uuid,
@@ -30,6 +37,14 @@ impl PhoneMutation {
         Ok(created_phone)
     }
 
+    /// Cria vários telefones de uma vez para um contato, utilizando `UNNEST` para inserção em lote.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `INSERT`.
+    /// - **contact_uuid**: identificador UUID do contato (`fk_contact`).
+    /// - **phones**: lista de números de telefone a serem cadastrados.
+    ///
+    /// Verifica se o contato existe; se não existir retorna `sqlx::Error::RowNotFound`.
+    /// Caso exista, insere todos os telefones e retorna o vetor de registros criados.
     pub async fn create_many<'a, E>(
         executor: E,
         contact_uuid: Uuid,
@@ -66,6 +81,13 @@ impl PhoneMutation {
         Ok(r)
     }
 
+    /// Atualiza o número de telefone de um registro existente em `contacts.tb_phone`.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `UPDATE`.
+    /// - **contact_uuid**: identificador UUID associado, usado para validar a existência do contato.
+    /// - **phone**: novo número de telefone.
+    ///
+    /// Retorna o telefone atualizado ou `sqlx::Error::RowNotFound` se o contato não existir.
     pub async fn update<'a, E>(
         executor: E,
         contact_uuid: Uuid,
@@ -98,6 +120,12 @@ impl PhoneMutation {
         }
     }
 
+    /// Remove um telefone da tabela `contacts.tb_phone` e retorna o registro removido.
+    ///
+    /// - **executor**: executor SQL (`PgPool`, transação, etc.) usado para rodar o `DELETE`.
+    /// - **uuid**: identificador UUID do telefone (`pk_phone`).
+    ///
+    /// Retorna o telefone deletado ou erro de banco.
     pub async fn delete<'a, E>(executor: E, uuid: Uuid) -> Result<Phone, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
