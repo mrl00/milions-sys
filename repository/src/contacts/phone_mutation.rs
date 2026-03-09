@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::contacts::{contact_query::ContactQuery, models::phone::Phone, phone_query::PhoneQuery};
+use crate::contacts::{contact_query::ContactQuery, models::phone::Phone};
 
 pub struct PhoneMutation;
 
@@ -13,32 +13,13 @@ impl PhoneMutation {
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
     {
-        let contact_exists = ContactQuery::get_by_uuid(executor, contact_uuid)
-            .await?
-            .is_some();
-
-        if !contact_exists {
-            return Err(sqlx::Error::InvalidArgument(
-                "Contact doesnt exists".to_string(),
-            ));
-        }
-
-        let phone_number_exists =
-            PhoneQuery::find_nonexistent_phones(executor, Vec::from([phone.clone()])).await?;
-
-        if !phone_number_exists.is_empty() {
-            return Err(sqlx::Error::InvalidArgument(
-                "Phone number already exists".to_string(),
-            ));
-        }
-
         let created_phone = sqlx::query_as!(
             Phone,
             r#"
-                    INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
-                    VALUES ($1, $2, $3)
-                    RETURNING *
-                    "#,
+            INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
             Uuid::now_v7(),
             &phone,
             &contact_uuid,
