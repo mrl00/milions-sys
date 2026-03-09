@@ -1,0 +1,11 @@
+[package]
+name = "config"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+config = "0.15.19"
+serde = { workspace = true }
+serde-aux = { workspace = true }
+secrecy = { workspace = true }
+sqlx = { workspace = true }
