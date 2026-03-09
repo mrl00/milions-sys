@@ -4,7 +4,8 @@ use crate::collaborators::{
     collaborator_query::CollaboratorQuery,
     models::{
         collaborator::{Collaborator, CollaboratorStatus, CreateCollaborator, UpdateCollaborator},
-        collaborator_contact::{CollaboratorContact, CreateCollaboratorContact},
+        collaborator_contact::CollaboratorContact,
+        collaborator_location::CollaboratorAddress,
     },
 };
 
@@ -140,11 +141,54 @@ pub struct CollaboratorContactMutation;
 impl CollaboratorContactMutation {
     pub async fn create_contact<'a, E>(
         executor: E,
-        c: CreateCollaboratorContact,
+        collaborator_uuid: Uuid,
+        contact_uuid: Uuid,
     ) -> Result<CollaboratorContact, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
     {
-        todo!()
+        let r = sqlx::query_as!(
+            CollaboratorContact,
+            r#"
+            INSERT INTO collaborators.tb_collaborator_contact (fk_collaborator, fk_contact)
+            VALUES ($1, $2)
+            RETURNING *
+            "#,
+            &collaborator_uuid,
+            &contact_uuid,
+        )
+        .fetch_one(executor)
+        .await?;
+
+        Ok(r)
+    }
+}
+
+pub struct CollaboratorAddressMutation;
+
+impl CollaboratorAddressMutation {
+    pub async fn create<'a, E>(
+        executor: E,
+        collaborator_uuid: Uuid,
+        location_uuid: Uuid,
+    ) -> Result<CollaboratorAddress, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres> + std::marker::Copy,
+    {
+        let r = sqlx::query_as!(
+            CollaboratorAddress,
+            r#"
+            INSERT INTO collaborators.tb_collaborator_address(pk_collaborator_address, fk_collaborator, fk_address)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &collaborator_uuid,
+            &location_uuid,
+        )
+        .fetch_one(executor)
+        .await?;
+
+        Ok(r)
     }
 }
