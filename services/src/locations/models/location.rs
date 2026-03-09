@@ -26,7 +26,7 @@ pub struct Location {
     pub pk_location: Uuid,
     pub idx_location: i64,
     pub tx_public_space: String, //logradouro
-    pub tx_address_complement: String,
+    pub tx_address_complement: Option<String>,
     pub tx_unit: String,
     pub tx_neighborhood: String,
     pub tx_locality: String,
