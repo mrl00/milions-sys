@@ -12,7 +12,7 @@ services = { path = "services" }
 config = { path = "config" }
 
 [workspace]
-members = ["config", "domain", "services"]
+members = ["config", "domain", "repository", "services"]
 
 [workspace.dependencies]
 regex = "1.12.3"
