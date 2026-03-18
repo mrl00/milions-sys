@@ -40,7 +40,7 @@ pub struct Location {
     pub tx_city: String,
     pub tx_state: String,
     pub tx_zipcode: String,
-    pub uin_hash: i64,
+    pub nr_hash: i64,
     pub ts_location_created_at: NaiveDateTime,
     pub ts_location_updated_at: NaiveDateTime,
 }
