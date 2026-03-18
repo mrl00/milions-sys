@@ -39,9 +39,11 @@ CREATE TABLE locations.tb_location
     tx_ibge                VARCHAR(16)             NOT NULL,
     tx_gia                 VARCHAR(16),                      -- exclusivo para municípios de SP
     tx_siafi               VARCHAR(8)              NOT NULL,
+    nr_hash                INTEGER                 NOT NULL,
     ts_location_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     ts_location_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
 
+    CONSTRAINT uq_nr_hash UNIQUE (nr_hash),
     CONSTRAINT pk_location PRIMARY KEY (pk_location),
     CONSTRAINT uq_idx_location UNIQUE (idx_location)
 );
