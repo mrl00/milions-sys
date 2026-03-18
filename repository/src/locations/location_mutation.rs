@@ -29,7 +29,7 @@ impl LocationMutation {
             tx_gia, 
             tx_ddd, 
             tx_siafi, 
-            uin_hash
+            nr_hash
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING *"#,
@@ -103,7 +103,7 @@ impl LocationMutation {
             tx_city,
             tx_state,
             tx_zipcode,
-            uin_hash
+            nr_hash
         )
         SELECT * FROM UNNEST(
             $1::uuid[],
@@ -194,7 +194,7 @@ impl LocationMutation {
             c.tx_city,
             c.tx_state,
             c.tx_zipcode,
-            uuid,
+            &uuid,
         )
         .fetch_one(executor)
         .await?;
