@@ -1,3 +1,3 @@
-pub mod location_mutation;
-pub mod location_query;
 pub mod models;
+pub mod mutations;
+pub mod queries;
