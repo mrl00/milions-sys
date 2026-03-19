@@ -1,6 +1,5 @@
-use secrecy::{ExposeSecret, SecretBox};
+use secrecy::{ExposeSecret, SecretBox, SecretString};
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -20,24 +19,31 @@ pub struct DatabaseSettings {
 }
 
 impl DatabaseSettings {
-    pub fn with_db(&self) -> PgConnectOptions {
-        DatabaseSettings::without_db(self)
+    pub fn connection_string(&self) -> SecretString {
+        SecretString::new(
+            format!(
+                "postgresql://{}:{}@{}:{}/{}",
+                self.username,
+                self.password.expose_secret(),
+                self.host,
+                self.port,
+                self.database_name
+            )
+            .into_boxed_str(),
+        )
     }
 
-    pub fn without_db(&self) -> PgConnectOptions {
-        let ssl_mode = if self.require_ssl {
-            PgSslMode::Require
-        } else {
-            PgSslMode::Prefer
-        };
-
-        PgConnectOptions::new()
-            .host(&self.host)
-            .port(self.port)
-            .username(&self.username)
-            .password(self.password.expose_secret())
-            .database(&self.database_name)
-            .ssl_mode(ssl_mode)
+    pub fn connection_without_db_string(&self) -> SecretString {
+        SecretString::new(
+            format!(
+                "postgresql://{}:{}@{}:{}",
+                self.username,
+                self.password.expose_secret(),
+                self.host,
+                self.port,
+            )
+            .into_boxed_str(),
+        )
     }
 }
 
