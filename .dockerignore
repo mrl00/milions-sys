@@ -1,0 +1,41 @@
+# Build output
+**/target/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docs & tests (optional: remove if needed in image)
+docs/
+README*
+*.md
+tests/
+benches/
+
+# Logs
+*.log
+logs/
