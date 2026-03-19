@@ -5,7 +5,7 @@ use crate::contacts::{
         contact::{Contact, CreateContact},
         phone::Phone,
     },
-    phone_mutation::PhoneMutation,
+    mutations::phone_mutation::PhoneMutation,
 };
 
 pub struct ContactMutation;
