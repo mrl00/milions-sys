@@ -1,2 +1,26 @@
+use std::net::TcpListener;
+
+use secrecy::ExposeSecret;
+use sqlx::postgres::PgPoolOptions;
+
 #[tokio::main]
-async fn main() {}
+async fn main() -> Result<(), std::io::Error> {
+    let settings = config::get_config().expect("Failed to get config");
+
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .idle_timeout(std::time::Duration::from_secs(5))
+        .connect_lazy(settings.database.connection_string().expose_secret())
+        .expect("Failed to create pool");
+
+    let address = format!(
+        "{}:{}",
+        settings.application.host, settings.application.port
+    );
+
+    println!("Running on http://{}", address);
+
+    let tcp_listener = TcpListener::bind(address)?;
+
+    rest::startup::run(tcp_listener, pool)?.await
+}
