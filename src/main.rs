@@ -5,7 +5,7 @@ use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let settings = config::get_config().expect("Failed to get config");
+    let settings = settings::get_config().expect("Failed to get config");
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
