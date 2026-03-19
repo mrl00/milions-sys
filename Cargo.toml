@@ -8,13 +8,17 @@ tokio = { workspace = true }
 sqlx = { workspace = true }
 rsa = { workspace = true }
 rand = { workspace = true }
+secrecy = { workspace = true }
 services = { path = "services" }
 config = { path = "config" }
+rest = { path = "rest" }
 
 [workspace]
-members = ["config", "domain", "repository", "services"]
+members = ["config", "domain", "repository", "rest", "services"]
 
 [workspace.dependencies]
+repository = { path = "repository" }
+actix-web = { version = "4.3.3" }
 regex = "1.12.3"
 testcontainers = "0.27.1"
 argon2 = "0.5.3"
@@ -25,7 +29,7 @@ uuid = { version = "1.21.0", features = ["v4", "serde", "v7"] }
 secrecy = { version = "0.10.0", features = ["serde"] }
 serde-aux = "4.7.0"
 serde = { version = "1.0.183", features = ["derive"] }
-keycloak = "26.4.0"
+keycloak = { version = "26.5.200" }
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio",
   "tls-native-tls",
