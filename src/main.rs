@@ -22,5 +22,5 @@ async fn main() -> Result<(), std::io::Error> {
 
     let tcp_listener = TcpListener::bind(address)?;
 
-    rest::startup::run(tcp_listener, pool)?.await
+    api::startup::run(tcp_listener, pool)?.await
 }

@@ -11,10 +11,10 @@ rand = { workspace = true }
 secrecy = { workspace = true }
 services = { path = "services" }
 config = { path = "config" }
-rest = { path = "rest" }
+api = { path = "api" }
 
 [workspace]
-members = ["config", "domain", "repository", "rest", "services"]
+members = ["config", "domain", "repository", "api", "services"]
 
 [workspace.dependencies]
 repository = { path = "repository" }
