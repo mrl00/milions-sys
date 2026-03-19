@@ -2,8 +2,8 @@ use uuid::Uuid;
 
 use crate::contacts::{
     models::{
-        contact::{Contact, CreateContact},
-        phone::Phone,
+        contact::{ContactModel, CreateContactModel},
+        phone::PhoneModel,
     },
     mutations::phone_mutation::PhoneMutation,
 };
@@ -12,12 +12,15 @@ pub struct ContactMutation;
 
 impl ContactMutation {
     /// Cria um contato em `contacts.tb_contact`.
-    pub async fn create<'a, E>(executor: E, contact: CreateContact) -> Result<Contact, sqlx::Error>
+    pub async fn create<'a, E>(
+        executor: E,
+        contact: CreateContactModel,
+    ) -> Result<ContactModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let created_contact = sqlx::query_as!(
-            Contact,
+            ContactModel,
             r#"
             INSERT INTO contacts.tb_contact (pk_contact, tx_email)
             VALUES ($1, $2)
@@ -37,12 +40,12 @@ impl ContactMutation {
         executor: E,
         uuid: Uuid,
         email: String,
-    ) -> Result<Contact, sqlx::Error>
+    ) -> Result<ContactModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let updated_contact = sqlx::query_as!(
-            Contact,
+            ContactModel,
             r#"
             UPDATE contacts.tb_contact
             SET tx_email = $1
@@ -63,7 +66,7 @@ impl ContactMutation {
         executor: E,
         contact_uuid: Uuid,
         phone: String,
-    ) -> Result<Phone, sqlx::Error>
+    ) -> Result<PhoneModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {

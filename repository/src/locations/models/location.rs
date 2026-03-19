@@ -5,7 +5,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ViaCepAddress {
+pub struct ViaCepAddressModel {
     pub cep: String,
     pub logradouro: String,
     pub complemento: String,
@@ -22,7 +22,7 @@ pub struct ViaCepAddress {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct Location {
+pub struct LocationModel {
     pub pk_location: Uuid,
     pub idx_location: i64,
     pub tx_public_space: String, //logradouro
@@ -45,7 +45,7 @@ pub struct Location {
     pub ts_location_updated_at: NaiveDateTime,
 }
 
-impl Hash for Location {
+impl Hash for LocationModel {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.tx_public_space.hash(state);
         self.tx_address_complement.hash(state);
@@ -66,7 +66,7 @@ impl Hash for Location {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateLocation {
+pub struct CreateLocationModel {
     pub tx_public_space: String,
     pub tx_address_complement: String,
     pub tx_unit: String,
@@ -84,7 +84,7 @@ pub struct CreateLocation {
     pub tx_zipcode: String,
 }
 
-impl CreateLocation {
+impl CreateLocationModel {
     pub fn gen_hash(&self) -> u64 {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         self.tx_public_space.hash(&mut hasher);
@@ -101,7 +101,7 @@ impl CreateLocation {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateLocation {
+pub struct UpdateLocationModel {
     pub tx_public_space: Option<String>,
     pub tx_address_complement: Option<String>,
     pub tx_unit: Option<String>,

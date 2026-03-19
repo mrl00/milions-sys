@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::locations::models::location::Location;
+use crate::locations::models::location::LocationModel;
 
 pub struct LocationQuery;
 
@@ -9,12 +9,12 @@ impl LocationQuery {
     pub async fn get_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
-    ) -> Result<Option<Location>, sqlx::Error>
+    ) -> Result<Option<LocationModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Option<Location> = sqlx::query_as!(
-            Location,
+        let r: Option<LocationModel> = sqlx::query_as!(
+            LocationModel,
             r#"
             SELECT *
             FROM locations.tb_location

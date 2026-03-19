@@ -1,17 +1,20 @@
 use uuid::Uuid;
 
-use crate::contacts::models::phone::Phone;
+use crate::contacts::models::phone::PhoneModel;
 
 pub struct PhoneQuery;
 
 impl PhoneQuery {
     /// Obtém um telefone por `pk_phone` em `contacts.tb_phone`.
-    pub async fn find_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Phone>, sqlx::Error>
+    pub async fn find_by_uuid<'a, E>(
+        executor: E,
+        uuid: Uuid,
+    ) -> Result<Option<PhoneModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phone = sqlx::query_as!(
-            Phone,
+            PhoneModel,
             r#"
             SELECT *
             FROM contacts.tb_phone
@@ -29,12 +32,12 @@ impl PhoneQuery {
     pub async fn get_by_contact<'a, E>(
         executor: E,
         contact: Uuid,
-    ) -> Result<Vec<Phone>, sqlx::Error>
+    ) -> Result<Vec<PhoneModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phones = sqlx::query_as!(
-            Phone,
+            PhoneModel,
             r#"
             SELECT *
             FROM contacts.tb_phone

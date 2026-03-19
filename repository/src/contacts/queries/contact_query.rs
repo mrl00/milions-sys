@@ -1,17 +1,20 @@
 use uuid::Uuid;
 
-use crate::contacts::models::contact::Contact;
+use crate::contacts::models::contact::ContactModel;
 
 pub struct ContactQuery;
 
 impl ContactQuery {
     /// Obtém um contato por `pk_contact` em `contacts.tb_contact`.
-    pub async fn get_by_uuid<'a, E>(executor: E, uuid: Uuid) -> Result<Option<Contact>, sqlx::Error>
+    pub async fn get_by_uuid<'a, E>(
+        executor: E,
+        uuid: Uuid,
+    ) -> Result<Option<ContactModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let contact = sqlx::query_as!(
-            Contact,
+            ContactModel,
             r#"
             SELECT *
             FROM contacts.tb_contact
@@ -29,12 +32,12 @@ impl ContactQuery {
     pub async fn get_by_email<'a, E>(
         executor: E,
         email: String,
-    ) -> Result<Option<Contact>, sqlx::Error>
+    ) -> Result<Option<ContactModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let contact = sqlx::query_as!(
-            Contact,
+            ContactModel,
             r#"
             SELECT *
             FROM contacts.tb_contact
@@ -49,9 +52,9 @@ impl ContactQuery {
     }
 
     /// Lista todos os contatos de `contacts.tb_contact` ordenados por `idx_contact`.
-    pub async fn list_all(pool: &sqlx::PgPool) -> Result<Vec<Contact>, sqlx::Error> {
+    pub async fn list_all(pool: &sqlx::PgPool) -> Result<Vec<ContactModel>, sqlx::Error> {
         let contacts = sqlx::query_as!(
-            Contact,
+            ContactModel,
             r#"
             SELECT *
             FROM contacts.tb_contact
