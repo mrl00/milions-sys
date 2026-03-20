@@ -1,0 +1,43 @@
+use std::hash::Hash;
+
+use regex::Regex;
+use snafu::Snafu;
+
+#[derive(Debug)]
+pub struct Phone(String);
+
+#[derive(Debug, Snafu)]
+pub enum PhoneError {
+    #[snafu(display("invalid phone number: '{}'", value))]
+    InvalidPhoneNumber { value: String },
+}
+
+impl TryFrom<String> for Phone {
+    type Error = PhoneError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let re = Regex::new(r"\+\d{13}\d{1}?").unwrap();
+        if !re.is_match(&value) {
+            return InvalidPhoneNumberSnafu { value }.fail();
+        }
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<str> for Phone {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl AsMut<str> for Phone {
+    fn as_mut(&mut self) -> &mut str {
+        self.0.as_mut()
+    }
+}
+
+impl Hash for Phone {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
