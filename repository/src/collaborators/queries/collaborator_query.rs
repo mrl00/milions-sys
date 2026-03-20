@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::collaborators::models::collaborator::CollaboratorModel;
+use domain::models::collaborator::CollaboratorModel;
 
 pub struct CollaboratorQuery;
 

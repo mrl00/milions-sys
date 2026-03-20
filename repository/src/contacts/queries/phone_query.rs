@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::contacts::models::phone::PhoneModel;
+use domain::models::phone::PhoneModel;
 
 pub struct PhoneQuery;
 

@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::clients::models::client::{ClientModel, ClientStatus, CreateClientModel};
+use domain::models::client::{ClientModel, ClientStatus, CreateClientModel};
 
 pub struct ClientMutation;
 

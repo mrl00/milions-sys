@@ -1,12 +1,11 @@
 use uuid::Uuid;
 
-use crate::contacts::{
-    models::{
-        contact::{ContactModel, CreateContactModel},
-        phone::PhoneModel,
-    },
-    mutations::phone_mutation::PhoneMutation,
+use domain::models::{
+    contact::{ContactModel, CreateContactModel},
+    phone::PhoneModel,
 };
+
+use crate::contacts::mutations::phone_mutation::PhoneMutation;
 
 pub struct ContactMutation;
 

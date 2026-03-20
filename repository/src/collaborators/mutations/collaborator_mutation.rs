@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::collaborators::models::{
+use domain::models::{
     collaborator::{
         CollaboratorModel, CollaboratorStatus, CreateCollaboratorModel, UpdateCollaboratorModel,
     },

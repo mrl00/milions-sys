@@ -1,4 +1,4 @@
-use crate::locations::models::location::{CreateLocationModel, LocationModel, UpdateLocationModel};
+use domain::models::location::{CreateLocationModel, LocationModel, UpdateLocationModel};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
@@ -52,7 +52,7 @@ impl LocationMutation {
             c.tx_gia,
             &c.tx_ddd,
             c.tx_siafi,
-            c.gen_hash() as i64,
+            c.nr_hash as i64,
         )
         .fetch_one(executor)
         .await?;
@@ -85,7 +85,7 @@ impl LocationMutation {
         let tx_city: Vec<String> = c.iter().map(|i| i.tx_city.clone()).collect();
         let tx_state: Vec<String> = c.iter().map(|i| i.tx_state.clone()).collect();
         let tx_zipcode: Vec<String> = c.iter().map(|i| i.tx_zipcode.clone()).collect();
-        let hashes: Vec<i64> = c.iter().map(|i| i.gen_hash() as i64).collect();
+        let hashes: Vec<i64> = c.iter().map(|i| i.nr_hash).collect();
 
         let r = sqlx::query_as!(
             LocationModel,

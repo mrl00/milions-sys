@@ -1,6 +1,5 @@
+use domain::models::client_address::ClientAddressModel;
 use uuid::Uuid;
-
-use crate::clients::models::client_address::ClientAddressModel;
 
 pub struct ClientAddressMutation;
 

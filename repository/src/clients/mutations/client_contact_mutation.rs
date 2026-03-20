@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::clients::models::client_contact::RepositoryClientContact;
+use domain::models::client_contact::RepositoryClientContact;
 
 pub struct ClientContactMutation;
 
