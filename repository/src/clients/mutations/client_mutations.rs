@@ -1,18 +1,19 @@
+use sqlx::PgPool;
 use uuid::Uuid;
 
-use domain::models::client::{ClientModel, ClientStatus, CreateClientModel};
+use domain::{
+    clients::ports::ClientMutationRepository,
+    errors::ClientError,
+    models::client::{ClientModel, ClientStatus, CreateClientModel, UpdateClientModel},
+};
 
-pub struct ClientMutation;
+/// Client mutation.
+pub struct ClientMutation {
+    pool: PgPool,
+}
 
-impl ClientMutation {
-    /// Cria um cliente em `clients.tb_client`.
-    pub async fn create<'a, E>(
-        executor: E,
-        c: CreateClientModel,
-    ) -> Result<ClientModel, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
+impl ClientMutationRepository for ClientMutation {
+    async fn create(&self, c: CreateClientModel) -> Result<ClientModel, ClientError> {
         let client = sqlx::query_as!(
             ClientModel,
             r#"
@@ -25,37 +26,52 @@ impl ClientMutation {
             &c.tx_status.to_string(),
             &c.tx_doc,
         )
-        .fetch_one(executor)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(client)
     }
 
-    /// Marca um cliente como ativo (`tx_status = Active`).
-    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientModel, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        ClientMutation::update_status(executor, uuid, ClientStatus::Active).await
+    async fn update(
+        &self,
+        uuid: uuid::Uuid,
+        u: UpdateClientModel,
+    ) -> Result<ClientModel, ClientError> {
+        let client = sqlx::query_as!(
+            ClientModel,
+            r#"
+            UPDATE clients.tb_client
+            SET tx_name = $1, tx_status = $2
+            WHERE pk_client = $3
+            RETURNING *
+            "#,
+            u.tx_name,
+            u.tx_status
+                .map_or_else(|| "inactive".to_string(), |s| s.to_string()),
+            uuid,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(client)
     }
 
-    /// Marca um cliente como inativo (`tx_status = Inactive`).
-    pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientModel, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        ClientMutation::update_status(executor, uuid, ClientStatus::Inactive).await
+    async fn activate(&self, uuid: uuid::Uuid) -> Result<ClientModel, ClientError> {
+        ClientMutation::update_status(&self.pool, uuid, ClientStatus::Active).await
     }
 
+    async fn deactivate(&self, uuid: uuid::Uuid) -> Result<ClientModel, ClientError> {
+        ClientMutation::update_status(&self.pool, uuid, ClientStatus::Inactive).await
+    }
+}
+
+impl ClientMutation {
     /// Atualiza `tx_status` de um cliente.
-    async fn update_status<'a, E>(
-        executor: E,
+    async fn update_status(
+        pool: &PgPool,
         uuid: Uuid,
         status: ClientStatus,
-    ) -> Result<ClientModel, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
+    ) -> Result<ClientModel, ClientError> {
         let client = sqlx::query_as!(
             ClientModel,
             r#"
@@ -67,7 +83,7 @@ impl ClientMutation {
             &status.to_string(),
             &uuid,
         )
-        .fetch_one(executor)
+        .fetch_one(pool)
         .await?;
 
         Ok(client)
