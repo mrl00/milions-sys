@@ -21,3 +21,17 @@ pub enum ClientError {
     #[snafu(transparent)]
     Infra { source: InfraError },
 }
+
+impl From<sqlx::Error> for ClientError {
+    fn from(source: sqlx::Error) -> Self {
+        match source {
+            sqlx::Error::RowNotFound => ClientError::NotFound { uuid: Uuid::nil() },
+            _ => ClientError::Infra {
+                source: InfraError::Database {
+                    action: "operação de banco",
+                    source,
+                },
+            },
+        }
+    }
+}
