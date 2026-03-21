@@ -33,12 +33,14 @@ CREATE TABLE clients.tb_client
     pk_client            UUID                    NOT NULL,
     idx_client           SERIAL                  NOT NULL,
     tx_name              VARCHAR(64)             NOT NULL,
+    tx_doc               VARCHAR(23)            NOT NULL,
     tx_status            VARCHAR(32)             NOT NULL,
     ts_client_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     ts_client_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
 
     CONSTRAINT pk_client PRIMARY KEY (pk_client),
-    CONSTRAINT uq_idx_client UNIQUE (idx_client)
+    CONSTRAINT uq_idx_client UNIQUE (idx_client),
+    CONSTRAINT uq_tx_doc UNIQUE (tx_doc)
 );
 
 

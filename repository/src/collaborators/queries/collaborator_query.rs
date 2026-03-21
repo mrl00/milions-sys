@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::collaborators::models::collaborator::Collaborator;
+use domain::models::collaborator::CollaboratorModel;
 
 pub struct CollaboratorQuery;
 
@@ -9,12 +9,12 @@ impl CollaboratorQuery {
     pub async fn find_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
-    ) -> Result<Option<Collaborator>, sqlx::Error>
+    ) -> Result<Option<CollaboratorModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let collaborator = sqlx::query_as!(
-            Collaborator,
+            CollaboratorModel,
             r#"
             SELECT *
             FROM collaborators.tb_collaborator
@@ -32,12 +32,12 @@ impl CollaboratorQuery {
     pub async fn find_by_cpf<'a, E>(
         executor: E,
         cpf: String,
-    ) -> Result<Option<Collaborator>, sqlx::Error>
+    ) -> Result<Option<CollaboratorModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let collaborator = sqlx::query_as!(
-            Collaborator,
+            CollaboratorModel,
             r#"
             SELECT *
             FROM collaborators.tb_collaborator

@@ -36,10 +36,10 @@ CREATE TABLE locations.tb_location
     tx_region              VARCHAR(64)             NOT NULL,
     tx_zipcode             VARCHAR(9)              NOT NULL,
     tx_ddd                 VARCHAR(3)              NOT NULL,
-    tx_ibge                VARCHAR(16)             NOT NULL,
+    tx_ibge                VARCHAR(16),
     tx_gia                 VARCHAR(16),                      -- exclusivo para municípios de SP
-    tx_siafi               VARCHAR(8)              NOT NULL,
-    nr_hash                INTEGER                 NOT NULL,
+    tx_siafi               VARCHAR(8),
+    nr_hash                BIGINT                  NOT NULL,
     ts_location_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     ts_location_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
 

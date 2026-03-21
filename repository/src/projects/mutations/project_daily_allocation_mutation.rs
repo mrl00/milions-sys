@@ -1,4 +1,4 @@
-use crate::projects::models::client_projects::{
+use domain::models::client_projects::{
     CreateProjectDailyAllocation, ProjectDailyAllocation, UpdateProjectDailyAllocation,
 };
 

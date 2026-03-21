@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+domain = { path = "../domain" }
 sqlx = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
