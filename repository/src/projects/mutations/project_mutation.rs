@@ -1,4 +1,4 @@
-use crate::projects::models::client_projects::{Project, ProjectStatus, UpdateProject};
+use domain::models::client_projects::{Project, ProjectStatus, UpdateProject};
 
 pub struct ProjectMutation;
 

@@ -1,4 +1,4 @@
-use crate::locations::models::location::{CreateLocation, Location, UpdateLocation};
+use domain::models::location::{CreateLocationModel, LocationModel, UpdateLocationModel};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
@@ -6,12 +6,15 @@ pub struct LocationMutation;
 
 impl LocationMutation {
     /// Cria uma localização em `locations.tb_location`.
-    pub async fn create<'a, E>(executor: E, c: CreateLocation) -> Result<Location, sqlx::Error>
+    pub async fn create<'a, E>(
+        executor: E,
+        c: CreateLocationModel,
+    ) -> Result<LocationModel, sqlx::Error>
     where
         E: Executor<'a, Database = Postgres>,
     {
         let r = sqlx::query_as!(
-            Location,
+            LocationModel,
             r#"INSERT INTO locations.tb_location (
             pk_location, 
             tx_street, 
@@ -49,7 +52,7 @@ impl LocationMutation {
             c.tx_gia,
             &c.tx_ddd,
             c.tx_siafi,
-            c.gen_hash() as i64,
+            c.nr_hash as i64,
         )
         .fetch_one(executor)
         .await?;
@@ -60,8 +63,8 @@ impl LocationMutation {
     /// Cria múltiplas localizações em `locations.tb_location` via inserção em lote.
     pub async fn create_many<'a, E>(
         executor: E,
-        c: Vec<CreateLocation>,
-    ) -> Result<Vec<Location>, sqlx::Error>
+        c: Vec<CreateLocationModel>,
+    ) -> Result<Vec<LocationModel>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -82,10 +85,10 @@ impl LocationMutation {
         let tx_city: Vec<String> = c.iter().map(|i| i.tx_city.clone()).collect();
         let tx_state: Vec<String> = c.iter().map(|i| i.tx_state.clone()).collect();
         let tx_zipcode: Vec<String> = c.iter().map(|i| i.tx_zipcode.clone()).collect();
-        let hashes: Vec<i64> = c.iter().map(|i| i.gen_hash() as i64).collect();
+        let hashes: Vec<i64> = c.iter().map(|i| i.nr_hash).collect();
 
         let r = sqlx::query_as!(
-            Location,
+            LocationModel,
             r#"INSERT INTO locations.tb_location (
             pk_location,
             tx_public_space,
@@ -153,13 +156,13 @@ impl LocationMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
-        c: UpdateLocation,
-    ) -> Result<Location, sqlx::Error>
+        c: UpdateLocationModel,
+    ) -> Result<LocationModel, sqlx::Error>
     where
         E: Executor<'a, Database = Postgres>,
     {
         let r = sqlx::query_as!(
-            Location,
+            LocationModel,
             r#"UPDATE locations.tb_location
             SET 
             tx_public_space = $1, 

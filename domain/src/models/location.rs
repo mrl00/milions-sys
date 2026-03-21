@@ -1,28 +1,8 @@
-use std::hash::{Hash, Hasher};
-
-use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ViaCepAddress {
-    pub cep: String,
-    pub logradouro: String,
-    pub complemento: String,
-    pub unidade: String,
-    pub bairro: String,
-    pub localidade: String,
-    pub uf: String,
-    pub estado: String,
-    pub regiao: String,
-    pub ibge: String,
-    pub gia: String,
-    pub ddd: String,
-    pub siafi: String,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct Location {
+pub struct LocationModel {
     pub pk_location: Uuid,
     pub idx_location: i64,
     pub tx_public_space: String, //logradouro
@@ -45,28 +25,8 @@ pub struct Location {
     pub ts_location_updated_at: NaiveDateTime,
 }
 
-impl Hash for Location {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.tx_public_space.hash(state);
-        self.tx_address_complement.hash(state);
-        self.tx_unit.hash(state);
-        self.tx_neighborhood.hash(state);
-        self.tx_locality.hash(state);
-        self.tx_region.hash(state);
-        self.tx_ibge.hash(state);
-        self.tx_gia.hash(state);
-        self.tx_ddd.hash(state);
-        self.tx_siafi.hash(state);
-        self.tx_street.hash(state);
-        self.tx_number.hash(state);
-        self.tx_city.hash(state);
-        self.tx_state.hash(state);
-        self.tx_zipcode.hash(state);
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateLocation {
+pub struct CreateLocationModel {
     pub tx_public_space: String,
     pub tx_address_complement: String,
     pub tx_unit: String,
@@ -82,26 +42,11 @@ pub struct CreateLocation {
     pub tx_city: String,
     pub tx_state: String,
     pub tx_zipcode: String,
-}
-
-impl CreateLocation {
-    pub fn gen_hash(&self) -> u64 {
-        let mut hasher = std::collections::hash_map::DefaultHasher::new();
-        self.tx_public_space.hash(&mut hasher);
-        self.tx_address_complement.hash(&mut hasher);
-        self.tx_unit.hash(&mut hasher);
-        self.tx_neighborhood.hash(&mut hasher);
-        self.tx_locality.hash(&mut hasher);
-        self.tx_region.hash(&mut hasher);
-        self.tx_ddd.hash(&mut hasher);
-        self.tx_state.hash(&mut hasher);
-        self.tx_zipcode.hash(&mut hasher);
-        hasher.finish()
-    }
+    pub nr_hash: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateLocation {
+pub struct UpdateLocationModel {
     pub tx_public_space: Option<String>,
     pub tx_address_complement: Option<String>,
     pub tx_unit: Option<String>,

@@ -1,7 +1,9 @@
 use uuid::Uuid;
 
-use crate::collaborators::models::{
-    collaborator::{Collaborator, CollaboratorStatus, CreateCollaborator, UpdateCollaborator},
+use domain::models::{
+    collaborator::{
+        CollaboratorModel, CollaboratorStatus, CreateCollaboratorModel, UpdateCollaboratorModel,
+    },
     collaborator_contact::CollaboratorContact,
     collaborator_location::CollaboratorAddress,
 };
@@ -12,13 +14,13 @@ impl CollaboratorMutation {
     /// Cria um colaborador em `collaborators.tb_collaborator`, garantindo CPF único.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateCollaborator,
-    ) -> Result<Collaborator, sqlx::Error>
+        c: CreateCollaboratorModel,
+    ) -> Result<CollaboratorModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Collaborator = sqlx::query_as!(
-                    Collaborator,
+        let r: CollaboratorModel = sqlx::query_as!(
+                    CollaboratorModel,
                     r#"
                     INSERT INTO collaborators.tb_collaborator (pk_collaborator, tx_name, tx_cpf, tx_level, tx_status)
                     VALUES ($1, $2, $3, $4, $5)
@@ -40,13 +42,13 @@ impl CollaboratorMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
-        c: UpdateCollaborator,
-    ) -> Result<Collaborator, sqlx::Error>
+        c: UpdateCollaboratorModel,
+    ) -> Result<CollaboratorModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Collaborator = sqlx::query_as!(
-            Collaborator,
+        let r: CollaboratorModel = sqlx::query_as!(
+            CollaboratorModel,
             r#"
             UPDATE collaborators.tb_collaborator
             SET tx_name = $1, tx_level = $2, tx_status = $3, tx_cpf = $4
@@ -66,7 +68,7 @@ impl CollaboratorMutation {
     }
 
     /// Marca um colaborador como ativo (`tx_status = Active`).
-    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
+    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<CollaboratorModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -74,7 +76,10 @@ impl CollaboratorMutation {
     }
 
     /// Marca um colaborador como inativo (`tx_status = Inactive`).
-    pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<Collaborator, sqlx::Error>
+    pub async fn deactivate<'a, E>(
+        executor: E,
+        uuid: Uuid,
+    ) -> Result<CollaboratorModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -86,12 +91,12 @@ impl CollaboratorMutation {
         executor: E,
         uuid: Uuid,
         status: CollaboratorStatus,
-    ) -> Result<Collaborator, sqlx::Error>
+    ) -> Result<CollaboratorModel, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Collaborator = sqlx::query_as!(
-            Collaborator,
+        let r: CollaboratorModel = sqlx::query_as!(
+            CollaboratorModel,
             r#"
                     UPDATE collaborators.tb_collaborator
                     SET tx_status = $1
