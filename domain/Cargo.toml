@@ -9,3 +9,4 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 snafu = { workspace = true }
 uuid = { workspace = true }
+sqlx = { workspace = true }
