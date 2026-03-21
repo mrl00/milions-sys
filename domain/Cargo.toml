@@ -10,3 +10,4 @@ regex = { workspace = true }
 snafu = { workspace = true }
 uuid = { workspace = true }
 sqlx = { workspace = true }
+serde = { workspace = true }
