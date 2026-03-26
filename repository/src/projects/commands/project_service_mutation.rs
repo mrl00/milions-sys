@@ -1,5 +1,5 @@
-use domain::models::client_projects::{
-    CreateProjectService, ProjectService, ProjectServiceStatus, UpdateProjectService,
+use domain::models::db::client_projects::{
+    CreateProjectServiceRow, ProjectServiceRow, ProjectServiceStatus, UpdateProjectServiceRow,
 };
 
 pub struct ProjectServiceMutation;
@@ -8,13 +8,13 @@ impl ProjectServiceMutation {
     /// Cria um tipo de projeto em `clients.tb_service_type`.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateProjectService,
-    ) -> Result<ProjectService, sqlx::Error>
+        c: CreateProjectServiceRow,
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectService,
+            ProjectServiceRow,
             r#"
             INSERT INTO clients.tb_project_service (
                 pk_project_service,
@@ -56,13 +56,13 @@ impl ProjectServiceMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-        u: UpdateProjectService,
-    ) -> Result<ProjectService, sqlx::Error>
+        u: UpdateProjectServiceRow,
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectService,
+            ProjectServiceRow,
             r#"
             UPDATE clients.tb_project_service
             SET 
@@ -92,7 +92,7 @@ impl ProjectServiceMutation {
     pub async fn pending<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-    ) -> Result<ProjectService, sqlx::Error>
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -103,7 +103,7 @@ impl ProjectServiceMutation {
     pub async fn in_progress<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-    ) -> Result<ProjectService, sqlx::Error>
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -115,7 +115,7 @@ impl ProjectServiceMutation {
     pub async fn completed<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-    ) -> Result<ProjectService, sqlx::Error>
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -126,12 +126,12 @@ impl ProjectServiceMutation {
         executor: E,
         uuid: uuid::Uuid,
         status: ProjectServiceStatus,
-    ) -> Result<ProjectService, sqlx::Error>
+    ) -> Result<ProjectServiceRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectService,
+            ProjectServiceRow,
             r#"
             UPDATE clients.tb_project_service
             SET tx_status = $1

@@ -1,20 +1,16 @@
+use domain::models::db::client::{ClientRow, ClientStatus, CreateClientRow};
 use uuid::Uuid;
-
-use domain::models::client::{ClientModel, ClientStatus, CreateClientModel};
 
 pub struct ClientMutation;
 
 impl ClientMutation {
     /// Cria um cliente em `clients.tb_client`.
-    pub async fn create<'a, E>(
-        executor: E,
-        c: CreateClientModel,
-    ) -> Result<ClientModel, sqlx::Error>
+    pub async fn create<'a, E>(executor: E, c: CreateClientRow) -> Result<ClientRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let client = sqlx::query_as!(
-            ClientModel,
+            ClientRow,
             r#"
             INSERT INTO clients.tb_client (pk_client, tx_name, tx_status, tx_doc)
             VALUES ($1, $2, $3, $4)
@@ -32,7 +28,7 @@ impl ClientMutation {
     }
 
     /// Marca um cliente como ativo (`tx_status = Active`).
-    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientModel, sqlx::Error>
+    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -40,7 +36,7 @@ impl ClientMutation {
     }
 
     /// Marca um cliente como inativo (`tx_status = Inactive`).
-    pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientModel, sqlx::Error>
+    pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<ClientRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -52,12 +48,12 @@ impl ClientMutation {
         executor: E,
         uuid: Uuid,
         status: ClientStatus,
-    ) -> Result<ClientModel, sqlx::Error>
+    ) -> Result<ClientRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let client = sqlx::query_as!(
-            ClientModel,
+            ClientRow,
             r#"
             UPDATE clients.tb_client
             SET tx_status = $1

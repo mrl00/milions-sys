@@ -6,7 +6,7 @@ use uuid::Uuid;
 // Pessoa física ou jurídica contratante da obra.
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct ClientModel {
+pub struct ClientRow {
     /// Identificador único do cliente (UUID gerado pela aplicação)
     pub pk_client: Uuid,
     /// Índice sequencial auto-incrementado
@@ -21,14 +21,14 @@ pub struct ClientModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateClientModel {
+pub struct CreateClientRow {
     pub tx_name: String,
     pub tx_status: ClientStatus,
     pub tx_doc: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateClientModel {
+pub struct UpdateClientRow {
     pub tx_name: Option<String>,
     pub tx_status: Option<ClientStatus>,
     pub tx_doc: Option<String>,

@@ -1,6 +1,5 @@
+use domain::models::db::client_contact::ClientContactRow;
 use uuid::Uuid;
-
-use domain::models::client_contact::RepositoryClientContact;
 
 pub struct ClientContactMutation;
 
@@ -10,12 +9,12 @@ impl ClientContactMutation {
         executor: E,
         client_uuid: Uuid,
         contact_uuid: Uuid,
-    ) -> Result<RepositoryClientContact, sqlx::Error>
+    ) -> Result<ClientContactRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            RepositoryClientContact,
+            ClientContactRow,
             r#"
             INSERT INTO clients.tb_client_contact (pk_client_contact, fk_client, fk_contact)
             VALUES ($1, $2, $3)

@@ -2,7 +2,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct LocationModel {
+pub struct LocationRow {
     pub pk_location: Uuid,
     pub idx_location: i64,
     pub tx_public_space: String, //logradouro
@@ -26,7 +26,7 @@ pub struct LocationModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateLocationModel {
+pub struct CreateLocationRow {
     pub tx_public_space: String,
     pub tx_address_complement: String,
     pub tx_unit: String,
@@ -46,7 +46,7 @@ pub struct CreateLocationModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateLocationModel {
+pub struct UpdateLocationRow {
     pub tx_public_space: Option<String>,
     pub tx_address_complement: Option<String>,
     pub tx_unit: Option<String>,

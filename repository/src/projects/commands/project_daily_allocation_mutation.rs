@@ -1,5 +1,5 @@
-use domain::models::client_projects::{
-    CreateProjectDailyAllocation, ProjectDailyAllocation, UpdateProjectDailyAllocation,
+use domain::models::db::client_projects::{
+    CreateProjectDailyAllocationRow, ProjectDailyAllocationRow, UpdateProjectDailyAllocationRow,
 };
 
 pub struct ProjectDailyAllocationMutation;
@@ -8,13 +8,13 @@ impl ProjectDailyAllocationMutation {
     /// Cria uma alocação diária em `clients.tb_project_daily_allocation`.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateProjectDailyAllocation,
-    ) -> Result<ProjectDailyAllocation, sqlx::Error>
+        c: CreateProjectDailyAllocationRow,
+    ) -> Result<ProjectDailyAllocationRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectDailyAllocation,
+            ProjectDailyAllocationRow,
             r#"
             INSERT INTO clients.tb_project_daily_allocation (
                 pk_project_daily_allocation,
@@ -57,13 +57,13 @@ impl ProjectDailyAllocationMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-        u: UpdateProjectDailyAllocation,
-    ) -> Result<ProjectDailyAllocation, sqlx::Error>
+        u: UpdateProjectDailyAllocationRow,
+    ) -> Result<ProjectDailyAllocationRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectDailyAllocation,
+            ProjectDailyAllocationRow,
             r#"
             UPDATE clients.tb_project_daily_allocation
             SET

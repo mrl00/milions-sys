@@ -3,7 +3,7 @@
 // Associação entre clientes e localizações físicas (um cliente pode ter vários).
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct ClientAddressModel {
+pub struct ClientAddressRow {
     pub pk_client_address: uuid::Uuid,
     pub idx_client_address: i32,
     pub fk_client: uuid::Uuid,
@@ -14,7 +14,7 @@ pub struct ClientAddressModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateClientAddressModel {
+pub struct CreateClientAddressRow {
     pub fk_client: uuid::Uuid,
     pub fk_address: uuid::Uuid,
 }

@@ -1,11 +1,10 @@
+use domain::models::db::{
+    contact::{ContactRow, CreateContactRow},
+    phone::PhoneRow,
+};
 use uuid::Uuid;
 
-use domain::models::{
-    contact::{ContactModel, CreateContactModel},
-    phone::PhoneModel,
-};
-
-use crate::contacts::mutations::phone_mutation::PhoneMutation;
+use crate::contacts::commands::phone_mutation::PhoneMutation;
 
 pub struct ContactMutation;
 
@@ -13,13 +12,13 @@ impl ContactMutation {
     /// Cria um contato em `contacts.tb_contact`.
     pub async fn create<'a, E>(
         executor: E,
-        contact: CreateContactModel,
-    ) -> Result<ContactModel, sqlx::Error>
+        contact: CreateContactRow,
+    ) -> Result<ContactRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let created_contact = sqlx::query_as!(
-            ContactModel,
+            ContactRow,
             r#"
             INSERT INTO contacts.tb_contact (pk_contact, tx_email)
             VALUES ($1, $2)
@@ -39,12 +38,12 @@ impl ContactMutation {
         executor: E,
         uuid: Uuid,
         email: String,
-    ) -> Result<ContactModel, sqlx::Error>
+    ) -> Result<ContactRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let updated_contact = sqlx::query_as!(
-            ContactModel,
+            ContactRow,
             r#"
             UPDATE contacts.tb_contact
             SET tx_email = $1
@@ -65,7 +64,7 @@ impl ContactMutation {
         executor: E,
         contact_uuid: Uuid,
         phone: String,
-    ) -> Result<PhoneModel, sqlx::Error>
+    ) -> Result<PhoneRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {

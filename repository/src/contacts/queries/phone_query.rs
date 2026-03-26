@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::phone::PhoneModel;
+use domain::models::db::phone::PhoneRow;
 
 pub struct PhoneQuery;
 
@@ -9,12 +9,12 @@ impl PhoneQuery {
     pub async fn find_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
-    ) -> Result<Option<PhoneModel>, sqlx::Error>
+    ) -> Result<Option<PhoneRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phone = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
             SELECT *
             FROM contacts.tb_phone
@@ -32,12 +32,12 @@ impl PhoneQuery {
     pub async fn get_by_contact<'a, E>(
         executor: E,
         contact: Uuid,
-    ) -> Result<Vec<PhoneModel>, sqlx::Error>
+    ) -> Result<Vec<PhoneRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let phones = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
             SELECT *
             FROM contacts.tb_phone

@@ -1,4 +1,4 @@
-use domain::models::client_address::ClientAddressModel;
+use domain::models::db::client_address::ClientAddressRow;
 use uuid::Uuid;
 
 pub struct ClientAddressMutation;
@@ -9,12 +9,12 @@ impl ClientAddressMutation {
         executor: E,
         client_uuid: Uuid,
         location_uuid: Uuid,
-    ) -> Result<ClientAddressModel, sqlx::Error>
+    ) -> Result<ClientAddressRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ClientAddressModel,
+            ClientAddressRow,
             r#"
             INSERT INTO clients.tb_client_address(pk_client_address, fk_client, fk_address)
             VALUES ($1, $2, $3)

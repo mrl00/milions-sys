@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::location::LocationModel;
+use domain::models::db::location::LocationRow;
 
 pub struct LocationQuery;
 
@@ -9,12 +9,12 @@ impl LocationQuery {
     pub async fn get_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
-    ) -> Result<Option<LocationModel>, sqlx::Error>
+    ) -> Result<Option<LocationRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Option<LocationModel> = sqlx::query_as!(
-            LocationModel,
+        let r: Option<LocationRow> = sqlx::query_as!(
+            LocationRow,
             r#"
             SELECT *
             FROM locations.tb_location
@@ -31,12 +31,12 @@ impl LocationQuery {
     pub async fn find_by_hash<'a, E>(
         executor: E,
         hash: i64,
-    ) -> Result<Option<LocationModel>, sqlx::Error>
+    ) -> Result<Option<LocationRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: Option<LocationModel> = sqlx::query_as!(
-            LocationModel,
+        let r: Option<LocationRow> = sqlx::query_as!(
+            LocationRow,
             r#"
             SELECT *
             FROM locations.tb_location

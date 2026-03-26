@@ -3,7 +3,7 @@
 // Associação N:N entre clientes e contatos (modelada como 1:1 via UNIQUE).
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct RepositoryClientContact {
+pub struct ClientContactRow {
     pub pk_client_contact: uuid::Uuid,
     pub idx_client_contact: i64,
     pub fk_client: uuid::Uuid,
@@ -13,7 +13,7 @@ pub struct RepositoryClientContact {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RepositoryCreateClientContact {
+pub struct CreateClientContactRow {
     pub fk_client: uuid::Uuid,
     pub fk_contact: uuid::Uuid,
 }
