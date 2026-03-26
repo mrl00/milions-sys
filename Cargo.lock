@@ -722,6 +722,7 @@ dependencies = [
 name = "domain"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "brazilian_utils",
  "regex",
  "serde",

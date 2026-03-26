@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 brazilian_utils = { version = "0.1.0" }
+async-trait = "0.1.89"
 thiserror = { workspace = true }
 regex = { workspace = true }
 snafu = { workspace = true }
