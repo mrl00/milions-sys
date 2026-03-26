@@ -1,13 +1,14 @@
 use std::net::TcpListener;
 
 use secrecy::ExposeSecret;
-use sqlx::postgres::PgPoolOptions;
+use settings::Settings;
+use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let settings = settings::get_config().expect("Failed to get config");
+    let settings: Settings = settings::get_config().expect("Failed to get config");
 
-    let pool = PgPoolOptions::new()
+    let pool: Pool<Postgres> = PgPoolOptions::new()
         .max_connections(10)
         .idle_timeout(std::time::Duration::from_secs(5))
         .connect_lazy(settings.database.connection_string().expose_secret())
