@@ -1,4 +1,4 @@
-use domain::models::db::client_address::ClientAddressRow;
+use domain::models::db::client_address_row::ClientAddressRow;
 use uuid::Uuid;
 
 pub struct ClientAddressMutation;

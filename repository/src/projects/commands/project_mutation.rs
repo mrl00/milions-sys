@@ -1,4 +1,4 @@
-use domain::models::db::client_projects::{ProjectRow, ProjectStatus, UpdateProjectRow};
+use domain::models::db::client_projects_row::{ProjectRow, ProjectStatus, UpdateProjectRow};
 
 pub struct ProjectRowMutation;
 

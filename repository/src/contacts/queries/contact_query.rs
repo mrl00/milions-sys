@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::db::contact::ContactRow;
+use domain::models::db::contact_row::ContactRow;
 
 pub struct ContactQuery;
 

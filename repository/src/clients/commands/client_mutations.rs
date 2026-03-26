@@ -1,4 +1,4 @@
-use domain::models::db::client::{ClientRow, ClientStatus, CreateClientRow};
+use domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
 use uuid::Uuid;
 
 pub struct ClientMutation;

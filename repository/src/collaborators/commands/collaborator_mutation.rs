@@ -1,9 +1,9 @@
 use domain::models::db::{
-    collaborator::{
+    collaborator_contact_row::CollaboratorContactRow,
+    collaborator_location_row::CollaboratorAddressRow,
+    collaborator_row::{
         CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow, UpdateCollaboratorRow,
     },
-    collaborator_contact::CollaboratorContactRow,
-    collaborator_location::CollaboratorAddressRow,
 };
 use uuid::Uuid;
 

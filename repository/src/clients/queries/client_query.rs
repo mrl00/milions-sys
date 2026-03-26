@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::db::client::ClientRow;
+use domain::models::db::client_row::ClientRow;
 
 pub struct ClientQuery;
 

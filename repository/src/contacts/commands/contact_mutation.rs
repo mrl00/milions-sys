@@ -1,6 +1,6 @@
 use domain::models::db::{
-    contact::{ContactRow, CreateContactRow},
-    phone::PhoneRow,
+    contact_row::{ContactRow, CreateContactRow},
+    phone_row::PhoneRow,
 };
 use uuid::Uuid;
 

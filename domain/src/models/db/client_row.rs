@@ -7,13 +7,9 @@ use uuid::Uuid;
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct ClientRow {
-    /// Identificador único do cliente (UUID gerado pela aplicação)
     pub pk_client: Uuid,
-    /// Índice sequencial auto-incrementado
     pub idx_client: i32,
-    /// Nome do cliente
     pub tx_name: String,
-    /// Status do cliente (ex: Active, Inactive)
     pub tx_status: String,
     pub tx_doc: String,
     pub ts_client_created_at: NaiveDateTime,

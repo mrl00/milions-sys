@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::db::phone::PhoneRow;
+use domain::models::db::phone_row::PhoneRow;
 
 pub struct PhoneQuery;
 
