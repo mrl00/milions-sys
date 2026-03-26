@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::db::collaborator::CollaboratorRow;
+use domain::models::db::collaborator_row::CollaboratorRow;
 
 pub struct CollaboratorQuery;
 

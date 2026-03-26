@@ -1,4 +1,4 @@
-use domain::models::db::client_contact::ClientContactRow;
+use domain::models::db::client_contact_row::ClientContactRow;
 use uuid::Uuid;
 
 pub struct ClientContactMutation;

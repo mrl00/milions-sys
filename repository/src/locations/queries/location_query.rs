@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::db::location::LocationRow;
+use domain::models::db::location_row::LocationRow;
 
 pub struct LocationQuery;
 

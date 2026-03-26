@@ -1,4 +1,4 @@
-use domain::models::db::phone::PhoneRow;
+use domain::models::db::phone_row::PhoneRow;
 use uuid::Uuid;
 
 pub struct PhoneMutation;

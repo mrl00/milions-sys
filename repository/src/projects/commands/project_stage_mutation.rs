@@ -1,4 +1,4 @@
-use domain::models::db::client_projects::{
+use domain::models::db::client_projects_row::{
     CreateProjectStageRow, ProjectStageRow, ProjectStageStatus, UpdateProjectStageRow,
 };
 

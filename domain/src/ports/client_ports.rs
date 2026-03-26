@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::ClientError,
-    models::db::client::{ClientRow, CreateClientRow, UpdateClientRow},
+    models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow},
 };
 
 // domain/src/clients/ports.rs

@@ -1,4 +1,4 @@
-use domain::models::db::location::{CreateLocationRow, LocationRow, UpdateLocationRow};
+use domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
