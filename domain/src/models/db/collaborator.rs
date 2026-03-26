@@ -38,7 +38,7 @@ impl fmt::Display for CollaboratorStatus {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct CollaboratorModel {
+pub struct CollaboratorRow {
     pub pk_collaborator: Uuid,
     pub idx_collaborator: i64,
     pub tx_name: String,
@@ -50,7 +50,7 @@ pub struct CollaboratorModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateCollaboratorModel {
+pub struct CreateCollaboratorRow {
     pub tx_name: String,
     pub tx_cpf: String,
     pub tx_level: CollaboratorLevel,
@@ -58,7 +58,7 @@ pub struct CreateCollaboratorModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateCollaboratorModel {
+pub struct UpdateCollaboratorRow {
     pub tx_name: Option<String>,
     pub tx_level: Option<String>,
     pub tx_status: Option<String>,

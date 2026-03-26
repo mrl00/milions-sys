@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use domain::models::contact::ContactModel;
+use domain::models::db::contact::ContactRow;
 
 pub struct ContactQuery;
 
@@ -9,12 +9,12 @@ impl ContactQuery {
     pub async fn get_by_uuid<'a, E>(
         executor: E,
         uuid: Uuid,
-    ) -> Result<Option<ContactModel>, sqlx::Error>
+    ) -> Result<Option<ContactRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let contact = sqlx::query_as!(
-            ContactModel,
+            ContactRow,
             r#"
             SELECT *
             FROM contacts.tb_contact
@@ -32,12 +32,12 @@ impl ContactQuery {
     pub async fn get_by_email<'a, E>(
         executor: E,
         email: String,
-    ) -> Result<Option<ContactModel>, sqlx::Error>
+    ) -> Result<Option<ContactRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let contact = sqlx::query_as!(
-            ContactModel,
+            ContactRow,
             r#"
             SELECT *
             FROM contacts.tb_contact
@@ -52,9 +52,9 @@ impl ContactQuery {
     }
 
     /// Lista todos os contatos de `contacts.tb_contact` ordenados por `idx_contact`.
-    pub async fn list_all(pool: &sqlx::PgPool) -> Result<Vec<ContactModel>, sqlx::Error> {
+    pub async fn list_all(pool: &sqlx::PgPool) -> Result<Vec<ContactRow>, sqlx::Error> {
         let contacts = sqlx::query_as!(
-            ContactModel,
+            ContactRow,
             r#"
             SELECT *
             FROM contacts.tb_contact

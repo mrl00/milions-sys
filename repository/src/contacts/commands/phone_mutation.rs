@@ -1,6 +1,5 @@
+use domain::models::db::phone::PhoneRow;
 use uuid::Uuid;
-
-use domain::models::phone::PhoneModel;
 
 pub struct PhoneMutation;
 
@@ -10,12 +9,12 @@ impl PhoneMutation {
         executor: E,
         contact_uuid: Uuid,
         phone: String,
-    ) -> Result<PhoneModel, sqlx::Error>
+    ) -> Result<PhoneRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let created_phone = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
             INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
             VALUES ($1, $2, $3)
@@ -36,7 +35,7 @@ impl PhoneMutation {
         executor: E,
         contact_uuid: Uuid,
         phones: Vec<String>,
-    ) -> Result<Vec<PhoneModel>, sqlx::Error>
+    ) -> Result<Vec<PhoneRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -44,7 +43,7 @@ impl PhoneMutation {
         let fks: Vec<Uuid> = std::iter::repeat_n(contact_uuid, phones.len()).collect();
 
         let r = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
             INSERT INTO contacts.tb_phone (pk_phone, fk_contact, tx_phone)
             SELECT * FROM UNNEST(
@@ -68,12 +67,12 @@ impl PhoneMutation {
         executor: E,
         contact_uuid: Uuid,
         phone: String,
-    ) -> Result<PhoneModel, sqlx::Error>
+    ) -> Result<PhoneRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let updated_phone = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
                     UPDATE contacts.tb_phone
                     SET tx_phone = $1
@@ -90,12 +89,12 @@ impl PhoneMutation {
     }
 
     /// Remove um telefone de `contacts.tb_phone` e retorna o registro removido.
-    pub async fn delete<'a, E>(executor: E, uuid: Uuid) -> Result<PhoneModel, sqlx::Error>
+    pub async fn delete<'a, E>(executor: E, uuid: Uuid) -> Result<PhoneRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let deleted_phone = sqlx::query_as!(
-            PhoneModel,
+            PhoneRow,
             r#"
             DELETE FROM contacts.tb_phone
             WHERE pk_phone = $1

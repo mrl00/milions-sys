@@ -9,7 +9,7 @@ use uuid::Uuid;
 // Centraliza informações financeiras e operacionais da obra.
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
-pub struct Project {
+pub struct ProjectRow {
     /// Identificador único do projeto
     pub pk_project: Uuid,
     pub idx_project: i32,
@@ -44,7 +44,7 @@ pub struct Project {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct CreateProject {
+pub struct CreateProjectRow {
     pub tx_name: String,
     pub tx_description: Option<String>,
     pub tx_status: ProjectStatus,
@@ -58,7 +58,7 @@ pub struct CreateProject {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UpdateProject {
+pub struct UpdateProjectRow {
     pub tx_name: Option<String>,
     pub tx_description: Option<String>,
     pub tx_status: Option<ProjectStatus>,
@@ -98,7 +98,7 @@ impl std::fmt::Display for ProjectStatus {
 // Fases de execução: Preparação, Selagem, Massa Corrida, Pintura Base, Acabamento.
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct ProjectStage {
+pub struct ProjectStageRow {
     /// Identificador único da etapa
     pub pk_project_stage: Uuid,
     pub idx_project_stage: i32,
@@ -118,7 +118,7 @@ pub struct ProjectStage {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CreateProjectStage {
+pub struct CreateProjectStageRow {
     pub fk_project: Uuid,
     pub tx_name: String,
     pub tx_description: Option<String>,
@@ -129,7 +129,7 @@ pub struct CreateProjectStage {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UpdateProjectStage {
+pub struct UpdateProjectStageRow {
     pub tx_name: Option<String>,
     pub tx_description: Option<String>,
     pub nr_order: Option<i32>,
@@ -162,7 +162,7 @@ impl std::fmt::Display for ProjectStageStatus {
 // Catálogo de serviços oferecidos (Pintura Interna, Textura, Massa Corrida etc.)
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
-pub struct ProjectServiceType {
+pub struct ProjectServiceTypeRow {
     /// Identificador único do tipo de serviço
     pub pk_service_type: Uuid,
     pub idx_service_type: i32,
@@ -179,7 +179,7 @@ pub struct ProjectServiceType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct CreateProjectServiceType {
+pub struct CreateProjectServiceTypeRow {
     pub tx_name: String,
     pub tx_description: Option<String>,
     pub tx_unit: ProjectServiceUnit,
@@ -187,7 +187,7 @@ pub struct CreateProjectServiceType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UpdateProjectServiceType {
+pub struct UpdateProjectServiceTypeRow {
     pub tx_name: Option<String>,
     pub tx_description: Option<String>,
     pub tx_unit: Option<ProjectServiceUnit>,
@@ -220,7 +220,7 @@ impl std::fmt::Display for ProjectServiceUnit {
 // nr_total_price é coluna gerada pelo banco (quantity * unit_price).
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
-pub struct ProjectService {
+pub struct ProjectServiceRow {
     /// Identificador único do serviço no projeto
     pub pk_project_service: Uuid,
     pub idx_project_service: i32,
@@ -242,7 +242,7 @@ pub struct ProjectService {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct CreateProjectService {
+pub struct CreateProjectServiceRow {
     pub fk_project: Uuid,
     pub fk_project_stage: Option<Uuid>,
     pub fk_service_type: Uuid,
@@ -253,7 +253,7 @@ pub struct CreateProjectService {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UpdateProjectService {
+pub struct UpdateProjectServiceRow {
     pub fk_project_stage: Option<Uuid>,
     pub tx_description: Option<String>,
     pub nr_quantity: Option<BigDecimal>,
@@ -284,7 +284,7 @@ impl std::fmt::Display for ProjectServiceStatus {
 // nr_hourly_rate_snapshot congela o valor/hora vigente no momento do registro.
 // =============================================================================
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
-pub struct ProjectDailyAllocation {
+pub struct ProjectDailyAllocationRow {
     /// Identificador único da alocação diária
     pub pk_project_daily_allocation: Uuid,
     pub idx_project_daily_allocation: i32,
@@ -306,7 +306,7 @@ pub struct ProjectDailyAllocation {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct CreateProjectDailyAllocation {
+pub struct CreateProjectDailyAllocationRow {
     pub fk_project: Uuid,
     pub fk_collaborator: Uuid,
     pub dt_work_date: NaiveDate,
@@ -317,7 +317,7 @@ pub struct CreateProjectDailyAllocation {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UpdateProjectDailyAllocation {
+pub struct UpdateProjectDailyAllocationRow {
     pub nr_hours_worked: Option<BigDecimal>,
     pub nr_hourly_rate_snapshot: Option<BigDecimal>,
     pub tx_notes: Option<String>,

@@ -2,7 +2,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
-pub struct CollaboratorContact {
+pub struct CollaboratorContactRow {
     pub pk_collaborator_contact: Uuid,
     pub idx_collaborator_contact: i64,
     pub fk_collaborator: Uuid,

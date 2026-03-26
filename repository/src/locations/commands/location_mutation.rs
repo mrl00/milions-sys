@@ -1,4 +1,4 @@
-use domain::models::location::{CreateLocationModel, LocationModel, UpdateLocationModel};
+use domain::models::db::location::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
@@ -8,13 +8,13 @@ impl LocationMutation {
     /// Cria uma localização em `locations.tb_location`.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateLocationModel,
-    ) -> Result<LocationModel, sqlx::Error>
+        c: CreateLocationRow,
+    ) -> Result<LocationRow, sqlx::Error>
     where
         E: Executor<'a, Database = Postgres>,
     {
         let r = sqlx::query_as!(
-            LocationModel,
+            LocationRow,
             r#"INSERT INTO locations.tb_location (
             pk_location, 
             tx_street, 
@@ -63,8 +63,8 @@ impl LocationMutation {
     /// Cria múltiplas localizações em `locations.tb_location` via inserção em lote.
     pub async fn create_many<'a, E>(
         executor: E,
-        c: Vec<CreateLocationModel>,
-    ) -> Result<Vec<LocationModel>, sqlx::Error>
+        c: Vec<CreateLocationRow>,
+    ) -> Result<Vec<LocationRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -88,7 +88,7 @@ impl LocationMutation {
         let hashes: Vec<i64> = c.iter().map(|i| i.nr_hash).collect();
 
         let r = sqlx::query_as!(
-            LocationModel,
+            LocationRow,
             r#"INSERT INTO locations.tb_location (
             pk_location,
             tx_public_space,
@@ -156,13 +156,13 @@ impl LocationMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
-        c: UpdateLocationModel,
-    ) -> Result<LocationModel, sqlx::Error>
+        c: UpdateLocationRow,
+    ) -> Result<LocationRow, sqlx::Error>
     where
         E: Executor<'a, Database = Postgres>,
     {
         let r = sqlx::query_as!(
-            LocationModel,
+            LocationRow,
             r#"UPDATE locations.tb_location
             SET 
             tx_public_space = $1, 

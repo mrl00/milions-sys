@@ -1,20 +1,20 @@
-use domain::models::client_projects::{
-    CreateProjectStage, ProjectStage, ProjectStageStatus, UpdateProjectStage,
+use domain::models::db::client_projects::{
+    CreateProjectStageRow, ProjectStageRow, ProjectStageStatus, UpdateProjectStageRow,
 };
 
-pub struct ProjectStageMutation;
+pub struct ProjectStageRowMutation;
 
-impl ProjectStageMutation {
+impl ProjectStageRowMutation {
     /// Cria um projeto de cliente em `clients.tb_project`.
     pub async fn create_stage<'a, E>(
         executor: E,
-        c: CreateProjectStage,
-    ) -> Result<ProjectStage, sqlx::Error>
+        c: CreateProjectStageRow,
+    ) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectStage,
+            ProjectStageRow,
             r#"
             INSERT INTO clients.tb_project_stage (pk_project_stage, fk_project, tx_name, tx_description, nr_order, tx_status, dt_start_date, dt_end_date)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -38,13 +38,13 @@ impl ProjectStageMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-        u: UpdateProjectStage,
-    ) -> Result<ProjectStage, sqlx::Error>
+        u: UpdateProjectStageRow,
+    ) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectStage,
+            ProjectStageRow,
             r#"
             UPDATE clients.tb_project_stage
             SET tx_name = $1, tx_description = $2, nr_order = $3, tx_status = $4, dt_start_date = $5, dt_end_date = $6
@@ -66,27 +66,27 @@ impl ProjectStageMutation {
     }
 
     /// Marca um projeto como em andamento (`tx_status = InProgress`).
-    pub async fn start<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStage, sqlx::Error>
+    pub async fn start<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectStageMutation::update_status(executor, uuid, ProjectStageStatus::InProgress).await
+        ProjectStageRowMutation::update_status(executor, uuid, ProjectStageStatus::InProgress).await
     }
 
     /// Marca um projeto como concluído (`tx_status = Completed`).
-    pub async fn done<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStage, sqlx::Error>
+    pub async fn done<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectStageMutation::update_status(executor, uuid, ProjectStageStatus::Completed).await
+        ProjectStageRowMutation::update_status(executor, uuid, ProjectStageStatus::Completed).await
     }
 
     /// Marca um projeto como parado (`tx_status = Skipped`).
-    pub async fn skip<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStage, sqlx::Error>
+    pub async fn skip<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectStageMutation::update_status(executor, uuid, ProjectStageStatus::Skipped).await
+        ProjectStageRowMutation::update_status(executor, uuid, ProjectStageStatus::Skipped).await
     }
 
     /// Atualiza `tx_status` de um projeto.
@@ -94,12 +94,12 @@ impl ProjectStageMutation {
         executor: E,
         uuid: uuid::Uuid,
         status: ProjectStageStatus,
-    ) -> Result<ProjectStage, sqlx::Error>
+    ) -> Result<ProjectStageRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectStage,
+            ProjectStageRow,
             r#"
             UPDATE clients.tb_project_stage
             SET tx_status = $1

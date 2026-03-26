@@ -1,7 +1,7 @@
 use sqlx::types::BigDecimal;
 
-use domain::models::client_projects::{
-    CreateProjectServiceType, ProjectServiceType, UpdateProjectServiceType,
+use domain::models::db::client_projects::{
+    CreateProjectServiceTypeRow, ProjectServiceTypeRow, UpdateProjectServiceTypeRow,
 };
 
 pub struct ProjectTypeMutation;
@@ -10,13 +10,13 @@ impl ProjectTypeMutation {
     /// Cria um tipo de projeto em `clients.tb_service_type`.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateProjectServiceType,
-    ) -> Result<ProjectServiceType, sqlx::Error>
+        c: CreateProjectServiceTypeRow,
+    ) -> Result<ProjectServiceTypeRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectServiceType,
+            ProjectServiceTypeRow,
             r#"
             INSERT INTO clients.tb_service_type (pk_service_type, tx_name, tx_description, tx_unit, nr_default_unit_price)
             VALUES ($1, $2, $3, $4, $5)
@@ -37,13 +37,13 @@ impl ProjectTypeMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-        u: UpdateProjectServiceType,
-    ) -> Result<ProjectServiceType, sqlx::Error>
+        u: UpdateProjectServiceTypeRow,
+    ) -> Result<ProjectServiceTypeRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            ProjectServiceType,
+            ProjectServiceTypeRow,
             r#"
             UPDATE clients.tb_service_type
             SET tx_name = $1, tx_description = $2, tx_unit = $3, nr_default_unit_price = $4

@@ -1,12 +1,11 @@
-use uuid::Uuid;
-
-use domain::models::{
+use domain::models::db::{
     collaborator::{
-        CollaboratorModel, CollaboratorStatus, CreateCollaboratorModel, UpdateCollaboratorModel,
+        CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow, UpdateCollaboratorRow,
     },
-    collaborator_contact::CollaboratorContact,
-    collaborator_location::CollaboratorAddress,
+    collaborator_contact::CollaboratorContactRow,
+    collaborator_location::CollaboratorAddressRow,
 };
+use uuid::Uuid;
 
 pub struct CollaboratorMutation;
 
@@ -14,13 +13,13 @@ impl CollaboratorMutation {
     /// Cria um colaborador em `collaborators.tb_collaborator`, garantindo CPF único.
     pub async fn create<'a, E>(
         executor: E,
-        c: CreateCollaboratorModel,
-    ) -> Result<CollaboratorModel, sqlx::Error>
+        c: CreateCollaboratorRow,
+    ) -> Result<CollaboratorRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: CollaboratorModel = sqlx::query_as!(
-                    CollaboratorModel,
+        let r: CollaboratorRow = sqlx::query_as!(
+                    CollaboratorRow,
                     r#"
                     INSERT INTO collaborators.tb_collaborator (pk_collaborator, tx_name, tx_cpf, tx_level, tx_status)
                     VALUES ($1, $2, $3, $4, $5)
@@ -42,13 +41,13 @@ impl CollaboratorMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: Uuid,
-        c: UpdateCollaboratorModel,
-    ) -> Result<CollaboratorModel, sqlx::Error>
+        c: UpdateCollaboratorRow,
+    ) -> Result<CollaboratorRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: CollaboratorModel = sqlx::query_as!(
-            CollaboratorModel,
+        let r: CollaboratorRow = sqlx::query_as!(
+            CollaboratorRow,
             r#"
             UPDATE collaborators.tb_collaborator
             SET tx_name = $1, tx_level = $2, tx_status = $3, tx_cpf = $4
@@ -68,7 +67,7 @@ impl CollaboratorMutation {
     }
 
     /// Marca um colaborador como ativo (`tx_status = Active`).
-    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<CollaboratorModel, sqlx::Error>
+    pub async fn activate<'a, E>(executor: E, uuid: Uuid) -> Result<CollaboratorRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -76,10 +75,7 @@ impl CollaboratorMutation {
     }
 
     /// Marca um colaborador como inativo (`tx_status = Inactive`).
-    pub async fn deactivate<'a, E>(
-        executor: E,
-        uuid: Uuid,
-    ) -> Result<CollaboratorModel, sqlx::Error>
+    pub async fn deactivate<'a, E>(executor: E, uuid: Uuid) -> Result<CollaboratorRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -91,12 +87,12 @@ impl CollaboratorMutation {
         executor: E,
         uuid: Uuid,
         status: CollaboratorStatus,
-    ) -> Result<CollaboratorModel, sqlx::Error>
+    ) -> Result<CollaboratorRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        let r: CollaboratorModel = sqlx::query_as!(
-            CollaboratorModel,
+        let r: CollaboratorRow = sqlx::query_as!(
+            CollaboratorRow,
             r#"
                     UPDATE collaborators.tb_collaborator
                     SET tx_status = $1
@@ -121,12 +117,12 @@ impl CollaboratorContactMutation {
         executor: E,
         collaborator_uuid: Uuid,
         contact_uuid: Uuid,
-    ) -> Result<CollaboratorContact, sqlx::Error>
+    ) -> Result<CollaboratorContactRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            CollaboratorContact,
+            CollaboratorContactRow,
             r#"
             INSERT INTO collaborators.tb_collaborator_contact (fk_collaborator, fk_contact)
             VALUES ($1, $2)
@@ -150,12 +146,12 @@ impl CollaboratorAddressMutation {
         executor: E,
         collaborator_uuid: Uuid,
         location_uuid: Uuid,
-    ) -> Result<CollaboratorAddress, sqlx::Error>
+    ) -> Result<CollaboratorAddressRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            CollaboratorAddress,
+            CollaboratorAddressRow,
             r#"
             INSERT INTO collaborators.tb_collaborator_address(pk_collaborator_address, fk_collaborator, fk_address)
             VALUES ($1, $2, $3)

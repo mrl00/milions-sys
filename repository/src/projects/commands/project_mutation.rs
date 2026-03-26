@@ -1,19 +1,19 @@
-use domain::models::client_projects::{Project, ProjectStatus, UpdateProject};
+use domain::models::db::client_projects::{ProjectRow, ProjectStatus, UpdateProjectRow};
 
-pub struct ProjectMutation;
+pub struct ProjectRowMutation;
 
-impl ProjectMutation {
+impl ProjectRowMutation {
     /// Cria um projeto de cliente em `clients.tb_project`.
     pub async fn create<'a, E>(
         executor: E,
         client_uuid: uuid::Uuid,
         location_uuid: uuid::Uuid,
-    ) -> Result<Project, sqlx::Error>
+    ) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            Project,
+            ProjectRow,
             r#"
             INSERT INTO clients.tb_project (pk_project, fk_client, fk_address)
             VALUES ($1, $2, $3)
@@ -32,13 +32,13 @@ impl ProjectMutation {
     pub async fn update<'a, E>(
         executor: E,
         uuid: uuid::Uuid,
-        u: UpdateProject,
-    ) -> Result<Project, sqlx::Error>
+        u: UpdateProjectRow,
+    ) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            Project,
+            ProjectRow,
             r#"
             UPDATE clients.tb_project
             SET tx_name = $1, tx_status = $2
@@ -57,35 +57,35 @@ impl ProjectMutation {
     }
 
     /// Marca um projeto como inativo (`tx_status = Inactive`).
-    pub async fn pause<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<Project, sqlx::Error>
+    pub async fn pause<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectMutation::update_status(executor, uuid, ProjectStatus::Paused).await
+        ProjectRowMutation::update_status(executor, uuid, ProjectStatus::Paused).await
     }
 
     /// Marca um projeto como parado (`tx_status = Stopped`).
-    pub async fn cancel<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<Project, sqlx::Error>
+    pub async fn cancel<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectMutation::update_status(executor, uuid, ProjectStatus::Cancelled).await
+        ProjectRowMutation::update_status(executor, uuid, ProjectStatus::Cancelled).await
     }
 
     /// Marca um projeto como em andamento (`tx_status = InProgress`).
-    pub async fn start<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<Project, sqlx::Error>
+    pub async fn start<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectMutation::update_status(executor, uuid, ProjectStatus::InProgress).await
+        ProjectRowMutation::update_status(executor, uuid, ProjectStatus::InProgress).await
     }
 
     /// Marca um projeto como concluído (`tx_status = Done`).
-    pub async fn done<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<Project, sqlx::Error>
+    pub async fn done<'a, E>(executor: E, uuid: uuid::Uuid) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
-        ProjectMutation::update_status(executor, uuid, ProjectStatus::Completed).await
+        ProjectRowMutation::update_status(executor, uuid, ProjectStatus::Completed).await
     }
 
     /// Atualiza `tx_status` de um projeto.
@@ -93,12 +93,12 @@ impl ProjectMutation {
         executor: E,
         uuid: uuid::Uuid,
         status: ProjectStatus,
-    ) -> Result<Project, sqlx::Error>
+    ) -> Result<ProjectRow, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
         let r = sqlx::query_as!(
-            Project,
+            ProjectRow,
             r#"
             UPDATE clients.tb_project
             SET tx_status = $1
