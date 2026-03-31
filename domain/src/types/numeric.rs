@@ -3,12 +3,12 @@ use std::hash::Hash;
 #[derive(Debug)]
 pub struct Numeric(String);
 
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum NumericError {
-    #[snafu(display("Number cannot be empty"))]
+    #[error("Number cannot be empty")]
     Empty,
 
-    #[snafu(display("Number '{value}' is invalid"))]
+    #[error("Number '{value}' is invalid")]
     NotANumber { value: String },
 }
 
@@ -18,7 +18,7 @@ impl TryInto<i64> for Numeric {
     fn try_into(self) -> Result<i64, Self::Error> {
         match self.0.parse::<i64>() {
             Ok(value) => Ok(value),
-            Err(_) => NotANumberSnafu { value: self.0 }.fail(),
+            Err(_) => Err(NumericError::NotANumber { value: self.0 }),
         }
     }
 }
@@ -28,11 +28,11 @@ impl TryFrom<String> for Numeric {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(NumericError::Empty);
         }
 
         if !value.chars().all(|c| c.is_ascii_digit()) {
-            return NotANumberSnafu { value }.fail();
+            return Err(NumericError::NotANumber { value });
         }
 
         Ok(Self(value))
