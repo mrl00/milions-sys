@@ -1,23 +1,20 @@
-use snafu::Snafu;
+use crate::errors::infra_error::InfraError;
 use sqlx::types::Uuid;
 
-use crate::errors::infra_error::InfraError;
-
-#[derive(Debug, Snafu)]
-#[snafu(visibility(pub))]
+#[derive(Debug, thiserror::Error)]
 pub enum ClientError {
-    #[snafu(display("cliente '{name}' já existe"))]
+    #[error("cliente '{name}' já existe")]
     AlreadyExists { name: String },
 
-    #[snafu(display("cliente não encontrado: {uuid}"))]
+    #[error("cliente não encontrado: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[snafu(display("contato não encontrado: {uuid}"))]
+    #[error("contato não encontrado: {uuid}")]
     ContactNotFound { uuid: Uuid },
 
-    #[snafu(display("endereço não encontrado: {uuid}"))]
+    #[error("endereço não encontrado: {uuid}")]
     LocationNotFound { uuid: Uuid },
 
-    #[snafu(transparent)]
+    #[error(transparent)]
     Infra { source: InfraError },
 }
