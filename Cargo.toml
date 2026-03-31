@@ -39,7 +39,6 @@ sqlx = { version = "0.8.6", features = [
   "chrono",
   "migrate",
   "bigdecimal",
-  "serde",
 ] }
 tokio = { version = "1.48.0", features = ["full"] }
 anyhow = { version = "1.0.75", default-features = false }
