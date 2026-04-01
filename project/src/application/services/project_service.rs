@@ -1,8 +1,7 @@
 use crate::domain::errors::ProjectError;
 use uuid::Uuid;
-
-use crate::domain::model::{CreateProjectRow, ProjectRow, ProjectStatus, UpdateProjectRow};
-use crate::domain::ports::ProjectRepository;
+use crate::domain::models::db::project_rows::{CreateProjectRow, ProjectRow, ProjectStatus, UpdateProjectRow};
+use crate::domain::ports::project_repository::ProjectRepository;
 
 pub struct ProjectService;
 

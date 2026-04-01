@@ -1,8 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
-
-use super::errors::ProjectError;
-use super::model::{CreateProjectRow, ProjectRow, UpdateProjectRow};
+use crate::domain::errors::ProjectError;
+use crate::domain::models::db::project_rows::{CreateProjectRow, ProjectRow, UpdateProjectRow};
 
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
@@ -11,6 +10,6 @@ pub trait ProjectRepository: Send + Sync {
     async fn find_all(&self) -> Result<Vec<ProjectRow>, ProjectError>;
     async fn create(&self, input: CreateProjectRow) -> Result<ProjectRow, ProjectError>;
     async fn update(&self, uuid: Uuid, input: UpdateProjectRow)
-    -> Result<ProjectRow, ProjectError>;
+                    -> Result<ProjectRow, ProjectError>;
     async fn delete(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }

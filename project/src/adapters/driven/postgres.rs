@@ -1,9 +1,6 @@
-use crate::domain::model::{
-    CreateProjectStageRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
-    UpdateProjectRow, UpdateProjectStageRow,
-};
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::domain::models::db::project_rows::{CreateProjectStageRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus, UpdateProjectRow, UpdateProjectStageRow};
 
 pub struct PgProjectRepository {
     pool: PgPool,
