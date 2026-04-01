@@ -1,10 +1,9 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-use crate::adapters::driven::postgres::PgClientRepository;
-use crate::domain::errors::ClientError;
+use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
+use crate::domain::errors::{ClientError, InfraError};
 use domain::{
-    errors::InfraError,
     models::db::viacep::ViaCepAddressModel,
     ports::viacep_port::ViaCepPort,
     types::{cep::Cep, doc::Doc, email::Email, phone::Phone},

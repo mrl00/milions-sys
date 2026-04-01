@@ -1,4 +1,7 @@
-use domain::errors::InfraError;
+mod infra_error;
+
+pub use infra_error::InfraError;
+
 use domain::ports::viacep_port::ViaCepError;
 use domain::types::{cep::CepError, doc::DocError, email::EmailError, phone::PhoneError};
 use uuid::Uuid;
