@@ -1,6 +1,7 @@
-use crate::domain::model::{
-    CollaboratorAddressRow, CollaboratorContactRow, CollaboratorRow, CollaboratorStatus,
-    CreateCollaboratorRow, UpdateCollaboratorRow,
+use crate::domain::models::db::collaborator_contact_row::CollaboratorContactRow;
+use crate::domain::models::db::collaborator_location_row::CollaboratorAddressRow;
+use crate::domain::models::db::collaborator_row::{
+    CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow, UpdateCollaboratorRow,
 };
 use sqlx::PgPool;
 use uuid::Uuid;
