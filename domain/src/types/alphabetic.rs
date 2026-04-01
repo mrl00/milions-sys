@@ -1,16 +1,14 @@
 use std::hash::Hash;
 
-use snafu::Snafu;
-
 #[derive(Debug)]
 pub struct Alphabetic(String);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum AlphabeticError {
-    #[snafu(display("empty name"))]
+    #[error("empty name")]
     Empty,
 
-    #[snafu(display("invalid name: '{}'", name))]
+    #[error("invalid name: '{name}'")]
     InvalidName { name: String },
 }
 
@@ -19,11 +17,11 @@ impl TryFrom<String> for Alphabetic {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(AlphabeticError::Empty);
         }
 
         if !value.chars().all(|c| c.is_ascii_alphabetic()) {
-            return InvalidNameSnafu { name: value }.fail();
+            return Err(AlphabeticError::InvalidName { name: value });
         }
 
         Ok(Self(value))

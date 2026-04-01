@@ -1,14 +1,13 @@
 use std::hash::Hash;
 
 use regex::Regex;
-use snafu::Snafu;
 
 #[derive(Debug)]
 pub struct Phone(String);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum PhoneError {
-    #[snafu(display("invalid phone number: '{}'", value))]
+    #[error("invalid phone number: '{value}'")]
     InvalidPhoneNumber { value: String },
 }
 
@@ -18,7 +17,7 @@ impl TryFrom<String> for Phone {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let re = Regex::new(r"\+\d{13}\d{1}?").unwrap();
         if !re.is_match(&value) {
-            return InvalidPhoneNumberSnafu { value }.fail();
+            return Err(PhoneError::InvalidPhoneNumber { value });
         }
         Ok(Self(value))
     }

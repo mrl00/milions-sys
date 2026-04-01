@@ -3,12 +3,12 @@ use std::hash::Hash;
 #[derive(Debug)]
 pub struct Alphanumeric(String);
 
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum AlphanumericError {
-    #[snafu(display("Alphanumeric cannot be empty"))]
+    #[error("Alphanumeric cannot be empty")]
     Empty,
 
-    #[snafu(display("Alphanumeric '{value}' is invalid"))]
+    #[error("Alphanumeric '{value}' is invalid")]
     InvalidAlphanumeric { value: String },
 }
 
@@ -17,11 +17,11 @@ impl TryFrom<String> for Alphanumeric {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(AlphanumericError::Empty);
         }
 
         if !value.chars().all(|c| c.is_ascii_alphanumeric()) {
-            return InvalidAlphanumericSnafu { value }.fail();
+            return Err(AlphanumericError::InvalidAlphanumeric { value });
         }
 
         Ok(Self(value))

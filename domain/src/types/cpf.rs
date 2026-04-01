@@ -1,19 +1,17 @@
 use std::hash::Hash;
 
-use snafu::Snafu;
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cpf(String);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum CpfError {
-    #[snafu(display("CPF cannot be empty"))]
+    #[error("CPF cannot be empty")]
     Empty,
 
-    #[snafu(display("CPF '{value}' has invalid length"))]
+    #[error("CPF '{value}' has invalid length")]
     InvalidLength { value: String },
 
-    #[snafu(display("CPF '{value}' is invalid"))]
+    #[error("CPF '{value}' is invalid")]
     InvalidCpf { value: String },
 }
 
@@ -22,15 +20,15 @@ impl TryFrom<String> for Cpf {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(CpfError::Empty);
         }
 
         if value.len() != 11 {
-            return InvalidLengthSnafu { value }.fail();
+            return Err(CpfError::InvalidLength { value });
         }
 
         if !brazilian_utils::cpf::is_valid(&value) {
-            return InvalidCpfSnafu { value }.fail();
+            return Err(CpfError::InvalidCpf { value });
         }
 
         Ok(Self(value))

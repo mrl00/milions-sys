@@ -1,49 +1,106 @@
 [package]
+edition = "2024"
 name = "milions-sys"
 version = "0.1.0"
-edition = "2024"
 
-[dependencies]
-tokio = { workspace = true }
-sqlx = { workspace = true }
-rsa = { workspace = true }
-rand = { workspace = true }
-secrecy = { workspace = true }
-services = { path = "services" }
-settings = { path = "settings" }
-api = { path = "api" }
+[dependencies.api]
+path = "api"
 
-[workspace]
-members = ["settings", "domain", "repository", "api", "services"]
+[dependencies.secrecy]
+workspace = true
 
-[workspace.dependencies]
-repository = { path = "repository" }
-actix-web = { version = "4.3.3" }
-regex = "1.12.3"
-testcontainers = "0.27.1"
-argon2 = "0.5.3"
-snafu = { version = "0.9.0", features = ["futures", "default", "std"] }
-thiserror = "2.0.18"
-chrono = { version = "0.4.26", features = ["serde"] }
-uuid = { version = "1.21.0", features = ["v4", "serde", "v7"] }
-secrecy = { version = "0.10.0", features = ["serde"] }
-serde-aux = "4.7.0"
-serde = { version = "1.0.183", features = ["derive"] }
-keycloak = { version = "26.5.200" }
-sqlx = { version = "0.8.6", features = [
-  "runtime-tokio",
-  "tls-native-tls",
-  "postgres",
-  "macros",
-  "uuid",
-  "chrono",
-  "migrate",
-  "bigdecimal",
-] }
-tokio = { version = "1.48.0", features = ["full"] }
-anyhow = { version = "1.0.75", default-features = false }
-rsa = { version = "0.9.10" }
-rand = "0.10.0"
+[dependencies.settings]
+path = "settings"
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.tokio]
+workspace = true
 
 [lints.rust]
 dead_code = "allow"
+
+[workspace]
+members = [
+    "api",
+    "client",
+    "collaborator",
+    "contact",
+    "domain",
+    "location",
+    "project",
+    "repository",
+    "settings",
+]
+
+[workspace.dependencies]
+argon2 = "0.5.3"
+bigdecimal = "0.4.7"
+rand = "0.10.0"
+regex = "1.12.3"
+serde-aux = "4.7.0"
+testcontainers = "0.27.1"
+thiserror = "2.0.18"
+
+[workspace.dependencies.actix-web]
+version = "4.3.3"
+
+[workspace.dependencies.anyhow]
+version = "1.0.75"
+default-features = false
+
+[workspace.dependencies.chrono]
+version = "0.4.26"
+features = ["serde"]
+
+[workspace.dependencies.keycloak]
+version = "26.5.200"
+
+[workspace.dependencies.repository]
+path = "repository"
+
+[workspace.dependencies.rsa]
+version = "0.9.10"
+
+[workspace.dependencies.secrecy]
+version = "0.10.0"
+features = ["serde"]
+
+[workspace.dependencies.serde]
+version = "1.0.183"
+features = ["derive"]
+
+[workspace.dependencies.snafu]
+version = "0.9.0"
+features = [
+    "futures",
+    "default",
+    "std",
+    "backtrace",
+]
+
+[workspace.dependencies.sqlx]
+version = "0.8.6"
+features = [
+    "runtime-tokio",
+    "tls-native-tls",
+    "postgres",
+    "macros",
+    "uuid",
+    "chrono",
+    "migrate",
+    "bigdecimal",
+]
+
+[workspace.dependencies.tokio]
+version = "1.48.0"
+features = ["full"]
+
+[workspace.dependencies.uuid]
+version = "1.21.0"
+features = [
+    "v4",
+    "serde",
+    "v7",
+]

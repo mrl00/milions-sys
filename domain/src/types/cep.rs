@@ -1,19 +1,17 @@
 use std::hash::Hash;
 
-use snafu::Snafu;
-
 #[derive(Debug)]
 pub struct Cep(String);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum CepError {
-    #[snafu(display("CEP cannot be empty"))]
+    #[error("CEP cannot be empty")]
     Empty,
 
-    #[snafu(display("CEP '{value}' has invalid length"))]
+    #[error("CEP '{value}' has invalid length")]
     InvalidLength { value: String },
 
-    #[snafu(display("CEP '{value}' is invalid"))]
+    #[error("CEP '{value}' is invalid")]
     InvalidCep { value: String },
 }
 
@@ -22,15 +20,15 @@ impl TryFrom<String> for Cep {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(CepError::Empty);
         }
 
         if value.len() != 8 {
-            return InvalidLengthSnafu { value }.fail();
+            return Err(CepError::InvalidLength { value });
         }
 
         if !brazilian_utils::cep::is_valid(&value) {
-            return InvalidCepSnafu { value }.fail();
+            return Err(CepError::InvalidCep { value });
         }
 
         Ok(Self(value))

@@ -1,19 +1,17 @@
 use std::hash::Hash;
 
-use snafu::Snafu;
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cnpj(String);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum CnpjError {
-    #[snafu(display("CNPJ cannot be empty"))]
+    #[error("CNPJ cannot be empty")]
     Empty,
 
-    #[snafu(display("CNPJ '{value}' has invalid length"))]
+    #[error("CNPJ '{value}' has invalid length")]
     InvalidLength { value: String },
 
-    #[snafu(display("CNPJ '{value}' is invalid"))]
+    #[error("CNPJ '{value}' is invalid")]
     InvalidCnpj { value: String },
 }
 
@@ -22,15 +20,15 @@ impl TryFrom<String> for Cnpj {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(CnpjError::Empty);
         }
 
         if value.len() != 14 {
-            return InvalidLengthSnafu { value }.fail();
+            return Err(CnpjError::InvalidLength { value });
         }
 
         if !brazilian_utils::cnpj::is_valid(&value) {
-            return InvalidCnpjSnafu { value }.fail();
+            return Err(CnpjError::InvalidCnpj { value });
         }
 
         Ok(Self(value))

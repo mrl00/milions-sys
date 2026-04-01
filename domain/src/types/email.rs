@@ -3,12 +3,12 @@ use std::hash::Hash;
 #[derive(Debug)]
 pub struct Email(String);
 
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug, thiserror::Error)]
 pub enum EmailError {
-    #[snafu(display("Email cannot be empty"))]
+    #[error("Email cannot be empty")]
     Empty,
 
-    #[snafu(display("Email '{value}' is invalid"))]
+    #[error("Email '{value}' is invalid")]
     InvalidEmail { value: String },
 }
 
@@ -17,11 +17,11 @@ impl TryFrom<String> for Email {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if value.is_empty() {
-            return EmptySnafu.fail();
+            return Err(EmailError::Empty);
         }
 
         if !brazilian_utils::email::is_valid(&value) {
-            return InvalidEmailSnafu { value }.fail();
+            return Err(EmailError::InvalidEmail { value });
         }
 
         Ok(Self(value))
