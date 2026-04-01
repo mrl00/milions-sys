@@ -5,3 +5,18 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
+domain = { path = "../domain" }
+location = { path = "../location" }
+contact = { path = "../contact" }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+snafu = { workspace = true }
+async-trait = "0.1.89"
+chrono = { workspace = true }
+bigdecimal = { workspace = true }
+rand = { workspace = true }
+
+[lints.rust]
+dead_code = "allow"
