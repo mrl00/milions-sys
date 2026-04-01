@@ -18,6 +18,9 @@ workspace = true
 [dependencies.tokio]
 workspace = true
 
+[dependencies.thiserror]
+workspace = true
+
 [lints.rust]
 dead_code = "allow"
 
@@ -27,10 +30,10 @@ members = [
     "client",
     "collaborator",
     "contact",
-    "domain",
     "location",
     "project",
-    "settings",
+    "settings", "types",
+    "viacep",
 ]
 
 [workspace.dependencies]
@@ -55,8 +58,6 @@ features = ["serde"]
 
 [workspace.dependencies.keycloak]
 version = "26.5.200"
-
-
 
 [workspace.dependencies.rsa]
 version = "0.9.10"
@@ -91,6 +92,9 @@ features = [
     "bigdecimal",
 ]
 
+[workspace.dependencies.async-trait]
+version = "0.1.89"
+
 [workspace.dependencies.tokio]
 version = "1.48.0"
 features = ["full"]
@@ -102,3 +106,5 @@ features = [
     "serde",
     "v7",
 ]
+[dependencies]
+regex = "1.12.3"
