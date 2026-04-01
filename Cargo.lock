@@ -480,8 +480,41 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "client"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "chrono",
+ "contact",
+ "domain",
+ "location",
+ "rand 0.10.0",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "collaborator"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -537,6 +570,20 @@ dependencies = [
  "getrandom 0.2.17",
  "once_cell",
  "tiny-keccak",
+]
+
+[[package]]
+name = "contact"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -1461,6 +1508,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d873d7c67ce09b42110d801813efbc9364414e356be9935700d368351657487"
 
 [[package]]
+name = "location"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1496,10 +1557,7 @@ name = "milions-sys"
 version = "0.1.0"
 dependencies = [
  "api",
- "rand 0.10.0",
- "rsa",
  "secrecy",
- "services",
  "settings",
  "sqlx",
  "tokio",
@@ -1894,6 +1952,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "project"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -2344,17 +2417,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "services"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "domain",
- "repository",
- "sqlx",
- "uuid",
 ]
 
 [[package]]
