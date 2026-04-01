@@ -1,21 +1,16 @@
 use std::hash::Hash;
 
 use regex::Regex;
+use crate::domain::errors::contact_error::PhoneError;
 
 #[derive(Debug)]
 pub struct Phone(String);
-
-#[derive(Debug, thiserror::Error)]
-pub enum PhoneError {
-    #[error("invalid phone number: '{value}'")]
-    InvalidPhoneNumber { value: String },
-}
 
 impl TryFrom<String> for Phone {
     type Error = PhoneError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let re = Regex::new(r"\+\d{13}\d{1}?").unwrap();
+        let re = Regex::new(r"\+\d{13}\d").unwrap();
         if !re.is_match(&value) {
             return Err(PhoneError::InvalidPhoneNumber { value });
         }

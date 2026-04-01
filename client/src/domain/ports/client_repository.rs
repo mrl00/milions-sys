@@ -1,8 +1,7 @@
+use crate::domain::errors::ClientError;
+use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
 use async_trait::async_trait;
 use uuid::Uuid;
-
-use super::errors::ClientError;
-use super::model::{ClientRow, CreateClientRow, UpdateClientRow};
 
 #[async_trait]
 pub trait ClientRepository: Send + Sync {

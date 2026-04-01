@@ -3,14 +3,17 @@ use std::hash::{Hash, Hasher};
 
 use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::{ClientError, InfraError};
-use domain::{
-    models::db::viacep::ViaCepAddressModel,
-    ports::viacep_port::ViaCepPort,
-    types::{cep::Cep, doc::Doc, email::Email, phone::Phone},
-};
+
+use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
 use location::domain::model::LocationRow;
 use sqlx::PgPool;
+use types::cep::Cep;
+use types::doc::Doc;
+use types::email::Email;
+use types::phone::Phone;
 use uuid::Uuid;
+use viacep::domain::models::viacep_model::ViaCepAddressModel;
+use viacep::domain::ports::viacep_port::ViaCepPort;
 
 pub struct RegisterClientInput {
     pub name: String,
@@ -43,7 +46,7 @@ impl RegisterClientService {
         pool: &PgPool,
         viacep: &dyn ViaCepPort,
         input: RegisterClientInput,
-    ) -> Result<crate::domain::model::ClientRow, ClientError> {
+    ) -> Result<ClientRow, ClientError> {
         let input = Self::validate_input(input)?;
         Self::ensure_document_available(pool, &input.doc).await?;
         Self::ensure_email_available(pool, &input.email).await?;
@@ -119,7 +122,7 @@ impl RegisterClientService {
         pool: &PgPool,
         input: &ValidatedInput,
         location_uuid: Uuid,
-    ) -> Result<crate::domain::model::ClientRow, ClientError> {
+    ) -> Result<ClientRow, ClientError> {
         let mut tx = pool
             .begin()
             .await
@@ -131,9 +134,9 @@ impl RegisterClientService {
 
         let client = PgClientRepository::create(
             &mut *tx,
-            crate::domain::model::CreateClientRow {
+            CreateClientRow {
                 tx_name: input.name.clone(),
-                tx_status: crate::domain::model::ClientStatus::Active,
+                tx_status: ClientStatus::Active,
                 tx_doc: input.doc.to_string(),
             },
         )

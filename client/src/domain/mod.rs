@@ -1,3 +1,3 @@
 pub mod errors;
-pub mod model;
-pub mod ports;
+pub mod models;
+pub(crate) mod ports;

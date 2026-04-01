@@ -1,9 +1,6 @@
-use crate::{
-    adapters::driven::dtos::{
-        client_address_row::ClientAddressRow, client_contact_row::ClientContactRow,
-    },
-    domain::model::{ClientRow, ClientStatus, CreateClientRow},
-};
+use crate::domain::models::db::client_address_row::ClientAddressRow;
+use crate::domain::models::db::client_contact_row::ClientContactRow;
+use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
 use sqlx::PgPool;
 use uuid::Uuid;
 
