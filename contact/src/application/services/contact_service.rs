@@ -1,8 +1,7 @@
-use crate::domain::errors::ContactError;
-use uuid::Uuid;
-
-use crate::domain::model::{ContactRow, CreateContactRow};
+use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
+use crate::domain::errors::contact_error::ContactError;
 use crate::domain::ports::ContactRepository;
+use uuid::Uuid;
 
 pub struct ContactService;
 

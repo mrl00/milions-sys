@@ -1,8 +1,7 @@
+use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
+use crate::domain::errors::contact_error::ContactError;
 use async_trait::async_trait;
 use uuid::Uuid;
-
-use crate::domain::errors::ContactError;
-use crate::domain::model::{ContactRow, CreateContactRow};
 
 #[async_trait]
 pub trait ContactRepository: Send + Sync {
