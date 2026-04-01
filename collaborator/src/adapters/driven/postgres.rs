@@ -5,11 +5,11 @@ use crate::domain::model::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct CollaboratorRepositoryImpl {
+pub struct PgCollaboratorRepository {
     pool: PgPool,
 }
 
-impl CollaboratorRepositoryImpl {
+impl PgCollaboratorRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

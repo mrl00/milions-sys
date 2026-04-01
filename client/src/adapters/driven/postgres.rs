@@ -4,11 +4,11 @@ use domain::models::db::client_contact_row::ClientContactRow;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct ClientRepositoryImpl {
+pub struct PgClientRepository {
     pool: PgPool,
 }
 
-impl ClientRepositoryImpl {
+impl PgClientRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

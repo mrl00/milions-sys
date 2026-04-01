@@ -1,7 +1,7 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-use crate::adapters::driven::postgres::ClientRepositoryImpl;
+use crate::adapters::driven::postgres::PgClientRepository;
 use crate::domain::errors::ClientError;
 use domain::{
     errors::InfraError,
@@ -57,7 +57,7 @@ impl RegisterClientService {
     }
 
     async fn ensure_document_available(pool: &PgPool, doc: &Doc) -> Result<(), ClientError> {
-        if ClientRepositoryImpl::find_by_document(pool, doc.to_string())
+        if PgClientRepository::find_by_document(pool, doc.to_string())
             .await
             .map_err(sqlx_to_client("buscar cliente por documento"))?
             .is_some()
@@ -130,7 +130,7 @@ impl RegisterClientService {
         // For now, create a placeholder contact UUID
         let contact_uuid = Uuid::now_v7();
 
-        let client = ClientRepositoryImpl::create(
+        let client = PgClientRepository::create(
             &mut *tx,
             crate::domain::model::CreateClientRow {
                 tx_name: input.name.clone(),
@@ -141,11 +141,11 @@ impl RegisterClientService {
         .await
         .map_err(sqlx_to_client("criar cliente"))?;
 
-        ClientRepositoryImpl::create_contact(&mut *tx, client.pk_client, contact_uuid)
+        PgClientRepository::create_contact(&mut *tx, client.pk_client, contact_uuid)
             .await
             .map_err(sqlx_to_client("vincular cliente-contato"))?;
 
-        ClientRepositoryImpl::create_address(&mut *tx, client.pk_client, location_uuid)
+        PgClientRepository::create_address(&mut *tx, client.pk_client, location_uuid)
             .await
             .map_err(sqlx_to_client("vincular cliente-endereço"))?;
 

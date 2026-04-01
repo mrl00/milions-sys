@@ -2,11 +2,11 @@ use crate::domain::model::{ContactRow, CreateContactRow, PhoneRow};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct ContactRepositoryImpl {
+pub struct PgContactRepository {
     pool: PgPool,
 }
 
-impl ContactRepositoryImpl {
+impl PgContactRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

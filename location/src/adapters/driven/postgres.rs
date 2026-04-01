@@ -2,11 +2,11 @@ use crate::domain::model::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct LocationRepositoryImpl {
+pub struct PgLocationRepository {
     pool: PgPool,
 }
 
-impl LocationRepositoryImpl {
+impl PgLocationRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
