@@ -5,13 +5,13 @@ use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::{ClientError, InfraError};
 
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
+use location::domain::models::db::location_row::LocationRow;
 use sqlx::PgPool;
 use types::cep::Cep;
 use types::doc::Doc;
 use types::email::Email;
 use types::phone::Phone;
 use uuid::Uuid;
-use location::domain::models::db::location_row::LocationRow;
 use viacep::domain::models::viacep_model::ViaCepAddressModel;
 use viacep::domain::ports::viacep_port::ViaCepPort;
 

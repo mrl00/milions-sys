@@ -1,5 +1,5 @@
-use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::ports::ContactRepository;
 use uuid::Uuid;
 

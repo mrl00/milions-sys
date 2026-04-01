@@ -1,5 +1,5 @@
-use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::PhoneRepository;
 use types::phone::Phone;
 use uuid::Uuid;
