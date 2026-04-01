@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+domain = { path = "../domain" }
 repository = { path = "../repository" }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+async-trait = "0.1.89"
 
 [lints.rust]
 dead_code = "allow"

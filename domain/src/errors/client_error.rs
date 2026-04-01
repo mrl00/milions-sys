@@ -11,6 +11,12 @@ pub enum ClientError {
     #[error("cliente não encontrado: {uuid}")]
     NotFound { uuid: Uuid },
 
+    #[error("cliente já está ativo: {uuid}")]
+    AlreadyActive { uuid: Uuid },
+
+    #[error("cliente já está inativo: {uuid}")]
+    AlreadyInactive { uuid: Uuid },
+
     #[error("contato não encontrado: {uuid}")]
     ContactNotFound { uuid: Uuid },
 
