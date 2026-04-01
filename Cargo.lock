@@ -485,6 +485,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "client"
+version = "0.1.0"
+
+[[package]]
+name = "collaborator"
+version = "0.1.0"
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -538,6 +546,10 @@ dependencies = [
  "once_cell",
  "tiny-keccak",
 ]
+
+[[package]]
+name = "contact"
+version = "0.1.0"
 
 [[package]]
 name = "convert_case"
@@ -1461,6 +1473,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d873d7c67ce09b42110d801813efbc9364414e356be9935700d368351657487"
 
 [[package]]
+name = "location"
+version = "0.1.0"
+
+[[package]]
 name = "lock_api"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1895,6 +1911,10 @@ checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "project"
+version = "0.1.0"
 
 [[package]]
 name = "quote"
