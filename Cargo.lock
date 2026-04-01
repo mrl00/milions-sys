@@ -480,6 +480,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -487,10 +488,34 @@ dependencies = [
 [[package]]
 name = "client"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "chrono",
+ "contact",
+ "domain",
+ "location",
+ "rand 0.10.0",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "collaborator"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "concurrent-queue"
@@ -550,6 +575,16 @@ dependencies = [
 [[package]]
 name = "contact"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "convert_case"
@@ -1475,6 +1510,16 @@ checksum = "4d873d7c67ce09b42110d801813efbc9364414e356be9935700d368351657487"
 [[package]]
 name = "location"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "lock_api"
@@ -1512,10 +1557,7 @@ name = "milions-sys"
 version = "0.1.0"
 dependencies = [
  "api",
- "rand 0.10.0",
- "rsa",
  "secrecy",
- "services",
  "settings",
  "sqlx",
  "tokio",
@@ -1915,6 +1957,17 @@ dependencies = [
 [[package]]
 name = "project"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "chrono",
+ "domain",
+ "serde",
+ "snafu",
+ "sqlx",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "quote"
@@ -2364,17 +2417,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "services"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "domain",
- "repository",
- "sqlx",
- "uuid",
 ]
 
 [[package]]

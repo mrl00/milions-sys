@@ -6,17 +6,8 @@ version = "0.1.0"
 [dependencies.api]
 path = "api"
 
-[dependencies.rand]
-workspace = true
-
-[dependencies.rsa]
-workspace = true
-
 [dependencies.secrecy]
 workspace = true
-
-[dependencies.services]
-path = "services"
 
 [dependencies.settings]
 path = "settings"
@@ -40,12 +31,12 @@ members = [
     "location",
     "project",
     "repository",
-    "services",
     "settings",
 ]
 
 [workspace.dependencies]
 argon2 = "0.5.3"
+bigdecimal = "0.4.7"
 rand = "0.10.0"
 regex = "1.12.3"
 serde-aux = "4.7.0"
