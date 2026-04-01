@@ -5,11 +5,11 @@ use crate::types::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum DocError {
-    #[error("CPF '{source}'")]
-    DocCpf { source: CpfError },
+    #[error(transparent)]
+    DocCpf(#[from] CpfError),
 
-    #[error("CNPJ '{source}'")]
-    DocCnpj { source: CnpjError },
+    #[error(transparent)]
+    DocCnpj(#[from] CnpjError),
 
     #[error("documento inválido")]
     InvalidDocument,
@@ -26,17 +26,9 @@ impl TryFrom<String> for Doc {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let doc = if value.len() == 11 {
-            Doc::Cpf(
-                value
-                    .try_into()
-                    .map_err(|source| DocError::DocCpf { source })?,
-            )
+            Doc::Cpf(value.try_into()?)
         } else if value.len() == 14 {
-            Doc::Cnpj(
-                value
-                    .try_into()
-                    .map_err(|source| DocError::DocCnpj { source })?,
-            )
+            Doc::Cnpj(value.try_into()?)
         } else {
             return Err(DocError::InvalidDocument);
         };
