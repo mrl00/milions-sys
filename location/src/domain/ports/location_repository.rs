@@ -1,8 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
-
-use super::errors::LocationError;
-use super::model::{CreateLocationRow, LocationRow, UpdateLocationRow};
+use crate::domain::errors::LocationError;
+use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 
 #[async_trait]
 pub trait LocationRepository: Send + Sync {

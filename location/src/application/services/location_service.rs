@@ -1,8 +1,7 @@
 use crate::domain::errors::LocationError;
 use uuid::Uuid;
-
-use crate::domain::model::{CreateLocationRow, LocationRow, UpdateLocationRow};
-use crate::domain::ports::LocationRepository;
+use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
+use crate::domain::ports::location_repository::LocationRepository;
 
 pub struct LocationService;
 

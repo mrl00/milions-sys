@@ -1,6 +1,6 @@
-use crate::domain::model::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 
 pub struct PgLocationRepository {
     pool: PgPool,
