@@ -1,7 +1,12 @@
 use std::hash::Hash;
 
 use regex::Regex;
-use crate::domain::errors::contact_error::PhoneError;
+
+#[derive(Debug, thiserror::Error)]
+pub enum PhoneError {
+    #[error("telefone inválido: '{value}'")]
+    InvalidPhoneNumber { value: String },
+}
 
 #[derive(Debug)]
 pub struct Phone(String);

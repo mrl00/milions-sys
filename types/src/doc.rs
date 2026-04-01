@@ -1,7 +1,5 @@
-use crate::typessss::{
-    cnpj::{Cnpj, CnpjError},
-    cpf::{Cpf, CpfError},
-};
+use crate::cnpj::{Cnpj, CnpjError};
+use crate::cpf::{Cpf, CpfError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DocError {
