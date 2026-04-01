@@ -1,5 +1,7 @@
 use crate::errors::infra_error::InfraError;
-use sqlx::types::Uuid;
+use crate::ports::viacep_port::ViaCepError;
+use crate::types::{cep::CepError, doc::DocError, email::EmailError, phone::PhoneError};
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientError {
@@ -15,6 +17,30 @@ pub enum ClientError {
     #[error("endereço não encontrado: {uuid}")]
     LocationNotFound { uuid: Uuid },
 
+    #[error("documento já cadastrado")]
+    DocumentAlreadyExists { doc: String },
+
+    #[error("email já cadastrado")]
+    EmailAlreadyExists { email: String },
+
+    #[error("telefone '{phone}' já existe")]
+    PhoneAlreadyExists { phone: String },
+
     #[error(transparent)]
-    Infra { source: InfraError },
+    InvalidDoc(#[from] DocError),
+
+    #[error(transparent)]
+    InvalidEmail(#[from] EmailError),
+
+    #[error(transparent)]
+    InvalidPhone(#[from] PhoneError),
+
+    #[error(transparent)]
+    InvalidCep(#[from] CepError),
+
+    #[error(transparent)]
+    ViaCep(#[from] ViaCepError),
+
+    #[error(transparent)]
+    Infra(#[from] InfraError),
 }
