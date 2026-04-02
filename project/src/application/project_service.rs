@@ -7,27 +7,21 @@ use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
     CreateProjectRow, ProjectRow, ProjectStatus, UpdateProjectRow,
 };
-use crate::domain::ports::project_repository::*;
-use crate::domain::use_cases::cancel_project::CancelProject;
-use crate::domain::use_cases::complete_project::CompleteProject;
-use crate::domain::use_cases::create_project::{
-    CreateProject as CreateProjectTrait, CreateProjectInput,
+use crate::domain::ports::project_repository::{
+    CreateProject as _, DeleteProject as _, FindAllProjects as _, FindProjectByClientId as _,
+    FindProjectById as _, UpdateProject as _,
 };
-use crate::domain::use_cases::delete_project::DeleteProject as DeleteProjectTrait;
-use crate::domain::use_cases::find_project::FindProject;
-use crate::domain::use_cases::list_projects::ListProjects;
-use crate::domain::use_cases::list_projects_by_client::ListProjectsByClient;
-use crate::domain::use_cases::pause_project::PauseProject;
-use crate::domain::use_cases::start_project::StartProject;
-use crate::domain::use_cases::update_project::{
-    UpdateProject as UpdateProjectTrait, UpdateProjectInput,
+use crate::domain::ports::project_use_cases::{
+    CancelProject, CompleteProject, CreateProject as CreateProjectTrait, CreateProjectInput,
+    DeleteProject as DeleteProjectTrait, FindProject, ListProjects, ListProjectsByClient,
+    PauseProject, StartProject, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
 };
 
-pub struct ProjectUseCases {
+pub struct ProjectService {
     repo: PgProjectRepository,
 }
 
-impl ProjectUseCases {
+impl ProjectService {
     pub fn new(pool: PgPool) -> Self {
         Self {
             repo: PgProjectRepository::new(pool),
@@ -36,7 +30,7 @@ impl ProjectUseCases {
 }
 
 #[async_trait]
-impl FindProject for ProjectUseCases {
+impl FindProject for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -46,21 +40,21 @@ impl FindProject for ProjectUseCases {
 }
 
 #[async_trait]
-impl ListProjects for ProjectUseCases {
+impl ListProjects for ProjectService {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl ListProjectsByClient for ProjectUseCases {
+impl ListProjectsByClient for ProjectService {
     async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_by_client_id(client_id).await
     }
 }
 
 #[async_trait]
-impl CreateProjectTrait for ProjectUseCases {
+impl CreateProjectTrait for ProjectService {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
             tx_name: input.name,
@@ -80,7 +74,7 @@ impl CreateProjectTrait for ProjectUseCases {
 }
 
 #[async_trait]
-impl UpdateProjectTrait for ProjectUseCases {
+impl UpdateProjectTrait for ProjectService {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -113,7 +107,7 @@ impl UpdateProjectTrait for ProjectUseCases {
 }
 
 #[async_trait]
-impl StartProject for ProjectUseCases {
+impl StartProject for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -150,7 +144,7 @@ impl StartProject for ProjectUseCases {
 }
 
 #[async_trait]
-impl PauseProject for ProjectUseCases {
+impl PauseProject for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -187,7 +181,7 @@ impl PauseProject for ProjectUseCases {
 }
 
 #[async_trait]
-impl CompleteProject for ProjectUseCases {
+impl CompleteProject for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -224,7 +218,7 @@ impl CompleteProject for ProjectUseCases {
 }
 
 #[async_trait]
-impl CancelProject for ProjectUseCases {
+impl CancelProject for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -261,7 +255,7 @@ impl CancelProject for ProjectUseCases {
 }
 
 #[async_trait]
-impl DeleteProjectTrait for ProjectUseCases {
+impl DeleteProjectTrait for ProjectService {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
