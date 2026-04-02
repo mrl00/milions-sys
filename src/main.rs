@@ -1,5 +1,6 @@
 use std::net::TcpListener;
 
+use milions_sys::startup;
 use secrecy::ExposeSecret;
 use settings::Settings;
 use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
@@ -24,5 +25,5 @@ async fn main() -> Result<(), std::io::Error> {
 
     let tcp_listener = TcpListener::bind(address)?;
 
-    api::startup::run(tcp_listener, pool)?.await
+    startup::run(tcp_listener, pool)?.await
 }
