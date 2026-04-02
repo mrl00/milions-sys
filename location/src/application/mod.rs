@@ -1,1 +1,1 @@
-pub mod location_use_cases;
+pub mod location_service;

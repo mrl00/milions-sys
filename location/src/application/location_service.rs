@@ -5,23 +5,21 @@ use uuid::Uuid;
 use crate::adapters::driven::postgres::pg_location_repository::PgLocationRepository;
 use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
-use crate::domain::ports::location_repository::*;
-use crate::domain::use_cases::create_location::{
-    CreateLocation as CreateLocationTrait, CreateLocationInput,
+use crate::domain::ports::location_repository::{
+    CreateLocation as _, DeleteLocation as _, FindAllLocations as _, FindLocationByHash as _,
+    FindLocationById as _, UpdateLocation as _,
 };
-use crate::domain::use_cases::delete_location::DeleteLocation as DeleteLocationTrait;
-use crate::domain::use_cases::find_location::FindLocation;
-use crate::domain::use_cases::find_or_create_location::FindOrCreateLocation as FindOrCreateLocationTrait;
-use crate::domain::use_cases::list_locations::ListLocations;
-use crate::domain::use_cases::update_location::{
-    UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
+use crate::domain::ports::location_use_cases::{
+    CreateLocation as CreateLocationTrait, CreateLocationInput,
+    DeleteLocation as DeleteLocationTrait, FindLocation, FindOrCreateLocation as FindOrCreateLocationTrait,
+    ListLocations, UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
 };
 
-pub struct LocationUseCases {
+pub struct LocationService {
     repo: PgLocationRepository,
 }
 
-impl LocationUseCases {
+impl LocationService {
     pub fn new(pool: PgPool) -> Self {
         Self {
             repo: PgLocationRepository::new(pool),
@@ -71,7 +69,7 @@ impl LocationUseCases {
 }
 
 #[async_trait]
-impl FindLocation for LocationUseCases {
+impl FindLocation for LocationService {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -81,21 +79,21 @@ impl FindLocation for LocationUseCases {
 }
 
 #[async_trait]
-impl ListLocations for LocationUseCases {
+impl ListLocations for LocationService {
     async fn execute(&self) -> Result<Vec<LocationRow>, LocationError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl CreateLocationTrait for LocationUseCases {
+impl CreateLocationTrait for LocationService {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         self.repo.create(Self::to_create_row(input)).await
     }
 }
 
 #[async_trait]
-impl FindOrCreateLocationTrait for LocationUseCases {
+impl FindOrCreateLocationTrait for LocationService {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         if let Some(existing) = self.repo.find_by_hash(input.hash).await? {
             return Ok(existing);
@@ -106,7 +104,7 @@ impl FindOrCreateLocationTrait for LocationUseCases {
 }
 
 #[async_trait]
-impl UpdateLocationTrait for LocationUseCases {
+impl UpdateLocationTrait for LocationService {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -122,7 +120,7 @@ impl UpdateLocationTrait for LocationUseCases {
 }
 
 #[async_trait]
-impl DeleteLocationTrait for LocationUseCases {
+impl DeleteLocationTrait for LocationService {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
