@@ -1,4 +1,4 @@
-use crate::domain::model::{
+use crate::domain::models::db::project_rows::{
     CreateProjectStageRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
     UpdateProjectRow, UpdateProjectStageRow,
 };

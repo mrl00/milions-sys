@@ -1,9 +1,10 @@
 use crate::domain::errors::ClientError;
-use domain::types::doc::Doc;
+use crate::domain::models::db::client_row::{
+    ClientRow, ClientStatus, CreateClientRow, UpdateClientRow,
+};
+use crate::domain::ports::client_repository::ClientRepository;
+use types::doc::Doc;
 use uuid::Uuid;
-
-use crate::domain::model::{ClientRow, ClientStatus, CreateClientRow, UpdateClientRow};
-use crate::domain::ports::ClientRepository;
 
 pub struct ClientService;
 

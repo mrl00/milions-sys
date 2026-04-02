@@ -5,7 +5,7 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
-domain = { path = "../domain" }
+types = { path = "../types" }
 sqlx = { workspace = true }
 uuid = { workspace = true }
 serde = { workspace = true }

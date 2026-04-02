@@ -1,9 +1,8 @@
-use crate::domain::errors::ContactError;
-use domain::types::phone::Phone;
-use uuid::Uuid;
-
-use crate::domain::model::PhoneRow;
+use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::PhoneRepository;
+use types::phone::Phone;
+use uuid::Uuid;
 
 pub struct PhoneService;
 
@@ -79,6 +78,7 @@ impl PhoneService {
     }
 
     fn validate_phone(phone: &str) -> Result<Phone, ContactError> {
-        Phone::try_from(phone.to_string()).map_err(ContactError::InvalidPhone)
+        let p = Phone::try_from(phone.to_string())?;
+        Ok(p)
     }
 }

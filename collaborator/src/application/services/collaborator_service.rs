@@ -1,11 +1,11 @@
-use crate::domain::errors::CollaboratorError;
-use domain::types::cpf::Cpf;
-use uuid::Uuid;
-
-use crate::domain::model::{
-    CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow, UpdateCollaboratorRow,
+use crate::domain::errors::collaborator_error::CollaboratorError;
+use crate::domain::models::db::collaborator_row::{
+    CollaboratorLevel, CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow,
+    UpdateCollaboratorRow,
 };
-use crate::domain::ports::CollaboratorRepository;
+use crate::domain::ports::collaborator_repository::CollaboratorRepository;
+use types::cpf::Cpf;
+use uuid::Uuid;
 
 pub struct CollaboratorService;
 
@@ -46,7 +46,7 @@ impl CollaboratorService {
         let input = CreateCollaboratorRow {
             tx_name: name,
             tx_cpf: cpf,
-            tx_level: crate::domain::model::CollaboratorLevel::P0,
+            tx_level: CollaboratorLevel::P0,
             tx_status: CollaboratorStatus::Active,
         };
 

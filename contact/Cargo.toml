@@ -5,14 +5,13 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
-domain = { path = "../domain" }
+types = { path = "../types" }
 sqlx = { workspace = true }
 uuid = { workspace = true }
-serde = { workspace = true }
 thiserror = { workspace = true }
 snafu = { workspace = true }
+regex = { workspace = true}
 async-trait = "0.1.89"
-chrono = { workspace = true }
 
 [lints.rust]
 dead_code = "allow"
