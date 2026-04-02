@@ -130,11 +130,12 @@ fn error_to_response(err: CollaboratorError) -> HttpResponse {
         })),
         AlreadyActive { .. } | AlreadyInactive { .. } => HttpResponse::BadRequest()
             .json(serde_json::json!({"error": "bad_request", "message": err.to_string()})),
-        InvalidCpf(_) | InvalidPhone(_) => HttpResponse::UnprocessableEntity()
-            .json(serde_json::json!({
+        InvalidCpf(_) | InvalidPhone(_) => {
+            HttpResponse::UnprocessableEntity().json(serde_json::json!({
                 "error": "validation_error",
                 "message": err.to_string(),
-            })),
+            }))
+        }
         _ => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "internal_error",
             "message": "internal server error",

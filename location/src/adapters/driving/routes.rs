@@ -76,10 +76,7 @@ async fn list_locations(service: web::Data<LocationService>) -> HttpResponse {
     }
 }
 
-async fn get_location(
-    service: web::Data<LocationService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn get_location(service: web::Data<LocationService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match FindLocation::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),

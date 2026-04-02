@@ -52,18 +52,14 @@ async fn register_contact(
 async fn list_contacts(service: web::Data<ContactService>) -> HttpResponse {
     match ListContacts::execute(&**service).await {
         Ok(rows) => {
-            let resp: Vec<ContactResponse> =
-                rows.into_iter().map(ContactResponse::from).collect();
+            let resp: Vec<ContactResponse> = rows.into_iter().map(ContactResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
         Err(e) => error_to_response(e),
     }
 }
 
-async fn get_contact(
-    service: web::Data<ContactService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn get_contact(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match FindContact::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ContactResponse::from(row)),
@@ -95,15 +91,11 @@ async fn add_phone(
     }
 }
 
-async fn list_phones(
-    service: web::Data<ContactService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn list_phones(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
     let contact_id = path.into_inner();
     match ListPhones::execute(&**service, contact_id).await {
         Ok(rows) => {
-            let resp: Vec<PhoneResponse> =
-                rows.into_iter().map(PhoneResponse::from).collect();
+            let resp: Vec<PhoneResponse> = rows.into_iter().map(PhoneResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
         Err(e) => error_to_response(e),
@@ -122,10 +114,7 @@ async fn update_phone(
     }
 }
 
-async fn remove_phone(
-    service: web::Data<ContactService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn remove_phone(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match RemovePhone::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(PhoneResponse::from(row)),
@@ -144,11 +133,12 @@ fn error_to_response(err: ContactError) -> HttpResponse {
             "error": "not_found",
             "message": err.to_string(),
         })),
-        AlreadyExists { .. } | PhoneAlreadyExists { .. } => HttpResponse::Conflict()
-            .json(serde_json::json!({
+        AlreadyExists { .. } | PhoneAlreadyExists { .. } => {
+            HttpResponse::Conflict().json(serde_json::json!({
                 "error": "conflict",
                 "message": err.to_string(),
-            })),
+            }))
+        }
         InvalidPhone(_) => HttpResponse::UnprocessableEntity().json(serde_json::json!({
             "error": "validation_error",
             "message": err.to_string(),

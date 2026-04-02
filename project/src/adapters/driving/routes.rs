@@ -24,9 +24,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(web::put().to(update_project))
             .route(web::delete().to(delete_project)),
     )
-    .service(
-        web::resource("/projects/{uuid}/status").route(web::put().to(update_project_status)),
-    );
+    .service(web::resource("/projects/{uuid}/status").route(web::put().to(update_project_status)));
 }
 
 fn parse_bd(val: &Option<String>) -> Option<BigDecimal> {
@@ -58,18 +56,14 @@ async fn create_project(
 async fn list_projects(service: web::Data<ProjectService>) -> HttpResponse {
     match ListProjects::execute(&**service).await {
         Ok(rows) => {
-            let resp: Vec<ProjectResponse> =
-                rows.into_iter().map(ProjectResponse::from).collect();
+            let resp: Vec<ProjectResponse> = rows.into_iter().map(ProjectResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
         Err(e) => error_to_response(e),
     }
 }
 
-async fn get_project(
-    service: web::Data<ProjectService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn get_project(service: web::Data<ProjectService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match FindProject::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
@@ -102,10 +96,7 @@ async fn update_project(
     }
 }
 
-async fn delete_project(
-    service: web::Data<ProjectService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn delete_project(service: web::Data<ProjectService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match DeleteProject::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
