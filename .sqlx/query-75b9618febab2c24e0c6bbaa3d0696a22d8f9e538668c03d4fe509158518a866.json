@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM contacts.tb_contact\n            WHERE tx_email = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_contact",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "ts_contact_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_contact_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "75b9618febab2c24e0c6bbaa3d0696a22d8f9e538668c03d4fe509158518a866"
+}

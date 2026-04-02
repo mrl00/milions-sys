@@ -83,10 +83,10 @@ impl UpdateContactEmailTrait for ContactService {
             .await?
             .ok_or(ContactError::NotFound { uuid })?;
 
-        if let Some(existing) = self.contact_repo.find_by_email(&email).await? {
-            if existing.pk_contact != uuid {
-                return Err(ContactError::AlreadyExists { email });
-            }
+        if let Some(existing) = self.contact_repo.find_by_email(&email).await?
+            && existing.pk_contact != uuid
+        {
+            return Err(ContactError::AlreadyExists { email });
         }
 
         self.contact_repo.update_email(uuid, email).await
@@ -147,12 +147,12 @@ impl AddPhones for ContactService {
             .find_nonexistent_phones(phones.clone())
             .await?;
 
-        if nonexistent.len() != phones.len() {
-            if let Some(phone) = phones.iter().find(|p| !nonexistent.contains(p)) {
-                return Err(ContactError::PhoneAlreadyExists {
-                    phone: phone.clone(),
-                });
-            }
+        if nonexistent.len() != phones.len()
+            && let Some(phone) = phones.iter().find(|p| !nonexistent.contains(p))
+        {
+            return Err(ContactError::PhoneAlreadyExists {
+                phone: phone.clone(),
+            });
         }
 
         self.phone_repo.create_many(contact_id, phones).await

@@ -1,7 +1,7 @@
 # ==============================================================================
 # Stage 1: Builder
 # ==============================================================================
-FROM rust:1.77-slim AS builder
+FROM rust:1.82-slim AS builder
 
 WORKDIR /app
 
@@ -11,13 +11,22 @@ RUN apt-get update && apt-get install -y \
   libssl-dev \
   && rm -rf /var/lib/apt/lists/*
 
-ENV SQLX_OFFLINE=true
+# Copy dependency manifests first for layer caching
+COPY Cargo.toml Cargo.lock ./
+COPY settings/Cargo.toml settings/
+COPY types/Cargo.toml types/
+COPY viacep/Cargo.toml viacep/
+COPY client/Cargo.toml client/
+COPY collaborator/Cargo.toml collaborator/
+COPY contact/Cargo.toml contact/
+COPY location/Cargo.toml location/
+COPY project/Cargo.toml project/
 
-RUN sqlx prepare --workspace --  --all-targets
-
+# Copy source code and sqlx offline cache
 COPY . .
 
-# Build the real application
+# Build with offline sqlx (uses pre-generated .sqlx/ cache)
+ENV SQLX_OFFLINE=true
 RUN cargo build --release
 
 # ==============================================================================
@@ -37,14 +46,19 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -ms /bin/bash appuser
 
 # Copy the compiled binary from the builder stage
-# Replace "my_app" with your actual binary name (same as [package] name in Cargo.toml)
 COPY --from=builder /app/target/release/milions-sys /usr/local/bin/milions-sys
+
+# Copy migrations for automatic startup migration
+COPY --from=builder /app/migrations /app/migrations
+
+# Copy config files
+COPY --from=builder /app/files /app/files
 
 # Set ownership and permissions
 RUN chown appuser:appuser /usr/local/bin/milions-sys && chmod +x /usr/local/bin/milions-sys
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 8000
 
 CMD ["milions-sys"]

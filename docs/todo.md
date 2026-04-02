@@ -2,8 +2,8 @@
 
 ## High Priority (blocking)
 
-- [ ] Fix Dockerfile — `sqlx prepare` runs before `COPY . .` (build-breaking bug)
-- [ ] Generate `.sqlx/` offline query cache (`SQLX_OFFLINE=true` build fails without it)
+- [x] Fix Dockerfile — `sqlx prepare` runs before `COPY . .` (build-breaking bug)
+- [x] Generate `.sqlx/` offline query cache (`SQLX_OFFLINE=true` build fails without it)
 - [ ] Add bounded context crates as dependencies in root `Cargo.toml`
 - [ ] Implement HTTP route controllers — clients CRUD (5 endpoints)
 - [ ] Implement HTTP route controllers — projects CRUD + status (5 endpoints)
