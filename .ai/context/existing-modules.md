@@ -178,7 +178,11 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `UpdateProject` | `update(uuid, input) -> ProjectRow` |
 | `DeleteProject` | `delete(uuid) -> ProjectRow` |
 
-**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`
+| `FindStageById` | `find_stage_by_id(uuid) -> Option<ProjectStageRow>` |
+| `CreateStage` | `create_stage(input: CreateProjectStageRow) -> ProjectStageRow` |
+| `UpdateStage` | `update_stage(uuid, input: UpdateProjectStageRow) -> ProjectStageRow` |
+
+**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`
 
 ### Use Cases (`domain/ports/project_use_cases.rs`)
 
@@ -194,9 +198,11 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `CompleteProject` | `execute(uuid) -> ProjectRow` |
 | `CancelProject` | `execute(uuid) -> ProjectRow` |
 | `DeleteProject` | `execute(uuid) -> ProjectRow` |
+| `CreateStage` | `execute(project_id, input: CreateStageInput) -> ProjectStageRow` |
+| `UpdateStage` | `execute(project_id, stage_id, input: UpdateStageInput) -> ProjectStageRow` |
 
-**Input structs:** `CreateProjectInput`, `UpdateProjectInput`
+**Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`
 
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits. Depends on `PgProjectRepository`.
+`ProjectService` — implements all use case traits (project + stage). Depends on `PgProjectRepository`.
