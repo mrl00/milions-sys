@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO collaborators.tb_collaborator_contact (fk_collaborator, fk_contact)\n            VALUES ($1, $2)\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_collaborator_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_collaborator_contact",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_collaborator",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "fk_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_collaborator_contact_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_collaborator_contact_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6c7d189ccbf6291a45ee184606f0763c787c44a2c3555828316043f92ada82ca"
+}

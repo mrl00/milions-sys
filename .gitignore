@@ -1,1 +1,38 @@
-/target
+# Build output
+/target/
+**/target/
+
+# Cargo lock (keep for binaries, ignore for libraries)
+# Cargo.lock  # uncomment if this is a library crate
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Coverage & profiling
+lcov.info
+tarpaulin-report.html
+perf.data
+perf.data.old
+
+# Benchmarks output
+criterion/
+
+# AI
+# .ai

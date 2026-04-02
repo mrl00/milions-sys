@@ -1,0 +1,10 @@
+pub mod alphabetic;
+pub mod alphanumeric;
+pub mod cep;
+pub mod cnpj;
+pub mod cpf;
+pub mod doc;
+pub mod email;
+pub mod errors;
+pub mod numeric;
+pub mod phone;

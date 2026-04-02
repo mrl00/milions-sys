@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM contacts.tb_phone\n            WHERE pk_phone = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_phone",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_phone",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_phone",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_phone_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_phone_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "9cd70ce46960ae42b3e1da82885d4feb27605b8f17ab3b2351b30a64828ff8ec"
+}

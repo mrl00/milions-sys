@@ -1,0 +1,19 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+types = { path = "../types" }
+location = { path = "../location" }
+viacep = {path = "../viacep"}
+sqlx = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+snafu = { workspace = true }
+async-trait = {workspace = true}
+
+
+[lints.rust]
+dead_code = "allow"
