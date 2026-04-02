@@ -1,6 +1,11 @@
-use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
+use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
+use crate::domain::ports::contact_repository::*;
+use types::errors::infra_error::InfraError;
 
 pub struct PgContactRepository {
     pool: PgPool,
@@ -10,15 +15,71 @@ impl PgContactRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+}
 
-    pub async fn create<'a, E>(
-        executor: E,
-        contact: CreateContactRow,
-    ) -> Result<ContactRow, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        let created_contact = sqlx::query_as!(
+fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {
+    move |e| ContactError::Infra {
+        source: InfraError::Database { action, source: e },
+    }
+}
+
+#[async_trait]
+impl FindContactById for PgContactRepository {
+    async fn find_by_id(&self, uuid: Uuid) -> Result<Option<ContactRow>, ContactError> {
+        sqlx::query_as!(
+            ContactRow,
+            r#"
+            SELECT *
+            FROM contacts.tb_contact
+            WHERE pk_contact = $1
+            "#,
+            &uuid,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("buscar contato por id"))
+    }
+}
+
+#[async_trait]
+impl FindContactByEmail for PgContactRepository {
+    async fn find_by_email(&self, email: &str) -> Result<Option<ContactRow>, ContactError> {
+        sqlx::query_as!(
+            ContactRow,
+            r#"
+            SELECT *
+            FROM contacts.tb_contact
+            WHERE tx_email = $1
+            "#,
+            &email,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("buscar contato por email"))
+    }
+}
+
+#[async_trait]
+impl FindAllContacts for PgContactRepository {
+    async fn find_all(&self) -> Result<Vec<ContactRow>, ContactError> {
+        sqlx::query_as!(
+            ContactRow,
+            r#"
+            SELECT *
+            FROM contacts.tb_contact
+            ORDER BY idx_contact
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("listar contatos"))
+    }
+}
+
+#[async_trait]
+impl CreateContact for PgContactRepository {
+    async fn create(&self, contact: CreateContactRow) -> Result<ContactRow, ContactError> {
+        sqlx::query_as!(
             ContactRow,
             r#"
             INSERT INTO contacts.tb_contact (pk_contact, tx_email)
@@ -28,21 +89,16 @@ impl PgContactRepository {
             Uuid::now_v7(),
             &contact.tx_email,
         )
-        .fetch_one(executor)
-        .await?;
-
-        Ok(created_contact)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("criar contato"))
     }
+}
 
-    pub async fn update_email<'a, E>(
-        executor: E,
-        uuid: Uuid,
-        email: String,
-    ) -> Result<ContactRow, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        let updated_contact = sqlx::query_as!(
+#[async_trait]
+impl UpdateContactEmail for PgContactRepository {
+    async fn update_email(&self, uuid: Uuid, email: String) -> Result<ContactRow, ContactError> {
+        sqlx::query_as!(
             ContactRow,
             r#"
             UPDATE contacts.tb_contact
@@ -53,68 +109,11 @@ impl PgContactRepository {
             &email,
             &uuid,
         )
-        .fetch_one(executor)
-        .await?;
-
-        Ok(updated_contact)
-    }
-
-    pub async fn get_by_uuid<'a, E>(
-        executor: E,
-        uuid: Uuid,
-    ) -> Result<Option<ContactRow>, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        let contact = sqlx::query_as!(
-            ContactRow,
-            r#"
-            SELECT *
-            FROM contacts.tb_contact
-            WHERE pk_contact = $1
-            "#,
-            &uuid,
-        )
-        .fetch_optional(executor)
-        .await?;
-
-        Ok(contact)
-    }
-
-    pub async fn get_by_email<'a, E>(
-        executor: E,
-        email: String,
-    ) -> Result<Option<ContactRow>, sqlx::Error>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
-        let contact = sqlx::query_as!(
-            ContactRow,
-            r#"
-            SELECT *
-            FROM contacts.tb_contact
-            WHERE tx_email = $1
-            "#,
-            &email,
-        )
-        .fetch_optional(executor)
-        .await?;
-
-        Ok(contact)
-    }
-
-    pub async fn list_all(pool: &sqlx::PgPool) -> Result<Vec<ContactRow>, sqlx::Error> {
-        let contacts = sqlx::query_as!(
-            ContactRow,
-            r#"
-            SELECT *
-            FROM contacts.tb_contact
-            ORDER BY idx_contact
-            "#
-        )
-        .fetch_all(pool)
-        .await?;
-
-        Ok(contacts)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("atualizar email do contato"))
     }
 }
+
+impl FindAndCreateContact for PgContactRepository {}
+impl FindAndUpdateContact for PgContactRepository {}
