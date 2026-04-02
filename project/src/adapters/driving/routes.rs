@@ -3,13 +3,14 @@ use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use super::dto::{
-    CreateProjectRequest, ProjectResponse, ProjectStatusRequest, UpdateProjectRequest,
+    CreateProjectRequest, CreateStageRequest, ProjectResponse, ProjectStatusRequest,
+    StageResponse, UpdateProjectRequest, UpdateStageRequest,
 };
 use crate::application::project_service::ProjectService;
 use crate::domain::errors::ProjectError;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateProject, DeleteProject, FindProject, ListProjects,
-    PauseProject, StartProject, UpdateProject,
+    CancelProject, CompleteProject, CreateProject, CreateStage, DeleteProject, FindProject,
+    ListProjects, PauseProject, StartProject, UpdateProject, UpdateStage,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -24,7 +25,15 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(web::put().to(update_project))
             .route(web::delete().to(delete_project)),
     )
-    .service(web::resource("/projects/{uuid}/status").route(web::put().to(update_project_status)));
+    .service(web::resource("/projects/{uuid}/status").route(web::put().to(update_project_status)))
+    .service(
+        web::resource("/projects/{project_id}/stages")
+            .route(web::post().to(create_stage)),
+    )
+    .service(
+        web::resource("/projects/{project_id}/stages/{stage_id}")
+            .route(web::put().to(update_stage)),
+    );
 }
 
 fn parse_bd(val: &Option<String>) -> Option<BigDecimal> {
@@ -158,5 +167,46 @@ fn error_to_response(err: ProjectError) -> HttpResponse {
             "error": "internal_error",
             "message": "internal server error",
         })),
+    }
+}
+
+async fn create_stage(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+    body: web::Json<CreateStageRequest>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::CreateStageInput {
+        name: body.name.clone(),
+        description: body.description.clone(),
+        order: body.order,
+        start_date: body.start_date,
+        end_date: body.end_date,
+    };
+
+    match CreateStage::execute(&**service, project_id, input).await {
+        Ok(row) => HttpResponse::Created().json(StageResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn update_stage(
+    service: web::Data<ProjectService>,
+    path: web::Path<(Uuid, Uuid)>,
+    body: web::Json<UpdateStageRequest>,
+) -> HttpResponse {
+    let (project_id, stage_id) = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::UpdateStageInput {
+        name: body.name.clone(),
+        description: body.description.clone(),
+        order: body.order,
+        status: body.status.clone(),
+        start_date: body.start_date,
+        end_date: body.end_date,
+    };
+
+    match UpdateStage::execute(&**service, project_id, stage_id, input).await {
+        Ok(row) => HttpResponse::Ok().json(StageResponse::from(row)),
+        Err(e) => error_to_response(e),
     }
 }

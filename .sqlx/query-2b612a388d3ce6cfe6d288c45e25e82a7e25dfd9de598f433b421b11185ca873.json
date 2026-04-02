@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE clients.tb_project_stage\n            SET tx_name = COALESCE($1, tx_name),\n                tx_description = COALESCE($2, tx_description),\n                nr_order = COALESCE($3, nr_order),\n                tx_status = COALESCE($4, tx_status),\n                dt_start_date = COALESCE($5, dt_start_date),\n                dt_end_date = COALESCE($6, dt_end_date)\n            WHERE pk_project_stage = $7\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_project_stage",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_project_stage",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_project",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "tx_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "nr_order",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "tx_status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "dt_start_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 8,
+        "name": "dt_end_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 9,
+        "name": "ts_created_at_project_stage",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "ts_updated_at_project_stage",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Int4",
+        "Varchar",
+        "Date",
+        "Date",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "2b612a388d3ce6cfe6d288c45e25e82a7e25dfd9de598f433b421b11185ca873"
+}

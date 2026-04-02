@@ -3,7 +3,10 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
-use crate::domain::models::db::project_rows::{CreateProjectRow, ProjectRow, UpdateProjectRow};
+use crate::domain::models::db::project_rows::{
+    CreateProjectRow, CreateProjectStageRow, ProjectRow, ProjectStageRow, UpdateProjectRow,
+    UpdateProjectStageRow,
+};
 use crate::domain::ports::project_repository::*;
 use types::errors::infra_error::InfraError;
 
@@ -169,3 +172,86 @@ impl DeleteProject for PgProjectRepository {
 impl FindAndCreateProject for PgProjectRepository {}
 impl FindAndUpdateProject for PgProjectRepository {}
 impl FindAndDeleteProject for PgProjectRepository {}
+
+#[async_trait]
+impl FindStageById for PgProjectRepository {
+    async fn find_stage_by_id(&self, uuid: Uuid) -> Result<Option<ProjectStageRow>, ProjectError> {
+        sqlx::query_as!(
+            ProjectStageRow,
+            r#"
+            SELECT *
+            FROM clients.tb_project_stage
+            WHERE pk_project_stage = $1
+            "#,
+            &uuid,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("buscar etapa por id"))
+    }
+}
+
+#[async_trait]
+impl CreateStage for PgProjectRepository {
+    async fn create_stage(&self, input: CreateProjectStageRow) -> Result<ProjectStageRow, ProjectError> {
+        sqlx::query_as!(
+            ProjectStageRow,
+            r#"
+            INSERT INTO clients.tb_project_stage (
+                pk_project_stage, fk_project, tx_name, tx_description,
+                nr_order, tx_status, dt_start_date, dt_end_date
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &input.fk_project,
+            &input.tx_name,
+            input.tx_description,
+            input.nr_order,
+            &input.tx_status.to_string(),
+            input.dt_start_date,
+            input.dt_end_date,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("criar etapa"))
+    }
+}
+
+#[async_trait]
+impl UpdateStage for PgProjectRepository {
+    async fn update_stage(
+        &self,
+        uuid: Uuid,
+        u: UpdateProjectStageRow,
+    ) -> Result<ProjectStageRow, ProjectError> {
+        sqlx::query_as!(
+            ProjectStageRow,
+            r#"
+            UPDATE clients.tb_project_stage
+            SET tx_name = COALESCE($1, tx_name),
+                tx_description = COALESCE($2, tx_description),
+                nr_order = COALESCE($3, nr_order),
+                tx_status = COALESCE($4, tx_status),
+                dt_start_date = COALESCE($5, dt_start_date),
+                dt_end_date = COALESCE($6, dt_end_date)
+            WHERE pk_project_stage = $7
+            RETURNING *
+            "#,
+            u.tx_name,
+            u.tx_description,
+            u.nr_order,
+            u.tx_status.map(|s| s.to_string()),
+            u.dt_start_date,
+            u.dt_end_date,
+            &uuid,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("atualizar etapa"))
+    }
+}
+
+impl FindAndCreateStage for PgProjectRepository {}
+impl FindAndUpdateStage for PgProjectRepository {}

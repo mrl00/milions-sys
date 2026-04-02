@@ -4,7 +4,7 @@ use sqlx::types::chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
-use crate::domain::models::db::project_rows::ProjectRow;
+use crate::domain::models::db::project_rows::{ProjectRow, ProjectStageRow};
 
 pub struct CreateProjectInput {
     pub name: String,
@@ -29,6 +29,23 @@ pub struct UpdateProjectInput {
     pub actual_cost: Option<BigDecimal>,
     pub notes: Option<String>,
     pub active: Option<bool>,
+}
+
+pub struct CreateStageInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub order: i32,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+}
+
+pub struct UpdateStageInput {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub order: Option<i32>,
+    pub status: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 #[async_trait]
@@ -83,4 +100,23 @@ pub trait CancelProject: Send + Sync {
 #[async_trait]
 pub trait DeleteProject: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait CreateStage: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait UpdateStage: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        stage_id: Uuid,
+        input: UpdateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError>;
 }
