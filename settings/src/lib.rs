@@ -83,8 +83,22 @@ impl TryFrom<String> for Environment {
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
-    let base_path = std::env::current_dir().expect("Failed to get current directory");
-    let config_path = base_path.join("files").join("app_config");
+    let config_path = match std::env::var("CARGO_MANIFEST_DIR") {
+        Ok(dir) => {
+            // Running via cargo (build/test) — navigate from settings/ to workspace root
+            let workspace_root = std::path::Path::new(&dir)
+                .parent()
+                .unwrap_or(std::path::Path::new(&dir));
+            workspace_root.join("files").join("app_config")
+        }
+        Err(_) => {
+            // Running binary directly (Docker, production) — use current dir
+            std::env::current_dir()
+                .expect("Failed to get current directory")
+                .join("files")
+                .join("app_config")
+        }
+    };
 
     let environment: Environment = std::env::var("APP_ENVIRONMENT")
         .unwrap_or_else(|_| "development".into())
