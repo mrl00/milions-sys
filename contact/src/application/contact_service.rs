@@ -8,17 +8,17 @@ use crate::domain::errors::contact_error::ContactError;
 use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::contact_repository::{
-    CreateContact as _, FindContactByEmail as _, FindContactById as _,
-    FindAllContacts as _, UpdateContactEmail as _,
+    CreateContact as _, FindAllContacts as _, FindContactByEmail as _, FindContactById as _,
+    UpdateContactEmail as _,
 };
 use crate::domain::ports::contact_use_cases::{
-    AddPhone, AddPhones, FindContact, FindPhone, ListContacts, ListPhones,
-    RegisterContact, RegisterContactInput, RemovePhone,
-    UpdateContactEmail as UpdateContactEmailTrait, UpdatePhone as UpdatePhoneTrait,
+    AddPhone, AddPhones, FindContact, FindPhone, ListContacts, ListPhones, RegisterContact,
+    RegisterContactInput, RemovePhone, UpdateContactEmail as UpdateContactEmailTrait,
+    UpdatePhone as UpdatePhoneTrait,
 };
 use crate::domain::ports::phone_repository::{
-    CreateManyPhones as _, CreatePhone as _, DeletePhone as _,
-    FindNonexistentPhones as _, FindPhoneByContactId as _, FindPhoneById as _, UpdatePhone as _,
+    CreateManyPhones as _, CreatePhone as _, DeletePhone as _, FindNonexistentPhones as _,
+    FindPhoneByContactId as _, FindPhoneById as _, UpdatePhone as _,
 };
 use types::phone::Phone;
 
@@ -41,7 +41,12 @@ impl ContactService {
 #[async_trait]
 impl RegisterContact for ContactService {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError> {
-        if self.contact_repo.find_by_email(&input.email).await?.is_some() {
+        if self
+            .contact_repo
+            .find_by_email(&input.email)
+            .await?
+            .is_some()
+        {
             return Err(ContactError::AlreadyExists { email: input.email });
         }
 
@@ -137,7 +142,10 @@ impl AddPhones for ContactService {
             validate_phone(phone)?;
         }
 
-        let nonexistent = self.phone_repo.find_nonexistent_phones(phones.clone()).await?;
+        let nonexistent = self
+            .phone_repo
+            .find_nonexistent_phones(phones.clone())
+            .await?;
 
         if nonexistent.len() != phones.len() {
             if let Some(phone) = phones.iter().find(|p| !nonexistent.contains(p)) {
