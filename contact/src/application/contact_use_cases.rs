@@ -27,9 +27,7 @@ impl ContactUseCases {
 impl RegisterContact for ContactUseCases {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError> {
         if self.repo.find_by_email(&input.email).await?.is_some() {
-            return Err(ContactError::AlreadyExists {
-                email: input.email,
-            });
+            return Err(ContactError::AlreadyExists { email: input.email });
         }
 
         self.repo

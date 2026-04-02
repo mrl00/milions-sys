@@ -26,7 +26,8 @@ pub trait CreateProject: Send + Sync {
 
 #[async_trait]
 pub trait UpdateProject: Send + Sync {
-    async fn update(&self, uuid: Uuid, input: UpdateProjectRow) -> Result<ProjectRow, ProjectError>;
+    async fn update(&self, uuid: Uuid, input: UpdateProjectRow)
+    -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]

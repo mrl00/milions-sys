@@ -2,9 +2,9 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::models::db::collaborator_contact_row::CollaboratorContactRow;
 use crate::domain::models::db::collaborator_location_row::CollaboratorAddressRow;
-use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::models::db::collaborator_row::{
     CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
 };
@@ -126,10 +126,7 @@ impl FindAllCollaborators for PgCollaboratorRepository {
 
 #[async_trait]
 impl CreateCollaborator for PgCollaboratorRepository {
-    async fn create(
-        &self,
-        c: CreateCollaboratorRow,
-    ) -> Result<CollaboratorRow, CollaboratorError> {
+    async fn create(&self, c: CreateCollaboratorRow) -> Result<CollaboratorRow, CollaboratorError> {
         sqlx::query_as!(
             CollaboratorRow,
             r#"

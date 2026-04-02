@@ -6,12 +6,12 @@ use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::ports::client_repository::{
-    CreateClient as _, DeleteClient as _, FindAll as _, FindById as _,
-    FindByDocument as _, UpdateClient as _,
+    CreateClient as _, DeleteClient as _, FindAll as _, FindByDocument as _, FindById as _,
+    UpdateClient as _,
 };
 use crate::domain::ports::client_use_cases::{
-    ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientById,
-    FindClientByDocument, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
+    ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
+    FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
     UpdateClientInput,
 };
 use types::doc::Doc;
@@ -31,10 +31,7 @@ impl ClientService {
 
 #[async_trait]
 impl RegisterClient for ClientService {
-    async fn execute(
-        &self,
-        input: RegisterClientInput,
-    ) -> Result<ClientRow, ClientError> {
+    async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         let _doc: Doc = input.doc.clone().try_into()?;
         let _cep: types::cep::Cep = input.cep.clone().try_into()?;
         let _email: types::email::Email = input.email.clone().try_into()?;

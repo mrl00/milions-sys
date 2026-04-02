@@ -10,14 +10,18 @@ use crate::domain::models::db::project_rows::{
 use crate::domain::ports::project_repository::*;
 use crate::domain::use_cases::cancel_project::CancelProject;
 use crate::domain::use_cases::complete_project::CompleteProject;
-use crate::domain::use_cases::create_project::{CreateProject as CreateProjectTrait, CreateProjectInput};
+use crate::domain::use_cases::create_project::{
+    CreateProject as CreateProjectTrait, CreateProjectInput,
+};
 use crate::domain::use_cases::delete_project::DeleteProject as DeleteProjectTrait;
 use crate::domain::use_cases::find_project::FindProject;
 use crate::domain::use_cases::list_projects::ListProjects;
 use crate::domain::use_cases::list_projects_by_client::ListProjectsByClient;
 use crate::domain::use_cases::pause_project::PauseProject;
 use crate::domain::use_cases::start_project::StartProject;
-use crate::domain::use_cases::update_project::{UpdateProject as UpdateProjectTrait, UpdateProjectInput};
+use crate::domain::use_cases::update_project::{
+    UpdateProject as UpdateProjectTrait, UpdateProjectInput,
+};
 
 pub struct ProjectUseCases {
     repo: PgProjectRepository,

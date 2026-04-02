@@ -6,12 +6,16 @@ use crate::adapters::driven::postgres::pg_location_repository::PgLocationReposit
 use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use crate::domain::ports::location_repository::*;
-use crate::domain::use_cases::create_location::{CreateLocation as CreateLocationTrait, CreateLocationInput};
+use crate::domain::use_cases::create_location::{
+    CreateLocation as CreateLocationTrait, CreateLocationInput,
+};
 use crate::domain::use_cases::delete_location::DeleteLocation as DeleteLocationTrait;
 use crate::domain::use_cases::find_location::FindLocation;
 use crate::domain::use_cases::find_or_create_location::FindOrCreateLocation as FindOrCreateLocationTrait;
 use crate::domain::use_cases::list_locations::ListLocations;
-use crate::domain::use_cases::update_location::{UpdateLocation as UpdateLocationTrait, UpdateLocationInput};
+use crate::domain::use_cases::update_location::{
+    UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
+};
 
 pub struct LocationUseCases {
     repo: PgLocationRepository,

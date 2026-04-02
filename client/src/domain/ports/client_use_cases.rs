@@ -41,7 +41,8 @@ pub trait ListClients: Send + Sync {
 
 #[async_trait]
 pub trait UpdateClient: Send + Sync {
-    async fn execute(&self, uuid: Uuid, input: UpdateClientInput) -> Result<ClientRow, ClientError>;
+    async fn execute(&self, uuid: Uuid, input: UpdateClientInput)
+    -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]

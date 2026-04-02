@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository;
 use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::phone_repository::*;
 use crate::domain::use_cases::add_phone::AddPhone;
 use crate::domain::use_cases::add_phones::AddPhones;
@@ -11,7 +12,6 @@ use crate::domain::use_cases::find_phone::FindPhone;
 use crate::domain::use_cases::list_phones::ListPhones;
 use crate::domain::use_cases::remove_phone::RemovePhone;
 use crate::domain::use_cases::update_phone::UpdatePhone as UpdatePhoneTrait;
-use crate::domain::models::db::phone_row::PhoneRow;
 use types::phone::Phone;
 
 pub struct PhoneUseCases {
