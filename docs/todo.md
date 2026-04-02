@@ -5,15 +5,17 @@
 - [x] Fix Dockerfile — `sqlx prepare` runs before `COPY . .` (build-breaking bug)
 - [x] Generate `.sqlx/` offline query cache (`SQLX_OFFLINE=true` build fails without it)
 - [x] Add bounded context crates as dependencies in root `Cargo.toml`
-- [ ] Create request/response DTOs (serde structs) for all endpoints
-- [ ] Implement error-to-HTTP response mapping (`ClientError`, `ProjectError`, etc → JSON + status code)
-- [ ] Implement HTTP route controllers — clients CRUD (5 endpoints)
-- [ ] Implement HTTP route controllers — projects CRUD + status (5 endpoints)
-- [ ] Implement HTTP route controllers — stages create + update (2 endpoints)
-- [ ] Implement HTTP route controllers — collaborators CRUD + status (5 endpoints)
-- [ ] Implement HTTP route controllers — allocations create/list/update (3 endpoints)
-- [ ] Implement HTTP route controllers — reports cost/progress/history (3 endpoints)
-- [ ] Wire services into `startup.rs` and register all routes
+- [x] Create request/response DTOs (serde structs) for all endpoints
+- [x] Implement error-to-HTTP response mapping (`ClientError`, `ProjectError`, etc → JSON + status code)
+- [x] Implement HTTP route controllers — clients CRUD (6 endpoints)
+- [x] Implement HTTP route controllers — projects CRUD + status (6 endpoints)
+- [x] Implement HTTP route controllers — collaborators CRUD + status (6 endpoints)
+- [x] Implement HTTP route controllers — contacts CRUD + phone CRUD (7 endpoints)
+- [x] Implement HTTP route controllers — locations CRUD (5 endpoints)
+- [x] Wire services into `startup.rs` and register all routes
+- [ ] Implement HTTP route controllers — stages create + update (2 endpoints) — blocked: no use cases
+- [ ] Implement HTTP route controllers — allocations create/list/update (3 endpoints) — blocked: no use cases
+- [ ] Implement HTTP route controllers — reports cost/progress/history (3 endpoints) — blocked: no use cases
 
 ## Medium Priority
 
@@ -34,4 +36,4 @@
 
 ## Context
 
-Domain and application layers are complete for 5/6 bounded contexts (client, collaborator, contact, location, project). The critical gap is the HTTP adapter layer — **0 of 23 API endpoints are wired**. The viacep crate is a skeleton (port + model only, no service/adapter).
+22 of 23 API endpoints are wired and compiling. Routes are registered under `/api` scope in `startup.rs`. Remaining 7 endpoints (stages, allocations, reports) require domain use cases to be implemented first.
