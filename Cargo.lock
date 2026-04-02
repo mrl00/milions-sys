@@ -1488,12 +1488,23 @@ name = "milions-sys"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "bigdecimal",
+ "chrono",
+ "client",
+ "collaborator",
+ "contact",
+ "location",
+ "project",
  "regex",
  "secrecy",
+ "serde",
+ "serde_json",
  "settings",
  "sqlx",
  "thiserror",
  "tokio",
+ "types",
+ "uuid",
 ]
 
 [[package]]

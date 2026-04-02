@@ -4,15 +4,15 @@
 
 - [x] Fix Dockerfile — `sqlx prepare` runs before `COPY . .` (build-breaking bug)
 - [x] Generate `.sqlx/` offline query cache (`SQLX_OFFLINE=true` build fails without it)
-- [ ] Add bounded context crates as dependencies in root `Cargo.toml`
+- [x] Add bounded context crates as dependencies in root `Cargo.toml`
+- [ ] Create request/response DTOs (serde structs) for all endpoints
+- [ ] Implement error-to-HTTP response mapping (`ClientError`, `ProjectError`, etc → JSON + status code)
 - [ ] Implement HTTP route controllers — clients CRUD (5 endpoints)
 - [ ] Implement HTTP route controllers — projects CRUD + status (5 endpoints)
 - [ ] Implement HTTP route controllers — stages create + update (2 endpoints)
 - [ ] Implement HTTP route controllers — collaborators CRUD + status (5 endpoints)
 - [ ] Implement HTTP route controllers — allocations create/list/update (3 endpoints)
 - [ ] Implement HTTP route controllers — reports cost/progress/history (3 endpoints)
-- [ ] Create request/response DTOs (serde structs) for all endpoints
-- [ ] Implement error-to-HTTP response mapping (`ClientError`, `ProjectError`, etc → JSON + status code)
 - [ ] Wire services into `startup.rs` and register all routes
 
 ## Medium Priority
