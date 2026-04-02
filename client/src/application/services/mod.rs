@@ -1,3 +1,3 @@
 pub mod client_service;
 
-pub use client_service::ClientService;
+pub use client_service::ClientUseCases;

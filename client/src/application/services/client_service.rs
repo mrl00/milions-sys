@@ -1,110 +1,145 @@
-use crate::domain::errors::ClientError;
-use crate::domain::models::db::client_row::{
-    ClientRow, ClientStatus, CreateClientRow, UpdateClientRow,
-};
-use crate::domain::ports::client_repository::ClientRepository;
-use types::doc::Doc;
+use async_trait::async_trait;
+use sqlx::PgPool;
 use uuid::Uuid;
 
-pub struct ClientService;
+use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
+use crate::domain::errors::ClientError;
+use crate::domain::models::db::client_row::{ClientRow, ClientStatus};
+use crate::domain::ports::client_repository::*;
+use crate::domain::use_cases::activate_client::ActivateClient;
+use crate::domain::use_cases::deactivate_client::DeactivateClient;
+use crate::domain::use_cases::delete_client::DeleteClient as DeleteClientTrait;
+use crate::domain::use_cases::find_client::FindClientById;
+use crate::domain::use_cases::find_client_by_document::FindClientByDocument;
+use crate::domain::use_cases::list_clients::ListClients;
+use crate::domain::use_cases::update_client::{UpdateClient as UpdateClientTrait, UpdateClientInput};
+use types::doc::Doc;
 
-impl ClientService {
-    pub async fn find_by_id(
-        repo: &dyn ClientRepository,
-        uuid: Uuid,
-    ) -> Result<ClientRow, ClientError> {
-        repo.find_by_id(uuid)
+pub struct ClientUseCases {
+    repo: PgClientRepository,
+}
+
+impl ClientUseCases {
+    pub fn new(pool: PgPool) -> Self {
+        Self {
+            repo: PgClientRepository::new(pool),
+        }
+    }
+}
+
+#[async_trait]
+impl FindClientById for ClientUseCases {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
             .await?
             .ok_or(ClientError::NotFound { uuid })
     }
+}
 
-    pub async fn find_by_document(
-        repo: &dyn ClientRepository,
-        doc: &str,
-    ) -> Result<Option<ClientRow>, ClientError> {
-        repo.find_by_document(doc).await
+#[async_trait]
+impl FindClientByDocument for ClientUseCases {
+    async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
+        self.repo.find_by_document(doc).await
     }
+}
 
-    pub async fn find_all(repo: &dyn ClientRepository) -> Result<Vec<ClientRow>, ClientError> {
-        repo.find_all().await
+#[async_trait]
+impl ListClients for ClientUseCases {
+    async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
+        self.repo.find_all().await
     }
+}
 
-    pub async fn create(
-        repo: &dyn ClientRepository,
-        name: String,
-        doc: String,
-    ) -> Result<ClientRow, ClientError> {
-        let _validated_doc: Doc = doc.clone().try_into()?;
-
-        if repo.find_by_document(&doc).await?.is_some() {
-            return Err(ClientError::DocumentAlreadyExists { doc });
-        }
-
-        let input = CreateClientRow {
-            tx_name: name,
-            tx_status: ClientStatus::Active,
-            tx_doc: doc,
-        };
-
-        repo.create(input).await
-    }
-
-    pub async fn update(
-        repo: &dyn ClientRepository,
+#[async_trait]
+impl UpdateClientTrait for ClientUseCases {
+    async fn execute(
+        &self,
         uuid: Uuid,
-        input: UpdateClientRow,
+        input: UpdateClientInput,
     ) -> Result<ClientRow, ClientError> {
-        Self::find_by_id(repo, uuid).await?;
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
 
-        if let Some(ref doc) = input.tx_doc {
+        if let Some(ref doc) = input.doc {
             let _validated: Doc = doc.clone().try_into()?;
         }
 
-        repo.update(uuid, input).await
+        self.repo
+            .update(
+                uuid,
+                crate::domain::models::db::client_row::UpdateClientRow {
+                    tx_name: input.name,
+                    tx_status: None,
+                    tx_doc: input.doc,
+                },
+            )
+            .await
     }
+}
 
-    pub async fn activate(
-        repo: &dyn ClientRepository,
-        uuid: Uuid,
-    ) -> Result<ClientRow, ClientError> {
-        let current = Self::find_by_id(repo, uuid).await?;
+#[async_trait]
+impl ActivateClient for ClientUseCases {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
         if current.tx_status == ClientStatus::Active.to_string() {
             return Err(ClientError::AlreadyActive { uuid });
         }
 
-        repo.update(
-            uuid,
-            UpdateClientRow {
-                tx_name: None,
-                tx_status: Some(ClientStatus::Active),
-                tx_doc: None,
-            },
-        )
-        .await
+        self.repo
+            .update(
+                uuid,
+                crate::domain::models::db::client_row::UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Active),
+                    tx_doc: None,
+                },
+            )
+            .await
     }
+}
 
-    pub async fn deactivate(
-        repo: &dyn ClientRepository,
-        uuid: Uuid,
-    ) -> Result<ClientRow, ClientError> {
-        let current = Self::find_by_id(repo, uuid).await?;
+#[async_trait]
+impl DeactivateClient for ClientUseCases {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
         if current.tx_status == ClientStatus::Inactive.to_string() {
             return Err(ClientError::AlreadyInactive { uuid });
         }
 
-        repo.update(
-            uuid,
-            UpdateClientRow {
-                tx_name: None,
-                tx_status: Some(ClientStatus::Inactive),
-                tx_doc: None,
-            },
-        )
-        .await
+        self.repo
+            .update(
+                uuid,
+                crate::domain::models::db::client_row::UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Inactive),
+                    tx_doc: None,
+                },
+            )
+            .await
     }
+}
 
-    pub async fn delete(repo: &dyn ClientRepository, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        Self::find_by_id(repo, uuid).await?;
-        repo.delete(uuid).await
+#[async_trait]
+impl DeleteClientTrait for ClientUseCases {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        self.repo.delete(uuid).await
     }
 }
