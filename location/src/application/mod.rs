@@ -1,1 +1,1 @@
-pub mod services;
+pub mod location_service;
