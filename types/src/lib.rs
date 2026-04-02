@@ -5,5 +5,6 @@ pub mod cnpj;
 pub mod cpf;
 pub mod doc;
 pub mod email;
+pub mod errors;
 pub mod numeric;
 pub mod phone;
