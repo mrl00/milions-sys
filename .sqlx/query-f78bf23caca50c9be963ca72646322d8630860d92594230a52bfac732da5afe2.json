@@ -1,0 +1,68 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE collaborators.tb_collaborator\n            SET tx_name = COALESCE($1, tx_name),\n                tx_level = COALESCE($2, tx_level),\n                tx_status = COALESCE($3, tx_status),\n                tx_cpf = COALESCE($4, tx_cpf)\n            WHERE pk_collaborator = $5\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_collaborator",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_collaborator",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_cpf",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "tx_level",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "tx_status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "ts_collaborator_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "ts_collaborator_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f78bf23caca50c9be963ca72646322d8630860d92594230a52bfac732da5afe2"
+}

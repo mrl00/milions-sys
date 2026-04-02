@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT input.tx_phone\n            FROM UNNEST($1::text[]) AS input(tx_phone)\n            LEFT JOIN contacts.tb_phone p ON p.tx_phone = input.tx_phone\n            WHERE p.tx_phone IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tx_phone",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f46d0c0ed7c3f6a042ac8d3322fb0456aeed4ac76119f9a5644449254a3ab5b6"
+}

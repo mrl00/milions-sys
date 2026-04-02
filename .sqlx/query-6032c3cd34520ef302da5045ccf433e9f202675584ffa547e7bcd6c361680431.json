@@ -1,0 +1,61 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE clients.tb_client\n            SET tx_name = COALESCE($1, tx_name),\n                tx_status = COALESCE($2, tx_status),\n                tx_doc = COALESCE($3, tx_doc)\n            WHERE pk_client = $4\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_client",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_client",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_client_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_client_updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 6,
+        "name": "tx_doc",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6032c3cd34520ef302da5045ccf433e9f202675584ffa547e7bcd6c361680431"
+}
