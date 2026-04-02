@@ -2,7 +2,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
-use crate::domain::errors::{ClientError, InfraError};
+use crate::domain::errors::ClientError;
 
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
 use location::domain::models::db::location_row::LocationRow;
@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use types::cep::Cep;
 use types::doc::Doc;
 use types::email::Email;
+use types::errors::infra_error::InfraError;
 use types::phone::Phone;
 use uuid::Uuid;
 use viacep::domain::models::viacep_model::ViaCepAddressModel;

@@ -1,7 +1,4 @@
-mod infra_error;
-
-pub use infra_error::InfraError;
-
+use types::errors::infra_error::InfraError;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]

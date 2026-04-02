@@ -1,5 +1,4 @@
-use crate::domain::errors::InfraError;
-use types::phone::PhoneError;
+use types::{errors::infra_error::InfraError, phone::PhoneError};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]

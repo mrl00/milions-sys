@@ -1456,6 +1456,7 @@ dependencies = [
  "snafu",
  "sqlx",
  "thiserror",
+ "types",
  "uuid",
 ]
 
@@ -1894,6 +1895,7 @@ dependencies = [
  "snafu",
  "sqlx",
  "thiserror",
+ "types",
  "uuid",
 ]
 
@@ -2984,6 +2986,8 @@ version = "0.1.0"
 dependencies = [
  "brazilian_utils",
  "regex",
+ "snafu",
+ "sqlx",
  "thiserror",
 ]
 

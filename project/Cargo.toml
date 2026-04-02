@@ -5,6 +5,7 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
+types = { path = "../types" }
 sqlx = { workspace = true }
 uuid = { workspace = true }
 serde = { workspace = true }

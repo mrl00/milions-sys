@@ -1,11 +1,7 @@
-mod infra_error;
-
-pub use infra_error::InfraError;
-
 use types::cep::CepError;
 use types::doc::DocError;
 use types::email::EmailError;
-use types::phone::PhoneError;
+use types::{errors::infra_error::InfraError, phone::PhoneError};
 use uuid::Uuid;
 use viacep::domain::ports::viacep_port::ViaCepError;
 
