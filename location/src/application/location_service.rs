@@ -11,8 +11,9 @@ use crate::domain::ports::location_repository::{
 };
 use crate::domain::ports::location_use_cases::{
     CreateLocation as CreateLocationTrait, CreateLocationInput,
-    DeleteLocation as DeleteLocationTrait, FindLocation, FindOrCreateLocation as FindOrCreateLocationTrait,
-    ListLocations, UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
+    DeleteLocation as DeleteLocationTrait, FindLocation,
+    FindOrCreateLocation as FindOrCreateLocationTrait, ListLocations,
+    UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
 };
 
 pub struct LocationService {
