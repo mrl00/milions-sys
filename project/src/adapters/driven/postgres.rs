@@ -193,7 +193,10 @@ impl FindStageById for PgProjectRepository {
 
 #[async_trait]
 impl CreateStage for PgProjectRepository {
-    async fn create_stage(&self, input: CreateProjectStageRow) -> Result<ProjectStageRow, ProjectError> {
+    async fn create_stage(
+        &self,
+        input: CreateProjectStageRow,
+    ) -> Result<ProjectStageRow, ProjectError> {
         sqlx::query_as!(
             ProjectStageRow,
             r#"

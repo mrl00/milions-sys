@@ -3,8 +3,8 @@ use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use super::dto::{
-    CreateProjectRequest, CreateStageRequest, ProjectResponse, ProjectStatusRequest,
-    StageResponse, UpdateProjectRequest, UpdateStageRequest,
+    CreateProjectRequest, CreateStageRequest, ProjectResponse, ProjectStatusRequest, StageResponse,
+    UpdateProjectRequest, UpdateStageRequest,
 };
 use crate::application::project_service::ProjectService;
 use crate::domain::errors::ProjectError;
@@ -26,10 +26,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(web::delete().to(delete_project)),
     )
     .service(web::resource("/projects/{uuid}/status").route(web::put().to(update_project_status)))
-    .service(
-        web::resource("/projects/{project_id}/stages")
-            .route(web::post().to(create_stage)),
-    )
+    .service(web::resource("/projects/{project_id}/stages").route(web::post().to(create_stage)))
     .service(
         web::resource("/projects/{project_id}/stages/{stage_id}")
             .route(web::put().to(update_stage)),
