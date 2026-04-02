@@ -14,25 +14,19 @@ use crate::domain::ports::collaborator_repository::FindAllCollaborators as _;
 use crate::domain::ports::collaborator_repository::FindCollaboratorByCpf as _;
 use crate::domain::ports::collaborator_repository::FindCollaboratorById as _;
 use crate::domain::ports::collaborator_repository::UpdateCollaborator as _;
-use crate::domain::use_cases::activate_collaborator::ActivateCollaborator;
-use crate::domain::use_cases::deactivate_collaborator::DeactivateCollaborator;
-use crate::domain::use_cases::delete_collaborator::DeleteCollaborator as DeleteCollaboratorTrait;
-use crate::domain::use_cases::find_collaborator::FindCollaborator;
-use crate::domain::use_cases::find_collaborator_by_cpf::FindCollaboratorByCpf;
-use crate::domain::use_cases::list_collaborators::ListCollaborators;
-use crate::domain::use_cases::register_collaborator::{
+use crate::domain::ports::collaborator_use_cases::{
+    ActivateCollaborator, DeactivateCollaborator, DeleteCollaborator as DeleteCollaboratorTrait,
+    FindCollaborator, FindCollaboratorByCpf, ListCollaborators,
     RegisterCollaborator as RegisterCollaboratorTrait, RegisterCollaboratorInput,
-};
-use crate::domain::use_cases::update_collaborator::{
     UpdateCollaborator as UpdateCollaboratorTrait, UpdateCollaboratorInput,
 };
 use types::cpf::Cpf;
 
-pub struct CollaboratorUseCases {
+pub struct CollaboratorService {
     repo: PgCollaboratorRepository,
 }
 
-impl CollaboratorUseCases {
+impl CollaboratorService {
     pub fn new(pool: PgPool) -> Self {
         Self {
             repo: PgCollaboratorRepository::new(pool),
@@ -41,7 +35,7 @@ impl CollaboratorUseCases {
 }
 
 #[async_trait]
-impl FindCollaborator for CollaboratorUseCases {
+impl FindCollaborator for CollaboratorService {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
@@ -51,21 +45,21 @@ impl FindCollaborator for CollaboratorUseCases {
 }
 
 #[async_trait]
-impl FindCollaboratorByCpf for CollaboratorUseCases {
+impl FindCollaboratorByCpf for CollaboratorService {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
         self.repo.find_by_cpf(cpf).await
     }
 }
 
 #[async_trait]
-impl ListCollaborators for CollaboratorUseCases {
+impl ListCollaborators for CollaboratorService {
     async fn execute(&self) -> Result<Vec<CollaboratorRow>, CollaboratorError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl RegisterCollaboratorTrait for CollaboratorUseCases {
+impl RegisterCollaboratorTrait for CollaboratorService {
     async fn execute(
         &self,
         input: RegisterCollaboratorInput,
@@ -88,7 +82,7 @@ impl RegisterCollaboratorTrait for CollaboratorUseCases {
 }
 
 #[async_trait]
-impl UpdateCollaboratorTrait for CollaboratorUseCases {
+impl UpdateCollaboratorTrait for CollaboratorService {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -118,7 +112,7 @@ impl UpdateCollaboratorTrait for CollaboratorUseCases {
 }
 
 #[async_trait]
-impl ActivateCollaborator for CollaboratorUseCases {
+impl ActivateCollaborator for CollaboratorService {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -145,7 +139,7 @@ impl ActivateCollaborator for CollaboratorUseCases {
 }
 
 #[async_trait]
-impl DeactivateCollaborator for CollaboratorUseCases {
+impl DeactivateCollaborator for CollaboratorService {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -172,7 +166,7 @@ impl DeactivateCollaborator for CollaboratorUseCases {
 }
 
 #[async_trait]
-impl DeleteCollaboratorTrait for CollaboratorUseCases {
+impl DeleteCollaboratorTrait for CollaboratorService {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
