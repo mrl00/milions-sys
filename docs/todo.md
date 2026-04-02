@@ -13,14 +13,14 @@
 - [x] Implement HTTP route controllers — contacts CRUD + phone CRUD (7 endpoints)
 - [x] Implement HTTP route controllers — locations CRUD (5 endpoints)
 - [x] Wire services into `startup.rs` and register all routes
-- [ ] Implement HTTP route controllers — stages create + update (2 endpoints) — blocked: no use cases
+- [x] Implement HTTP route controllers — stages create + update (2 endpoints)
 - [ ] Implement HTTP route controllers — allocations create/list/update (3 endpoints) — blocked: no use cases
 - [ ] Implement HTTP route controllers — reports cost/progress/history (3 endpoints) — blocked: no use cases
 
 ## Medium Priority
 
 - [ ] Implement viacep crate — HTTP client adapter for ViaCEP API
-- [ ] Implement Stage CRUD — domain ports, service, repository (only models exist)
+- [x] Implement Stage CRUD — domain ports, service, repository (only models existed)
 - [ ] Implement Allocation CRUD — domain ports, service, repository (only models exist)
 - [ ] Implement Reports — cost, progress, history queries
 - [ ] Add unit tests per bounded context
