@@ -1,37 +1,55 @@
 # location
 
-A Rust project using hexagonal architecture (ports and adapters).
+Bounded context for managing **addresses/locations** in the milions-sys construction project management system.
 
-## Project Structure
+## Domain
 
-```
-src/
-├── adapters/
-│   ├── driven/      # Outgoing adapters (repositories, external services)
-│   └── driving/     # Incoming adapters (controllers, handlers)
-├── application/     # Application services / use cases
-└── domain/
-    ├── model.rs     # Domain models
-    └── ports.rs     # Port interfaces (traits)
-```
+Locations represent physical addresses with full Brazilian address data including CEP (postal code), street, neighborhood, city, state, and geographic coordinates. Addresses are deduplicated by hash to avoid duplicates.
 
 ## Architecture
 
-### Domain Layer
+Follows hexagonal architecture (ports and adapters):
 
-Contains core business logic with no external dependencies. Defines domain models and port interfaces (traits) that abstract external concerns.
+```
+location/
+├── src/
+│   ├── domain/
+│   │   ├── errors/mod.rs          # LocationError enum
+│   │   ├── models/db/             # LocationRow
+│   │   └── ports/
+│   │       ├── location_repository.rs   # FindById, FindByHash, FindAll, Create, Update, Delete
+│   │       └── location_use_cases.rs    # RegisterLocation, FindLocation, ListLocations, UpdateLocation, DeleteLocation
+│   ├── application/
+│   │   └── location_service.rs    # LocationService — implements all use case traits
+│   └── adapters/
+│       ├── driven/
+│       │   └── postgres/
+│       │       └── pg_location_repository.rs  # PostgreSQL implementation
+│       └── driving/
+│           ├── dto.rs             # Request/response DTOs
+│           └── routes.rs          # HTTP route handlers
+└── Cargo.toml
+```
 
-### Application Layer
+## Dependencies
 
-Orchestrates use cases by coordinating domain objects and ports. Contains application services that implement business workflows.
+- `types` — shared value objects (`Cep`)
 
-### Adapters Layer
+## API Endpoints
 
-Implements ports to connect the application to external systems.
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/locations` | Register a new location |
+| GET | `/api/locations` | List all locations |
+| GET | `/api/locations/{uuid}` | Find location by ID |
+| PUT | `/api/locations/{uuid}` | Update a location |
+| DELETE | `/api/locations/{uuid}` | Delete a location |
 
-- **Driving adapters** (inbound): Receive input and invoke application services (e.g., HTTP handlers, CLI commands)
-- **Driven adapters** (outbound): Implement output interfaces (e.g., database repositories, external API clients)
+## Error Types
 
-## License
-
-This project is licensed under the MIT License.
+| Variant | HTTP Status | Description |
+|---------|-------------|-------------|
+| `NotFound` | 404 | Location not found |
+| `AlreadyExists` | 409 | Location with same hash already exists |
+| `InvalidField` | 422 | Validation error on a field |
+| `Infra` | 500 | Infrastructure/database error |
