@@ -13,7 +13,7 @@ use crate::domain::ports::collaborator_repository::{
 };
 use crate::domain::ports::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
-    FindCollaboratorByCpfUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+    FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
     RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
     UpdateCollaboratorUseCase,
 };
@@ -50,7 +50,7 @@ impl<R: CollaboratorRepository> FindCollaboratorUseCase for CollaboratorService<
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> FindCollaboratorByCpfUseCase for CollaboratorService<R> {
+impl<R: CollaboratorRepository> FindCollaboratorByDocumentUseCase for CollaboratorService<R> {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
         self.repo.find_by_cpf(cpf).await
     }
@@ -195,7 +195,7 @@ mod tests {
     };
     use crate::domain::ports::collaborator_use_cases::{
         ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
-        FindCollaboratorByCpfUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+        FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
         RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
         UpdateCollaboratorUseCase,
     };
@@ -341,7 +341,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_cpf_result = Some(row.clone());
         let service = CollaboratorService::new(repo);
-        let result = FindCollaboratorByCpfUseCase::execute(&service, "12345678909")
+        let result = FindCollaboratorByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
         assert!(result.is_some());
