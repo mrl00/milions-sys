@@ -18,3 +18,7 @@ chrono = { workspace = true }
 
 [lints.rust]
 dead_code = "allow"
+
+[dev-dependencies]
+mockall = "0.13"
+tokio = { workspace = true }

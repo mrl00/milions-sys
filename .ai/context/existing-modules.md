@@ -35,7 +35,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/client_service.rs`)
 
-`ClientService` — implements all use case traits. Depends on `PgClientRepository`.
+`ClientService<R>` — generic over repository traits. `ConcreteClientService` type alias for production (`ClientService<PgClientRepository>`). 17 unit tests with `MockRepo`.
 
 ---
 
@@ -71,7 +71,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/collaborator_service.rs`)
 
-`CollaboratorService` — implements all use case traits. Depends on `PgCollaboratorRepository`.
+`CollaboratorService<R>` — generic over repository traits. `ConcreteCollaboratorService` type alias for production (`CollaboratorService<PgCollaboratorRepository>`). 17 unit tests with `MockRepo`.
 
 ---
 
@@ -129,7 +129,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/contact_service.rs`)
 
-`ContactService` — implements all use case traits (contact + phone). Depends on `PgContactRepository` + `PgPhoneRepository`.
+`ContactService<C, P>` — generic over contact and phone repository traits. `ConcreteContactService` type alias for production (`ContactService<PgContactRepository, PgPhoneRepository>`). 21 unit tests with `MockContactRepo` and `MockPhoneRepo`.
 
 ---
 
@@ -163,7 +163,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/location_service.rs`)
 
-`LocationService` — implements all use case traits. Depends on `PgLocationRepository`.
+`LocationService<R>` — generic over repository traits. `ConcreteLocationService` type alias for production (`LocationService<PgLocationRepository>`). 16 unit tests with `MockRepo`.
 
 ---
 
@@ -220,4 +220,4 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits (project + stage + allocation + reports). Depends on `PgProjectRepository`.
+`ProjectService<R>` — generic over repository traits. `ConcreteProjectService` type alias for production (`ProjectService<PgProjectRepository>`). 14 unit tests with `MockRepo`.
