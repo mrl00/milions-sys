@@ -11,9 +11,11 @@ use super::dto::{
 use crate::application::project_service::ConcreteProjectService;
 use crate::domain::errors::ProjectError;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateAllocation, CreateProject, CreateStage, DeleteProject,
-    FindProject, GetCostReport, GetHistoryReport, GetProgressReport, ListAllocations, ListProjects,
-    PauseProject, StartProject, UpdateAllocation, UpdateProject, UpdateStage,
+    CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
+    CreateStageUseCase, DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase,
+    GetHistoryReportUseCase, GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsUseCase,
+    PauseProjectUseCase, StartProjectUseCase, UpdateAllocationUseCase, UpdateProjectUseCase,
+    UpdateStageUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -76,14 +78,14 @@ async fn create_project(
         address_id: body.address_id,
     };
 
-    match CreateProject::execute(&**service, input).await {
+    match CreateProjectUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(ProjectResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }
 
 async fn list_projects(service: web::Data<ConcreteProjectService>) -> HttpResponse {
-    match ListProjects::execute(&**service).await {
+    match ListProjectsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ProjectResponse> = rows.into_iter().map(ProjectResponse::from).collect();
             HttpResponse::Ok().json(resp)
@@ -97,7 +99,7 @@ async fn get_project(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match FindProject::execute(&**service, uuid).await {
+    match FindProjectUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -122,7 +124,7 @@ async fn update_project(
         active: body.active,
     };
 
-    match UpdateProject::execute(&**service, uuid, input).await {
+    match UpdateProjectUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -133,7 +135,7 @@ async fn delete_project(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match DeleteProject::execute(&**service, uuid).await {
+    match DeleteProjectUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -146,16 +148,16 @@ async fn update_project_status(
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
-        "in_progress" => StartProject::execute(&**service, uuid)
+        "in_progress" => StartProjectUseCase::execute(&**service, uuid)
             .await
             .map(ProjectResponse::from),
-        "paused" => PauseProject::execute(&**service, uuid)
+        "paused" => PauseProjectUseCase::execute(&**service, uuid)
             .await
             .map(ProjectResponse::from),
-        "completed" => CompleteProject::execute(&**service, uuid)
+        "completed" => CompleteProjectUseCase::execute(&**service, uuid)
             .await
             .map(ProjectResponse::from),
-        "cancelled" => CancelProject::execute(&**service, uuid)
+        "cancelled" => CancelProjectUseCase::execute(&**service, uuid)
             .await
             .map(ProjectResponse::from),
         _ => {
@@ -218,7 +220,7 @@ async fn create_stage(
         end_date: body.end_date,
     };
 
-    match CreateStage::execute(&**service, project_id, input).await {
+    match CreateStageUseCase::execute(&**service, project_id, input).await {
         Ok(row) => HttpResponse::Created().json(StageResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -239,7 +241,7 @@ async fn update_stage(
         end_date: body.end_date,
     };
 
-    match UpdateStage::execute(&**service, project_id, stage_id, input).await {
+    match UpdateStageUseCase::execute(&**service, project_id, stage_id, input).await {
         Ok(row) => HttpResponse::Ok().json(StageResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -260,7 +262,7 @@ async fn create_allocation(
         present: body.present,
     };
 
-    match CreateAllocation::execute(&**service, project_id, input).await {
+    match CreateAllocationUseCase::execute(&**service, project_id, input).await {
         Ok(row) => HttpResponse::Created().json(AllocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -271,7 +273,7 @@ async fn list_allocations(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
-    match ListAllocations::execute(&**service, project_id).await {
+    match ListAllocationsUseCase::execute(&**service, project_id).await {
         Ok(rows) => {
             let resp: Vec<AllocationResponse> =
                 rows.into_iter().map(AllocationResponse::from).collect();
@@ -294,7 +296,7 @@ async fn update_allocation(
         present: body.present,
     };
 
-    match UpdateAllocation::execute(&**service, project_id, allocation_id, input).await {
+    match UpdateAllocationUseCase::execute(&**service, project_id, allocation_id, input).await {
         Ok(row) => HttpResponse::Ok().json(AllocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -305,7 +307,7 @@ async fn get_cost_report(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
-    match GetCostReport::execute(&**service, project_id).await {
+    match GetCostReportUseCase::execute(&**service, project_id).await {
         Ok(report) => HttpResponse::Ok().json(CostReportResponse {
             project_id: report.project_id,
             project_name: report.project_name,
@@ -326,7 +328,7 @@ async fn get_progress_report(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
-    match GetProgressReport::execute(&**service, project_id).await {
+    match GetProgressReportUseCase::execute(&**service, project_id).await {
         Ok(report) => HttpResponse::Ok().json(ProgressReportResponse {
             project_id: report.project_id,
             project_name: report.project_name,
@@ -355,7 +357,7 @@ async fn get_history_report(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let collaborator_id = path.into_inner();
-    match GetHistoryReport::execute(&**service, collaborator_id).await {
+    match GetHistoryReportUseCase::execute(&**service, collaborator_id).await {
         Ok(report) => HttpResponse::Ok().json(HistoryReportResponse {
             collaborator_id: report.collaborator_id,
             collaborator_name: report.collaborator_name,

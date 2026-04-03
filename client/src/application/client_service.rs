@@ -10,9 +10,9 @@ use crate::domain::ports::client_repository::{
     FindById, UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::client_use_cases::{
-    ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
-    FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
-    UpdateClientInput,
+    ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
+    FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
+    RegisterClientUseCase, UpdateClientInput, UpdateClientUseCase,
 };
 use contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository;
 use contact::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository;
@@ -65,7 +65,7 @@ fn compute_location_hash(
 }
 
 #[async_trait]
-impl RegisterClient for ConcreteClientService {
+impl RegisterClientUseCase for ConcreteClientService {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         let _doc: Doc = input.doc.clone().try_into()?;
         let _cep: types::cep::Cep = input.cep.clone().try_into()?;
@@ -207,7 +207,7 @@ impl RegisterClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl FindClientById for ConcreteClientService {
+impl FindClientByIdUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -217,21 +217,21 @@ impl FindClientById for ConcreteClientService {
 }
 
 #[async_trait]
-impl FindClientByDocument for ConcreteClientService {
+impl FindClientByDocumentUseCase for ConcreteClientService {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl ListClients for ConcreteClientService {
+impl ListClientsUseCase for ConcreteClientService {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl UpdateClient for ConcreteClientService {
+impl UpdateClientUseCase for ConcreteClientService {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -260,7 +260,7 @@ impl UpdateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl ActivateClient for ConcreteClientService {
+impl ActivateClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -286,7 +286,7 @@ impl ActivateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl DeactivateClient for ConcreteClientService {
+impl DeactivateClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -312,7 +312,7 @@ impl DeactivateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl DeleteClientTrait for ConcreteClientService {
+impl DeleteClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -324,7 +324,7 @@ impl DeleteClientTrait for ConcreteClientService {
 }
 
 #[async_trait]
-impl<R: ClientRepository> FindClientById for ClientService<R> {
+impl<R: ClientRepository> FindClientByIdUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -334,21 +334,21 @@ impl<R: ClientRepository> FindClientById for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> FindClientByDocument for ClientService<R> {
+impl<R: ClientRepository> FindClientByDocumentUseCase for ClientService<R> {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl<R: ClientRepository> ListClients for ClientService<R> {
+impl<R: ClientRepository> ListClientsUseCase for ClientService<R> {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R: ClientRepository> UpdateClient for ClientService<R> {
+impl<R: ClientRepository> UpdateClientUseCase for ClientService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -377,7 +377,7 @@ impl<R: ClientRepository> UpdateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> ActivateClient for ClientService<R> {
+impl<R: ClientRepository> ActivateClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -403,7 +403,7 @@ impl<R: ClientRepository> ActivateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> DeactivateClient for ClientService<R> {
+impl<R: ClientRepository> DeactivateClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -429,7 +429,7 @@ impl<R: ClientRepository> DeactivateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> DeleteClientTrait for ClientService<R> {
+impl<R: ClientRepository> DeleteClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -450,8 +450,9 @@ mod tests {
         UpdateClient as UpdateClientRepo,
     };
     use crate::domain::ports::client_use_cases::{
-        ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
-        FindClientById, ListClients, UpdateClient, UpdateClientInput,
+        ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
+        FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, UpdateClientInput,
+        UpdateClientUseCase,
     };
 
     #[derive(Default)]
@@ -562,7 +563,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = FindClientById::execute(&service, uuid).await.unwrap();
+        let result = FindClientByIdUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
         assert_eq!(result.tx_name, "Test Client");
     }
@@ -572,7 +575,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = FindClientById::execute(&service, uuid).await;
+        let result = FindClientByIdUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 
@@ -582,7 +585,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_document_result = Some(row.clone());
         let service = ClientService::new(repo);
-        let result = FindClientByDocument::execute(&service, "12345678909")
+        let result = FindClientByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
         assert!(result.is_some());
@@ -596,7 +599,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![r1, r2];
         let service = ClientService::new(repo);
-        let result = ListClients::execute(&service).await.unwrap();
+        let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -604,7 +607,7 @@ mod tests {
     async fn list_clients_returns_empty() {
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = ListClients::execute(&service).await.unwrap();
+        let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert!(result.is_empty());
     }
 
@@ -617,7 +620,7 @@ mod tests {
             name: Some("Updated".to_string()),
             doc: None,
         };
-        let result = UpdateClient::execute(&service, uuid, input).await;
+        let result = UpdateClientUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 
@@ -629,7 +632,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = ActivateClient::execute(&service, uuid).await.unwrap();
+        let result = ActivateClientUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -640,7 +645,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = ActivateClient::execute(&service, uuid).await;
+        let result = ActivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyActive { .. })));
     }
 
@@ -651,7 +656,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeactivateClient::execute(&service, uuid).await.unwrap();
+        let result = DeactivateClientUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -663,7 +670,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeactivateClient::execute(&service, uuid).await;
+        let result = DeactivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyInactive { .. })));
     }
 
@@ -674,7 +681,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeleteClientTrait::execute(&service, uuid).await.unwrap();
+        let result = DeleteClientUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -683,7 +690,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = DeleteClientTrait::execute(&service, uuid).await;
+        let result = DeleteClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 

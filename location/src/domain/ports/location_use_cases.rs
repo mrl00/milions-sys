@@ -42,22 +42,22 @@ pub struct UpdateLocationInput {
 }
 
 #[async_trait]
-pub trait FindLocation: Send + Sync {
+pub trait FindLocationUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError>;
 }
 
 #[async_trait]
-pub trait ListLocations: Send + Sync {
+pub trait ListLocationsUseCase: Send + Sync {
     async fn execute(&self) -> Result<Vec<LocationRow>, LocationError>;
 }
 
 #[async_trait]
-pub trait CreateLocation: Send + Sync {
+pub trait CreateLocationUseCase: Send + Sync {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError>;
 }
 
 #[async_trait]
-pub trait UpdateLocation: Send + Sync {
+pub trait UpdateLocationUseCase: Send + Sync {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -66,6 +66,6 @@ pub trait UpdateLocation: Send + Sync {
 }
 
 #[async_trait]
-pub trait DeleteLocation: Send + Sync {
+pub trait DeleteLocationUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError>;
 }
