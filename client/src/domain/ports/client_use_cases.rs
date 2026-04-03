@@ -33,6 +33,7 @@ pub trait FindClientByIdUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait FindClientByDocumentUseCase: Send + Sync {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError>;

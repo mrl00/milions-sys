@@ -28,6 +28,7 @@ pub trait FindCollaboratorUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait FindCollaboratorByDocumentUseCase: Send + Sync {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError>;
