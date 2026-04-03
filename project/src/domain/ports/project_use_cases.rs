@@ -77,11 +77,6 @@ pub trait ListProjectsUseCase: Send + Sync {
 }
 
 #[async_trait]
-pub trait ListProjectsByClientUseCase: Send + Sync {
-    async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError>;
-}
-
-#[async_trait]
 pub trait CreateProjectUseCase: Send + Sync {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError>;
 }
