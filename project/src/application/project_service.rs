@@ -5,16 +5,20 @@ use uuid::Uuid;
 use crate::adapters::driven::postgres::PgProjectRepository;
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectRow, ProjectRow, ProjectStatus, UpdateProjectRow,
+    CreateProjectRow, CreateProjectStageRow, ProjectRow, ProjectStageRow, ProjectStageStatus,
+    ProjectStatus, UpdateProjectRow,
 };
 use crate::domain::ports::project_repository::{
-    CreateProject as _, DeleteProject as _, FindAllProjects as _, FindProjectByClientId as _,
-    FindProjectById as _, UpdateProject as _,
+    CreateProject as _, CreateStage as _, DeleteProject as _, FindAllProjects as _,
+    FindProjectByClientId as _, FindProjectById as _, FindStageById as _, UpdateProject as _,
+    UpdateStage as _,
 };
 use crate::domain::ports::project_use_cases::{
     CancelProject, CompleteProject, CreateProject as CreateProjectTrait, CreateProjectInput,
-    DeleteProject as DeleteProjectTrait, FindProject, ListProjects, ListProjectsByClient,
-    PauseProject, StartProject, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
+    CreateStage as CreateStageTrait, CreateStageInput, DeleteProject as DeleteProjectTrait,
+    FindProject, ListProjects, ListProjectsByClient, PauseProject, StartProject,
+    UpdateProject as UpdateProjectTrait, UpdateProjectInput, UpdateStage as UpdateStageTrait,
+    UpdateStageInput,
 };
 
 pub struct ProjectService {
@@ -263,5 +267,76 @@ impl DeleteProjectTrait for ProjectService {
             .ok_or(ProjectError::NotFound { uuid })?;
 
         self.repo.delete(uuid).await
+    }
+}
+
+#[async_trait]
+impl CreateStageTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let row = CreateProjectStageRow {
+            fk_project: project_id,
+            tx_name: input.name,
+            tx_description: input.description,
+            nr_order: input.order,
+            tx_status: ProjectStageStatus::Pending,
+            dt_start_date: input.start_date,
+            dt_end_date: input.end_date,
+        };
+
+        self.repo.create_stage(row).await
+    }
+}
+
+#[async_trait]
+impl UpdateStageTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        stage_id: Uuid,
+        input: UpdateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let current = self
+            .repo
+            .find_stage_by_id(stage_id)
+            .await?
+            .ok_or(ProjectError::StageNotFound { uuid: stage_id })?;
+
+        if current.fk_project != project_id {
+            return Err(ProjectError::StageNotFound { uuid: stage_id });
+        }
+
+        self.repo
+            .update_stage(
+                stage_id,
+                crate::domain::models::db::project_rows::UpdateProjectStageRow {
+                    tx_name: input.name,
+                    tx_description: input.description,
+                    nr_order: input.order,
+                    tx_status: input.status.map(|s| match s.as_str() {
+                        "pending" => ProjectStageStatus::Pending,
+                        "in_progress" => ProjectStageStatus::InProgress,
+                        "completed" => ProjectStageStatus::Completed,
+                        "skipped" => ProjectStageStatus::Skipped,
+                        _ => ProjectStageStatus::Pending,
+                    }),
+                    dt_start_date: input.start_date,
+                    dt_end_date: input.end_date,
+                },
+            )
+            .await
     }
 }
