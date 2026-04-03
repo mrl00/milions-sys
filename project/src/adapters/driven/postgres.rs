@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::errors::ProjectError;
+use crate::domain:: errors::ProjectError;
 use crate::domain::models::db::project_rows::{
     AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
     CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
@@ -21,10 +21,8 @@ impl PgProjectRepository {
     }
 }
 
-fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ProjectError {
-    move |e| ProjectError::Infra {
-        source: InfraError::Database { action, source: e },
-    }
+fn db_err(action: &'static str, e: sqlx::Error) -> ProjectError {
+    InfraError::Database { action, source: e }.into()
 }
 
 #[async_trait]
@@ -41,7 +39,7 @@ impl FindProjectById for PgProjectRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar projeto por id"))
+        .map_err(|e| db_err("buscar projeto por id", e))
     }
 }
 
@@ -59,7 +57,7 @@ impl FindProjectByClientId for PgProjectRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("buscar projetos por cliente"))
+        .map_err(|e| db_err("buscar projetos por cliente", e))
     }
 }
 
@@ -75,7 +73,7 @@ impl FindAllProjects for PgProjectRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar projetos"))
+        .map_err(|e| db_err("listar projetos", e))
     }
 }
 
@@ -108,7 +106,7 @@ impl CreateProject for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar projeto"))
+        .map_err(|e| db_err("criar projeto", e))
     }
 }
 
@@ -148,7 +146,7 @@ impl UpdateProject for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar projeto"))
+        .map_err(|e| db_err("atualizar projeto", e))
     }
 }
 
@@ -166,7 +164,7 @@ impl DeleteProject for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover projeto"))
+        .map_err(|e| db_err("remover projeto", e))
     }
 }
 
@@ -188,7 +186,7 @@ impl FindStageById for PgProjectRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar etapa por id"))
+        .map_err(|e| db_err("buscar etapa por id", e))
     }
 }
 
@@ -219,7 +217,7 @@ impl CreateStage for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar etapa"))
+        .map_err(|e| db_err("criar etapa", e))
     }
 }
 
@@ -253,7 +251,7 @@ impl UpdateStage for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar etapa"))
+        .map_err(|e| db_err("atualizar etapa", e))
     }
 }
 
@@ -277,7 +275,7 @@ impl FindAllocationById for PgProjectRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar alocação por id"))
+        .map_err(|e| db_err("buscar alocação por id", e))
     }
 }
 
@@ -299,7 +297,7 @@ impl FindAllocationsByProjectId for PgProjectRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar alocações por projeto"))
+        .map_err(|e| db_err("listar alocações por projeto", e))
     }
 }
 
@@ -331,7 +329,7 @@ impl CreateAllocation for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar alocação"))
+        .map_err(|e| db_err("criar alocação", e))
     }
 }
 
@@ -361,7 +359,7 @@ impl UpdateAllocation for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar alocação"))
+        .map_err(|e| db_err("atualizar alocação", e))
     }
 }
 
@@ -386,7 +384,7 @@ impl FindStagesByProjectId for PgProjectRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar etapas por projeto"))
+        .map_err(|e| db_err("listar etapas por projeto", e))
     }
 }
 
@@ -420,6 +418,6 @@ impl FindAllocationsByCollaboratorId for PgProjectRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar alocações por colaborador"))
+        .map_err(|e| db_err("listar alocações por colaborador", e))
     }
 }

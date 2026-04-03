@@ -22,5 +22,5 @@ pub enum ProjectError {
     InvalidField { field: &'static str, reason: String },
 
     #[error(transparent)]
-    Infra { source: InfraError },
+    Infra(#[from] InfraError),
 }
