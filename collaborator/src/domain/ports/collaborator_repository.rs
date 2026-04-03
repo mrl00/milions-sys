@@ -46,3 +46,26 @@ pub trait DeleteCollaborator: Send + Sync {
 pub trait FindAndCreateCollaborator: FindCollaboratorByCpf + CreateCollaborator {}
 pub trait FindAndUpdateCollaborator: FindCollaboratorById + UpdateCollaborator {}
 pub trait FindAndDeleteCollaborator: FindCollaboratorById + DeleteCollaborator {}
+
+pub trait CollaboratorRepository:
+    FindCollaboratorById
+    + FindCollaboratorByCpf
+    + FindAllCollaborators
+    + CreateCollaborator
+    + UpdateCollaborator
+    + DeleteCollaborator
+    + Send
+    + Sync
+{
+}
+impl<T> CollaboratorRepository for T where
+    T: FindCollaboratorById
+        + FindCollaboratorByCpf
+        + FindAllCollaborators
+        + CreateCollaborator
+        + UpdateCollaborator
+        + DeleteCollaborator
+        + Send
+        + Sync
+{
+}

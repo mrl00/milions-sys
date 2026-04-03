@@ -49,3 +49,28 @@ pub trait FindNonexistentPhones: Send + Sync {
 pub trait FindAndCreatePhone: FindPhoneByContactId + CreatePhone {}
 pub trait FindAndUpdatePhone: FindPhoneById + UpdatePhone {}
 pub trait FindAndDeletePhone: FindPhoneById + DeletePhone {}
+
+pub trait PhoneRepository:
+    FindPhoneById
+    + FindPhoneByContactId
+    + CreatePhone
+    + CreateManyPhones
+    + UpdatePhone
+    + DeletePhone
+    + FindNonexistentPhones
+    + Send
+    + Sync
+{
+}
+impl<T> PhoneRepository for T where
+    T: FindPhoneById
+        + FindPhoneByContactId
+        + CreatePhone
+        + CreateManyPhones
+        + UpdatePhone
+        + DeletePhone
+        + FindNonexistentPhones
+        + Send
+        + Sync
+{
+}

@@ -4,10 +4,7 @@ use uuid::Uuid;
 use crate::adapters::driven::postgres::pg_location_repository::PgLocationRepository;
 use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
-use crate::domain::ports::location_repository::{
-    CreateLocation, DeleteLocation, FindAllLocations, FindLocationByHash, FindLocationById,
-    UpdateLocation,
-};
+use crate::domain::ports::location_repository::LocationRepository;
 use crate::domain::ports::location_use_cases::{
     CreateLocation as CreateLocationTrait, CreateLocationInput,
     DeleteLocation as DeleteLocationTrait, FindLocation,
@@ -19,15 +16,7 @@ pub struct LocationService<R> {
     repo: R,
 }
 
-impl<R> LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation,
-{
+impl<R: LocationRepository> LocationService<R> {
     pub fn new(repo: R) -> Self {
         Self { repo }
     }
@@ -77,17 +66,7 @@ where
 pub type ConcreteLocationService = LocationService<PgLocationRepository>;
 
 #[async_trait]
-impl<R> FindLocation for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> FindLocation for LocationService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -97,51 +76,21 @@ where
 }
 
 #[async_trait]
-impl<R> ListLocations for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> ListLocations for LocationService<R> {
     async fn execute(&self) -> Result<Vec<LocationRow>, LocationError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R> CreateLocationTrait for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> CreateLocationTrait for LocationService<R> {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         self.repo.create(Self::to_create_row(input)).await
     }
 }
 
 #[async_trait]
-impl<R> FindOrCreateLocationTrait for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> FindOrCreateLocationTrait for LocationService<R> {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         if let Some(existing) = self.repo.find_by_hash(input.hash).await? {
             return Ok(existing);
@@ -152,17 +101,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateLocationTrait for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> UpdateLocationTrait for LocationService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -178,17 +117,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeleteLocationTrait for LocationService<R>
-where
-    R: FindLocationById
-        + FindLocationByHash
-        + FindAllLocations
-        + CreateLocation
-        + UpdateLocation
-        + DeleteLocation
-        + Send
-        + Sync,
-{
+impl<R: LocationRepository> DeleteLocationTrait for LocationService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)

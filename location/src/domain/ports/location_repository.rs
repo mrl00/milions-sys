@@ -41,3 +41,26 @@ pub trait DeleteLocation: Send + Sync {
 pub trait FindOrCreateLocation: FindLocationByHash + CreateLocation {}
 pub trait FindAndUpdateLocation: FindLocationById + UpdateLocation {}
 pub trait FindAndDeleteLocation: FindLocationById + DeleteLocation {}
+
+pub trait LocationRepository:
+    FindLocationById
+    + FindLocationByHash
+    + FindAllLocations
+    + CreateLocation
+    + UpdateLocation
+    + DeleteLocation
+    + Send
+    + Sync
+{
+}
+impl<T> LocationRepository for T where
+    T: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync
+{
+}

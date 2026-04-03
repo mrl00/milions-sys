@@ -8,8 +8,8 @@ use crate::domain::models::db::collaborator_row::{
     UpdateCollaboratorRow,
 };
 use crate::domain::ports::collaborator_repository::{
-    CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByCpf,
-    FindCollaboratorById, UpdateCollaborator,
+    CollaboratorRepository, CreateCollaborator, DeleteCollaborator, FindAllCollaborators,
+    FindCollaboratorByCpf, FindCollaboratorById, UpdateCollaborator,
 };
 use crate::domain::ports::collaborator_use_cases::{
     ActivateCollaborator, DeactivateCollaborator, DeleteCollaborator as DeleteCollaboratorTrait,
@@ -40,17 +40,7 @@ where
 pub type ConcreteCollaboratorService = CollaboratorService<PgCollaboratorRepository>;
 
 #[async_trait]
-impl<R> FindCollaborator for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> FindCollaborator for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
@@ -60,51 +50,21 @@ where
 }
 
 #[async_trait]
-impl<R> FindCollaboratorByCpfTrait for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> FindCollaboratorByCpfTrait for CollaboratorService<R> {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
         self.repo.find_by_cpf(cpf).await
     }
 }
 
 #[async_trait]
-impl<R> ListCollaborators for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> ListCollaborators for CollaboratorService<R> {
     async fn execute(&self) -> Result<Vec<CollaboratorRow>, CollaboratorError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R> RegisterCollaboratorTrait for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> RegisterCollaboratorTrait for CollaboratorService<R> {
     async fn execute(
         &self,
         input: RegisterCollaboratorInput,
@@ -127,17 +87,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateCollaboratorTrait for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> UpdateCollaboratorTrait for CollaboratorService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -167,17 +117,7 @@ where
 }
 
 #[async_trait]
-impl<R> ActivateCollaborator for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> ActivateCollaborator for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -204,17 +144,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeactivateCollaborator for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> DeactivateCollaborator for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -241,17 +171,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeleteCollaboratorTrait for CollaboratorService<R>
-where
-    R: FindCollaboratorById
-        + FindCollaboratorByCpf
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator
-        + Send
-        + Sync,
-{
+impl<R: CollaboratorRepository> DeleteCollaboratorTrait for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
