@@ -91,7 +91,6 @@ Use this checklist when reviewing PRs or before merging changes to milions-sys.
 ## Testing
 
 - [ ] Unit tests for domain logic (validation, error mapping)
-- [ ] Integration tests use `testcontainers` for Postgres
 - [ ] Tests cover error paths, not only happy paths
 - [ ] No tests depend on shared mutable state
 

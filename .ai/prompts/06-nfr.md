@@ -118,7 +118,7 @@ Quality attributes and operational constraints for milions-sys.
 | Clippy | Deny warnings in CI |
 | Format | `rustfmt` enforced |
 | Dead code | Allowed during development (`dead_code = "allow"`) |
-| Tests | Unit tests per crate, integration tests with `testcontainers` |
+| Tests | Unit tests per crate |
 | CI | `cargo check`, `cargo clippy`, `cargo test`, `cargo fmt --check` |
 
 ### Documentation
