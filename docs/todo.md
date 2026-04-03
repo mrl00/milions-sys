@@ -30,6 +30,7 @@
 
 ## Low Priority (code quality)
 
+- [ ] Refactor `ClientService` to use `Arc<dyn Trait>` instead of importing concrete repository types from other crates — restores hexagonal architecture dependency direction
 - [ ] Implement complete collaborator registration (contact, phones, address, join tables)
 - [ ] Fix `collaborator_name` in history report (project crate can't access collaborator data)
 - [ ] Implement Service Types & Project Services CRUD (tables exist, zero code)
