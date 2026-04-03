@@ -193,7 +193,3 @@ impl DeleteCollaborator for PgCollaboratorRepository {
         .map_err(sqlx_err("remove collaborator"))
     }
 }
-
-impl FindAndCreateCollaborator for PgCollaboratorRepository {}
-impl FindAndUpdateCollaborator for PgCollaboratorRepository {}
-impl FindAndDeleteCollaborator for PgCollaboratorRepository {}

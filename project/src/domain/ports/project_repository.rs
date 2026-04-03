@@ -110,14 +110,6 @@ pub trait FindAllocationsByCollaboratorId: Send + Sync {
     ) -> Result<Vec<AllocationWithProjectName>, ProjectError>;
 }
 
-pub trait FindAndCreateProject: FindProjectByClientId + CreateProject {}
-pub trait FindAndUpdateProject: FindProjectById + UpdateProject {}
-pub trait FindAndDeleteProject: FindProjectById + DeleteProject {}
-pub trait FindAndCreateStage: FindStageById + CreateStage {}
-pub trait FindAndUpdateStage: FindStageById + UpdateStage {}
-pub trait FindAndCreateAllocation: FindAllocationById + CreateAllocation {}
-pub trait FindAndUpdateAllocation: FindAllocationById + UpdateAllocation {}
-
 pub trait ProjectRepository:
     FindProjectById
     + FindProjectByClientId

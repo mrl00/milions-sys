@@ -43,10 +43,6 @@ pub trait DeleteCollaborator: Send + Sync {
     async fn delete(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
-pub trait FindAndCreateCollaborator: FindCollaboratorByCpf + CreateCollaborator {}
-pub trait FindAndUpdateCollaborator: FindCollaboratorById + UpdateCollaborator {}
-pub trait FindAndDeleteCollaborator: FindCollaboratorById + DeleteCollaborator {}
-
 pub trait CollaboratorRepository:
     FindCollaboratorById
     + FindCollaboratorByCpf

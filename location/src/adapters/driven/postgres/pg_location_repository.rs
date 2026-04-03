@@ -262,7 +262,3 @@ impl DeleteLocation for PgLocationRepository {
         .map_err(sqlx_err("remove location"))
     }
 }
-
-impl FindOrCreateLocation for PgLocationRepository {}
-impl FindAndUpdateLocation for PgLocationRepository {}
-impl FindAndDeleteLocation for PgLocationRepository {}

@@ -203,7 +203,3 @@ impl CreateClientWithTx for PgClientRepository {
         .map_err(sqlx_err("create client in transaction"))
     }
 }
-
-impl FindAndCreate for PgClientRepository {}
-impl FindAndUpdate for PgClientRepository {}
-impl FindAndDelete for PgClientRepository {}

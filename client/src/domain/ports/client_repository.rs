@@ -43,10 +43,6 @@ pub trait CreateClientWithTx: Send + Sync {
     ) -> Result<ClientRow, ClientError>;
 }
 
-pub trait FindAndCreate: FindByDocument + CreateClient {}
-pub trait FindAndUpdate: FindById + UpdateClient {}
-pub trait FindAndDelete: FindById + DeleteClient {}
-
 pub trait ClientRepository:
     FindById + FindByDocument + FindAll + CreateClient + UpdateClient + DeleteClient + Send + Sync
 {

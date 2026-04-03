@@ -38,10 +38,6 @@ pub trait DeleteLocation: Send + Sync {
     async fn delete(&self, uuid: Uuid) -> Result<LocationRow, LocationError>;
 }
 
-pub trait FindOrCreateLocation: FindLocationByHash + CreateLocation {}
-pub trait FindAndUpdateLocation: FindLocationById + UpdateLocation {}
-pub trait FindAndDeleteLocation: FindLocationById + DeleteLocation {}
-
 pub trait LocationRepository:
     FindLocationById
     + FindLocationByHash

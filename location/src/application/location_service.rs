@@ -7,8 +7,7 @@ use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, Up
 use crate::domain::ports::location_repository::LocationRepository;
 use crate::domain::ports::location_use_cases::{
     CreateLocation as CreateLocationTrait, CreateLocationInput,
-    DeleteLocation as DeleteLocationTrait, FindLocation,
-    FindOrCreateLocation as FindOrCreateLocationTrait, ListLocations,
+    DeleteLocation as DeleteLocationTrait, FindLocation, ListLocations,
     UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
 };
 
@@ -90,17 +89,6 @@ impl<R: LocationRepository> CreateLocationTrait for LocationService<R> {
 }
 
 #[async_trait]
-impl<R: LocationRepository> FindOrCreateLocationTrait for LocationService<R> {
-    async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
-        if let Some(existing) = self.repo.find_by_hash(input.hash).await? {
-            return Ok(existing);
-        }
-
-        self.repo.create(Self::to_create_row(input)).await
-    }
-}
-
-#[async_trait]
 impl<R: LocationRepository> UpdateLocationTrait for LocationService<R> {
     async fn execute(
         &self,
@@ -137,7 +125,7 @@ mod tests {
     };
     use crate::domain::ports::location_use_cases::{
         CreateLocation as CreateLocationTrait, DeleteLocation as DeleteLocationTrait, FindLocation,
-        FindOrCreateLocation, ListLocations, UpdateLocation as UpdateLocationTrait,
+        ListLocations, UpdateLocation as UpdateLocationTrait,
     };
     use sqlx::types::chrono::NaiveDateTime;
 
@@ -363,68 +351,6 @@ mod tests {
         let result = CreateLocationTrait::execute(&service, input).await.unwrap();
         assert_eq!(result.tx_street, "Paulista");
         assert_eq!(result.nr_hash, 123456789);
-    }
-
-    #[tokio::test]
-    async fn find_or_create_returns_existing_when_hash_matches() {
-        let existing = make_row();
-        let hash = existing.nr_hash;
-        let mut repo = MockRepo::new();
-        repo.find_by_hash_result = Some(FindByHashResult::Found(existing.clone()));
-        let input = CreateLocationInput {
-            street: "Test".to_string(),
-            number: "1".to_string(),
-            city: "Test".to_string(),
-            state: "SP".to_string(),
-            zipcode: "00000000".to_string(),
-            complement: "".to_string(),
-            public_space: "Rua".to_string(),
-            unit: "".to_string(),
-            neighborhood: "Test".to_string(),
-            locality: "Test".to_string(),
-            region: "SP".to_string(),
-            ibge: None,
-            gia: None,
-            ddd: "11".to_string(),
-            siafi: None,
-            hash,
-        };
-        let service = LocationService::new(repo);
-        let result = FindOrCreateLocation::execute(&service, input)
-            .await
-            .unwrap();
-        assert_eq!(result.pk_location, existing.pk_location);
-        assert_eq!(result.tx_street, existing.tx_street);
-    }
-
-    #[tokio::test]
-    async fn find_or_create_creates_when_hash_not_found() {
-        let mut repo = MockRepo::new();
-        repo.find_by_hash_result = Some(FindByHashResult::NotFound);
-        let input = CreateLocationInput {
-            street: "New".to_string(),
-            number: "999".to_string(),
-            city: "New".to_string(),
-            state: "RJ".to_string(),
-            zipcode: "20000000".to_string(),
-            complement: "".to_string(),
-            public_space: "Av".to_string(),
-            unit: "".to_string(),
-            neighborhood: "New".to_string(),
-            locality: "New".to_string(),
-            region: "RJ".to_string(),
-            ibge: None,
-            gia: None,
-            ddd: "21".to_string(),
-            siafi: None,
-            hash: 999,
-        };
-        let service = LocationService::new(repo);
-        let result = FindOrCreateLocation::execute(&service, input)
-            .await
-            .unwrap();
-        assert_eq!(result.tx_street, "New");
-        assert_eq!(result.nr_hash, 999);
     }
 
     #[tokio::test]

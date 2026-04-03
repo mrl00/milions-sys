@@ -57,11 +57,6 @@ pub trait CreateLocation: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindOrCreateLocation: Send + Sync {
-    async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError>;
-}
-
-#[async_trait]
 pub trait UpdateLocation: Send + Sync {
     async fn execute(
         &self,

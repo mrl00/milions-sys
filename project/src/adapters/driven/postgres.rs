@@ -168,10 +168,6 @@ impl DeleteProject for PgProjectRepository {
     }
 }
 
-impl FindAndCreateProject for PgProjectRepository {}
-impl FindAndUpdateProject for PgProjectRepository {}
-impl FindAndDeleteProject for PgProjectRepository {}
-
 #[async_trait]
 impl FindStageById for PgProjectRepository {
     async fn find_stage_by_id(&self, uuid: Uuid) -> Result<Option<ProjectStageRow>, ProjectError> {
@@ -254,9 +250,6 @@ impl UpdateStage for PgProjectRepository {
         .map_err(|e| db_err("update stage", e))
     }
 }
-
-impl FindAndCreateStage for PgProjectRepository {}
-impl FindAndUpdateStage for PgProjectRepository {}
 
 #[async_trait]
 impl FindAllocationById for PgProjectRepository {
@@ -362,9 +355,6 @@ impl UpdateAllocation for PgProjectRepository {
         .map_err(|e| db_err("update allocation", e))
     }
 }
-
-impl FindAndCreateAllocation for PgProjectRepository {}
-impl FindAndUpdateAllocation for PgProjectRepository {}
 
 #[async_trait]
 impl FindStagesByProjectId for PgProjectRepository {

@@ -115,7 +115,7 @@ impl RegisterClient for ConcreteClientService {
                         tx_public_space: "".to_string(),
                         tx_address_complement: input.complement.clone(),
                         tx_unit: "".to_string(),
-                        tx_neighborhood: "".to_string(),
+                        tx_neighborhood: input.neighborhood.clone(),
                         tx_locality: input.city.clone(),
                         tx_region: input.state.clone(),
                         tx_ibge: None,
