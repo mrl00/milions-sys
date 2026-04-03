@@ -3,24 +3,24 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProjectError {
-    #[error("projeto não encontrado: {uuid}")]
+    #[error("project not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("projeto já está com status '{status}'")]
+    #[error("project is already in status '{status}'")]
     AlreadyInStatus { uuid: Uuid, status: String },
 
-    #[error("etapa não encontrada: {uuid}")]
+    #[error("stage not found: {uuid}")]
     StageNotFound { uuid: Uuid },
 
-    #[error("alocação não encontrada: {uuid}")]
+    #[error("allocation not found: {uuid}")]
     AllocationNotFound { uuid: Uuid },
 
-    #[error("colaborador não encontrado: {uuid}")]
+    #[error("collaborator not found: {uuid}")]
     CollaboratorNotFound { uuid: Uuid },
 
-    #[error("campo inválido: {field} — {reason}")]
+    #[error("invalid field: {field} -- {reason}")]
     InvalidField { field: &'static str, reason: String },
 
     #[error(transparent)]
-    Infra { source: InfraError },
+    Infra(#[from] InfraError),
 }

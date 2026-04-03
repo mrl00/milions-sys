@@ -140,17 +140,17 @@ Every bounded context follows a hexagonal (ports and adapters) layout:
 
 ### 3.3 Workspace Crates
 
-| Crate | Role |
-|-------|------|
-| `milions-sys` | Binary entrypoint (actix-web server) |
-| `settings` | Configuration from YAML + env vars |
-| `types` | Shared value objects (Phone, Email, Cpf, Cnpj, Doc, Cep) |
-| `viacep` | ViaCEP external API integration |
-| `client` | Client bounded context |
-| `collaborator` | Collaborator bounded context |
-| `contact` | Contact bounded context |
-| `location` | Location bounded context |
-| `project` | Project bounded context |
+| Crate          | Role                                                     |
+| -------------- | -------------------------------------------------------- |
+| `milions-sys`  | Binary entrypoint (actix-web server)                     |
+| `settings`     | Configuration from YAML + env vars                       |
+| `types`        | Shared value objects (Phone, Email, Cpf, Cnpj, Doc, Cep) |
+| `viacep`       | ViaCEP external API integration                          |
+| `client`       | Client bounded context                                   |
+| `collaborator` | Collaborator bounded context                             |
+| `contact`      | Contact bounded context                                  |
+| `location`     | Location bounded context                                 |
+| `project`      | Project bounded context                                  |
 
 ### 3.4 Cross-Context Dependencies
 
@@ -409,7 +409,7 @@ See `.ai/prompts/04-api-contracts.md` for full endpoint definitions.
 ```json
 {
   "error": "not_found",
-  "message": "cliente não encontrado: 018e3a7b-..."
+  "message": "client not found: 018e3a7b-..."
 }
 ```
 
@@ -518,7 +518,7 @@ See `.ai/prompts/06-nfr.md` for full details.
 | Pool size | 10 connections |
 | Graceful shutdown | 30s drain |
 | Logging | structured via `tracing`, no PII |
-| Errors | pt-BR messages, generic to client |
+| Errors | en-US messages, generic to client |
 
 ---
 
@@ -557,6 +557,7 @@ See `.ai/prompts/05-security.md` for full details. Not implemented yet.
 | 1 | Hexagonal architecture | Clean separation of concerns, testable domain logic |
 | 2 | One trait per method (ISP) | Flexible composition, easy mocking |
 | 3 | Super-traits (`FindAnd*`) | Convenient grouping without forcing interface bloat |
+| 3b | Composite repository traits | Replace bloated trait bounds across 50+ impl blocks, reducing ~630 lines |
 | 4 | `InfraError` duplicated per context | Avoids shared error crate coupling |
 | 5 | UUID v7 | Time-ordered, good B-tree index performance |
 | 6 | `sqlx::query_as!` | Compile-time SQL validation |
@@ -564,3 +565,5 @@ See `.ai/prompts/05-security.md` for full details. Not implemented yet.
 | 8 | `secrecy::SecretString` | Redacts credentials in Debug output |
 | 9 | `BigDecimal` for money | Exact decimal arithmetic, no floating point |
 | 10 | COALESCE for partial updates | Avoids overwriting fields with NULL |
+| 11 | `pub fn build(pool)` per context | Encapsulates service wiring, simplifies startup.rs |
+| 12 | Executor-based repo methods | Enables cross-entity transactions without tight coupling |

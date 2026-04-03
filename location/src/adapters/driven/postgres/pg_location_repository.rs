@@ -15,6 +15,59 @@ impl PgLocationRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn find_or_create_with_executor<'a, E>(
+        executor: E,
+        c: CreateLocationRow,
+    ) -> Result<LocationRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            LocationRow,
+            r#"
+            INSERT INTO locations.tb_location (
+                pk_location,
+                tx_street,
+                tx_number,
+                tx_city,
+                tx_state,
+                tx_zipcode,
+                tx_public_space,
+                tx_address_complement,
+                tx_unit,
+                tx_neighborhood,
+                tx_locality,
+                tx_region,
+                tx_ibge,
+                tx_gia,
+                tx_ddd,
+                tx_siafi
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            ON CONFLICT (nr_hash) DO UPDATE SET nr_hash = EXCLUDED.nr_hash
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &c.tx_street,
+            &c.tx_number,
+            &c.tx_city,
+            &c.tx_state,
+            &c.tx_zipcode,
+            &c.tx_public_space,
+            &c.tx_address_complement,
+            &c.tx_unit,
+            &c.tx_neighborhood,
+            &c.tx_locality,
+            &c.tx_region,
+            c.tx_ibge,
+            c.tx_gia,
+            &c.tx_ddd,
+            c.tx_siafi,
+        )
+        .fetch_one(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> LocationError {
@@ -37,25 +90,7 @@ impl FindLocationById for PgLocationRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar localização por id"))
-    }
-}
-
-#[async_trait]
-impl FindLocationByHash for PgLocationRepository {
-    async fn find_by_hash(&self, hash: i64) -> Result<Option<LocationRow>, LocationError> {
-        sqlx::query_as!(
-            LocationRow,
-            r#"
-            SELECT *
-            FROM locations.tb_location
-            WHERE nr_hash = $1
-            "#,
-            hash,
-        )
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(sqlx_err("buscar localização por hash"))
+        .map_err(sqlx_err("find location by id"))
     }
 }
 
@@ -72,7 +107,7 @@ impl FindAllLocations for PgLocationRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar localizações"))
+        .map_err(sqlx_err("list locations"))
     }
 }
 
@@ -97,10 +132,9 @@ impl CreateLocation for PgLocationRepository {
             tx_ibge, 
             tx_gia, 
             tx_ddd, 
-            tx_siafi, 
-            nr_hash
+            tx_siafi
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             RETURNING *"#,
             Uuid::now_v7(),
             &c.tx_street,
@@ -118,11 +152,10 @@ impl CreateLocation for PgLocationRepository {
             c.tx_gia,
             &c.tx_ddd,
             c.tx_siafi,
-            c.nr_hash as i64,
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar localização"))
+        .map_err(sqlx_err("create location"))
     }
 }
 
@@ -133,21 +166,21 @@ impl UpdateLocation for PgLocationRepository {
             LocationRow,
             r#"UPDATE locations.tb_location
             SET 
-            tx_public_space = $1, 
-            tx_address_complement = $2, 
-            tx_unit = $3, 
-            tx_neighborhood = $4, 
-            tx_locality = $5, 
-            tx_region = $6, 
-            tx_ibge = $7, 
-            tx_gia = $8, 
-            tx_ddd = $9, 
-            tx_siafi = $10, 
-            tx_street = $11, 
-            tx_number = $12, 
-            tx_city = $13, 
-            tx_state = $14, 
-            tx_zipcode = $15
+            tx_public_space = COALESCE($1, tx_public_space), 
+            tx_address_complement = COALESCE($2, tx_address_complement), 
+            tx_unit = COALESCE($3, tx_unit), 
+            tx_neighborhood = COALESCE($4, tx_neighborhood), 
+            tx_locality = COALESCE($5, tx_locality), 
+            tx_region = COALESCE($6, tx_region), 
+            tx_ibge = COALESCE($7, tx_ibge), 
+            tx_gia = COALESCE($8, tx_gia), 
+            tx_ddd = COALESCE($9, tx_ddd), 
+            tx_siafi = COALESCE($10, tx_siafi), 
+            tx_street = COALESCE($11, tx_street), 
+            tx_number = COALESCE($12, tx_number), 
+            tx_city = COALESCE($13, tx_city), 
+            tx_state = COALESCE($14, tx_state), 
+            tx_zipcode = COALESCE($15, tx_zipcode)
             WHERE pk_location = $16
             RETURNING *"#,
             c.tx_public_space,
@@ -169,7 +202,7 @@ impl UpdateLocation for PgLocationRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar localização"))
+        .map_err(sqlx_err("update location"))
     }
 }
 
@@ -187,10 +220,6 @@ impl DeleteLocation for PgLocationRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover localização"))
+        .map_err(sqlx_err("remove location"))
     }
 }
-
-impl FindOrCreateLocation for PgLocationRepository {}
-impl FindAndUpdateLocation for PgLocationRepository {}
-impl FindAndDeleteLocation for PgLocationRepository {}

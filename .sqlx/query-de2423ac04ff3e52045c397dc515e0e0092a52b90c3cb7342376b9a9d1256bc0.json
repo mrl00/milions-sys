@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM locations.tb_location\n            WHERE nr_hash = $1\n            ",
+  "query": "INSERT INTO locations.tb_location (\n            pk_location, \n            tx_street, \n            tx_number, \n            tx_city, \n            tx_state, \n            tx_zipcode,  \n            tx_public_space, \n            tx_address_complement,\n            tx_unit, \n            tx_neighborhood, \n            tx_locality, \n            tx_region, \n            tx_ibge, \n            tx_gia, \n            tx_ddd, \n            tx_siafi\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n            RETURNING *",
   "describe": {
     "columns": [
       {
@@ -106,7 +106,22 @@
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
       ]
     },
     "nullable": [
@@ -132,5 +147,5 @@
       false
     ]
   },
-  "hash": "9a5f917ef5b982c8854a95718debc3edb2006527ab2d271c97514872bbacc442"
+  "hash": "de2423ac04ff3e52045c397dc515e0e0092a52b90c3cb7342376b9a9d1256bc0"
 }

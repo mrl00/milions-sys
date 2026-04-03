@@ -7,6 +7,7 @@ license = "MIT"
 [dependencies]
 types = { path = "../types" }
 location = { path = "../location" }
+contact = { path = "../contact" }
 viacep = {path = "../viacep"}
 sqlx = { workspace = true }
 uuid = { workspace = true }
@@ -19,7 +20,6 @@ actix-web = { workspace = true }
 
 
 [lints.rust]
-dead_code = "allow"
 
 [dev-dependencies]
 tokio = { workspace = true }

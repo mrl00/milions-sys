@@ -67,27 +67,22 @@ pub struct UpdateAllocationInput {
 }
 
 #[async_trait]
-pub trait FindProject: Send + Sync {
+pub trait FindProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait ListProjects: Send + Sync {
+pub trait ListProjectsUseCase: Send + Sync {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError>;
 }
 
 #[async_trait]
-pub trait ListProjectsByClient: Send + Sync {
-    async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError>;
-}
-
-#[async_trait]
-pub trait CreateProject: Send + Sync {
+pub trait CreateProjectUseCase: Send + Sync {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait UpdateProject: Send + Sync {
+pub trait UpdateProjectUseCase: Send + Sync {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -96,32 +91,32 @@ pub trait UpdateProject: Send + Sync {
 }
 
 #[async_trait]
-pub trait StartProject: Send + Sync {
+pub trait StartProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait PauseProject: Send + Sync {
+pub trait PauseProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait CompleteProject: Send + Sync {
+pub trait CompleteProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait CancelProject: Send + Sync {
+pub trait CancelProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait DeleteProject: Send + Sync {
+pub trait DeleteProjectUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
 }
 
 #[async_trait]
-pub trait CreateStage: Send + Sync {
+pub trait CreateStageUseCase: Send + Sync {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -130,7 +125,7 @@ pub trait CreateStage: Send + Sync {
 }
 
 #[async_trait]
-pub trait UpdateStage: Send + Sync {
+pub trait UpdateStageUseCase: Send + Sync {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -140,7 +135,7 @@ pub trait UpdateStage: Send + Sync {
 }
 
 #[async_trait]
-pub trait CreateAllocation: Send + Sync {
+pub trait CreateAllocationUseCase: Send + Sync {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -149,7 +144,7 @@ pub trait CreateAllocation: Send + Sync {
 }
 
 #[async_trait]
-pub trait ListAllocations: Send + Sync {
+pub trait ListAllocationsUseCase: Send + Sync {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -157,7 +152,7 @@ pub trait ListAllocations: Send + Sync {
 }
 
 #[async_trait]
-pub trait UpdateAllocation: Send + Sync {
+pub trait UpdateAllocationUseCase: Send + Sync {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -203,16 +198,16 @@ pub struct HistoryReportData {
 }
 
 #[async_trait]
-pub trait GetCostReport: Send + Sync {
+pub trait GetCostReportUseCase: Send + Sync {
     async fn execute(&self, project_id: Uuid) -> Result<CostReportData, ProjectError>;
 }
 
 #[async_trait]
-pub trait GetProgressReport: Send + Sync {
+pub trait GetProgressReportUseCase: Send + Sync {
     async fn execute(&self, project_id: Uuid) -> Result<ProgressReportData, ProjectError>;
 }
 
 #[async_trait]
-pub trait GetHistoryReport: Send + Sync {
+pub trait GetHistoryReportUseCase: Send + Sync {
     async fn execute(&self, collaborator_id: Uuid) -> Result<HistoryReportData, ProjectError>;
 }

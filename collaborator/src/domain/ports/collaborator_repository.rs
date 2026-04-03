@@ -12,8 +12,11 @@ pub trait FindCollaboratorById: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindCollaboratorByCpf: Send + Sync {
-    async fn find_by_cpf(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError>;
+pub trait FindCollaboratorByDocument: Send + Sync {
+    async fn find_by_document(
+        &self,
+        doc: &str,
+    ) -> Result<Option<CollaboratorRow>, CollaboratorError>;
 }
 
 #[async_trait]
@@ -43,6 +46,25 @@ pub trait DeleteCollaborator: Send + Sync {
     async fn delete(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
-pub trait FindAndCreateCollaborator: FindCollaboratorByCpf + CreateCollaborator {}
-pub trait FindAndUpdateCollaborator: FindCollaboratorById + UpdateCollaborator {}
-pub trait FindAndDeleteCollaborator: FindCollaboratorById + DeleteCollaborator {}
+pub trait CollaboratorRepository:
+    FindCollaboratorById
+    + FindCollaboratorByDocument
+    + FindAllCollaborators
+    + CreateCollaborator
+    + UpdateCollaborator
+    + DeleteCollaborator
+    + Send
+    + Sync
+{
+}
+impl<T> CollaboratorRepository for T where
+    T: FindCollaboratorById
+        + FindCollaboratorByDocument
+        + FindAllCollaborators
+        + CreateCollaborator
+        + UpdateCollaborator
+        + DeleteCollaborator
+        + Send
+        + Sync
+{
+}

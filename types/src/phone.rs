@@ -1,10 +1,13 @@
 use std::hash::Hash;
+use std::sync::LazyLock;
 
 use regex::Regex;
 
+static PHONE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\+\d{12,13}$").unwrap());
+
 #[derive(Debug, thiserror::Error)]
 pub enum PhoneError {
-    #[error("telefone inválido: '{value}'")]
+    #[error("invalid phone: '{value}'")]
     InvalidPhoneNumber { value: String },
 }
 
@@ -15,8 +18,7 @@ impl TryFrom<String> for Phone {
     type Error = PhoneError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let re = Regex::new(r"\+\d{13}\d").unwrap();
-        if !re.is_match(&value) {
+        if !PHONE_RE.is_match(&value) {
             return Err(PhoneError::InvalidPhoneNumber { value });
         }
         Ok(Self(value))

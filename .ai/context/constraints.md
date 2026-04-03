@@ -20,9 +20,9 @@ Hard rules that must not be violated.
 
 ## Naming
 
-- Repository port traits: short names (`FindById`, `CreateClient`)
-- Use case traits: prefixed with entity (`FindClientById`, `RegisterContact`)
-- Super-traits: `FindAnd*` pattern
+- Repository port traits: short names (`FindById`, `CreateClient`, `FindByDocument`)
+- Use case traits: entity name + `UseCase` suffix (`FindClientByIdUseCase`, `RegisterContactUseCase`)
+- Composite repository traits: `<Entity>Repository` (e.g. `ClientRepository`)
 - Services: `<Entity>Service`
 - Adapters: `Pg<Entity>Repository`
 - Errors: `<Entity>Error`
@@ -32,6 +32,7 @@ Hard rules that must not be violated.
 - Each bounded context defines its own error enum
 - `InfraError` is duplicated per context, never shared
 - Error variants use `#[error(transparent)]` or `#[error("...")]`
+- Error messages are in English
 - sqlx errors must be wrapped in `InfraError::Database`
 
 ## SQL

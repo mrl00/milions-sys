@@ -16,26 +16,28 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `DeleteClient`       | `delete(uuid) -> ClientRow`                         |
 | `CreateClientWithTx` | `create_with_tx(tx, input) -> ClientRow`            |
 
-**Super-traits:** `FindAndCreate`, `FindAndUpdate`, `FindAndDelete`
+**Composite trait:** `ClientRepository` (bundles all 6 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/client_use_cases.rs`)
 
+All use case traits end with `UseCase` suffix.
+
 | Trait | Method |
 |-------|--------|
-| `RegisterClient` | `execute(input: RegisterClientInput) -> ClientRow` |
-| `FindClientById` | `execute(uuid) -> ClientRow` |
-| `FindClientByDocument` | `execute(doc) -> Option<ClientRow>` |
-| `ListClients` | `execute() -> Vec<ClientRow>` |
-| `UpdateClient` | `execute(uuid, input: UpdateClientInput) -> ClientRow` |
-| `ActivateClient` | `execute(uuid) -> ClientRow` |
-| `DeactivateClient` | `execute(uuid) -> ClientRow` |
-| `DeleteClient` | `execute(uuid) -> ClientRow` |
+| `RegisterClientUseCase` | `execute(input: RegisterClientInput) -> ClientRow` |
+| `FindClientByIdUseCase` | `execute(uuid) -> ClientRow` |
+| `FindClientByDocumentUseCase` | `execute(doc) -> Option<ClientRow>` |
+| `ListClientsUseCase` | `execute() -> Vec<ClientRow>` |
+| `UpdateClientUseCase` | `execute(uuid, input: UpdateClientInput) -> ClientRow` |
+| `ActivateClientUseCase` | `execute(uuid) -> ClientRow` |
+| `DeactivateClientUseCase` | `execute(uuid) -> ClientRow` |
+| `DeleteClientUseCase` | `execute(uuid) -> ClientRow` |
 
 **Input structs:** `RegisterClientInput`, `UpdateClientInput`
 
 ### Service (`application/client_service.rs`)
 
-`ClientService<R>` — generic over repository traits. `ConcreteClientService` type alias for production (`ClientService<PgClientRepository>`). 17 unit tests with `MockRepo`.
+`ClientService<R>` — generic over repository traits. `ConcreteClientService` is a separate struct holding `PgClientRepository` and `PgPool`, enabling transactional full registration (contact, phones, location, join tables). 16 unit tests with `MockRepo`.
 
 ---
 
@@ -43,29 +45,31 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Repository Ports (`domain/ports/collaborator_repository.rs`)
 
-| Trait                   | Method                                                    |
-| ----------------------- | --------------------------------------------------------- |
-| `FindCollaboratorById`  | `find_by_id(uuid) -> Option<CollaboratorRow>`             |
-| `FindCollaboratorByCpf` | `find_by_cpf(cpf) -> Option<CollaboratorRow>`             |
-| `FindAllCollaborators`  | `find_all() -> Vec<CollaboratorRow>`                      |
-| `CreateCollaborator`    | `create(input: CreateCollaboratorRow) -> CollaboratorRow` |
-| `UpdateCollaborator`    | `update(uuid, input) -> CollaboratorRow`                  |
-| `DeleteCollaborator`    | `delete(uuid) -> CollaboratorRow`                         |
+| Trait                      | Method                                                    |
+| -------------------------- | --------------------------------------------------------- |
+| `FindCollaboratorById`     | `find_by_id(uuid) -> Option<CollaboratorRow>`             |
+| `FindCollaboratorByDocument` | `find_by_document(doc) -> Option<CollaboratorRow>`      |
+| `FindAllCollaborators`     | `find_all() -> Vec<CollaboratorRow>`                      |
+| `CreateCollaborator`       | `create(input: CreateCollaboratorRow) -> CollaboratorRow` |
+| `UpdateCollaborator`       | `update(uuid, input) -> CollaboratorRow`                  |
+| `DeleteCollaborator`       | `delete(uuid) -> CollaboratorRow`                         |
 
-**Super-traits:** `FindAndCreateCollaborator`, `FindAndUpdateCollaborator`, `FindAndDeleteCollaborator`
+**Composite trait:** `CollaboratorRepository` (bundles all 6 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/collaborator_use_cases.rs`)
 
+All use case traits end with `UseCase` suffix.
+
 | Trait | Method |
 |-------|--------|
-| `RegisterCollaborator` | `execute(input: RegisterCollaboratorInput) -> CollaboratorRow` |
-| `FindCollaborator` | `execute(uuid) -> CollaboratorRow` |
-| `FindCollaboratorByCpf` | `execute(cpf) -> Option<CollaboratorRow>` |
-| `ListCollaborators` | `execute() -> Vec<CollaboratorRow>` |
-| `UpdateCollaborator` | `execute(uuid, input: UpdateCollaboratorInput) -> CollaboratorRow` |
-| `ActivateCollaborator` | `execute(uuid) -> CollaboratorRow` |
-| `DeactivateCollaborator` | `execute(uuid) -> CollaboratorRow` |
-| `DeleteCollaborator` | `execute(uuid) -> CollaboratorRow` |
+| `RegisterCollaboratorUseCase` | `execute(input: RegisterCollaboratorInput) -> CollaboratorRow` |
+| `FindCollaboratorUseCase` | `execute(uuid) -> CollaboratorRow` |
+| `FindCollaboratorByDocumentUseCase` | `execute(doc) -> Option<CollaboratorRow>` |
+| `ListCollaboratorsUseCase` | `execute() -> Vec<CollaboratorRow>` |
+| `UpdateCollaboratorUseCase` | `execute(uuid, input: UpdateCollaboratorInput) -> CollaboratorRow` |
+| `ActivateCollaboratorUseCase` | `execute(uuid) -> CollaboratorRow` |
+| `DeactivateCollaboratorUseCase` | `execute(uuid) -> CollaboratorRow` |
+| `DeleteCollaboratorUseCase` | `execute(uuid) -> CollaboratorRow` |
 
 **Input structs:** `RegisterCollaboratorInput`, `UpdateCollaboratorInput`
 
@@ -87,43 +91,31 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `CreateContact` | `create(input: CreateContactRow) -> ContactRow` |
 | `UpdateContactEmail` | `update_email(uuid, email) -> ContactRow` |
 
-**Super-traits:** `FindAndCreateContact`, `FindAndUpdateContact`
-
-### Phone Repository Ports (`domain/ports/phone_repository.rs`)
-
-| Trait | Method |
-|-------|--------|
-| `FindPhoneById` | `find_by_id(uuid) -> Option<PhoneRow>` |
-| `FindPhoneByContactId` | `find_by_contact_id(contact_id) -> Vec<PhoneRow>` |
-| `CreatePhone` | `create(contact_id, phone) -> PhoneRow` |
-| `CreateManyPhones` | `create_many(contact_id, phones) -> Vec<PhoneRow>` |
-| `UpdatePhone` | `update(uuid, phone) -> PhoneRow` |
-| `DeletePhone` | `delete(uuid) -> PhoneRow` |
-| `FindNonexistentPhones` | `find_nonexistent_phones(phones) -> Vec<String>` |
-
-**Super-traits:** `FindAndCreatePhone`, `FindAndUpdatePhone`, `FindAndDeletePhone`
+**Composite traits:** `ContactRepository` (5 traits + Send + Sync), `PhoneRepository` (7 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/contact_use_cases.rs`)
+
+All use case traits end with `UseCase` suffix.
 
 **Contact:**
 
 | Trait | Method |
 |-------|--------|
-| `RegisterContact` | `execute(input: RegisterContactInput) -> ContactRow` |
-| `FindContact` | `execute(uuid) -> ContactRow` |
-| `ListContacts` | `execute() -> Vec<ContactRow>` |
-| `UpdateContactEmail` | `execute(uuid, email) -> ContactRow` |
+| `RegisterContactUseCase` | `execute(input: RegisterContactInput) -> ContactRow` |
+| `FindContactUseCase` | `execute(uuid) -> ContactRow` |
+| `ListContactsUseCase` | `execute() -> Vec<ContactRow>` |
+| `UpdateContactEmailUseCase` | `execute(uuid, email) -> ContactRow` |
 
 **Phone:**
 
 | Trait | Method |
 |-------|--------|
-| `FindPhone` | `execute(uuid) -> PhoneRow` |
-| `ListPhones` | `execute(contact_id) -> Vec<PhoneRow>` |
-| `AddPhone` | `execute(contact_id, phone) -> PhoneRow` |
-| `AddPhones` | `execute(contact_id, phones) -> Vec<PhoneRow>` |
-| `UpdatePhone` | `execute(uuid, phone) -> PhoneRow` |
-| `RemovePhone` | `execute(uuid) -> PhoneRow` |
+| `FindPhoneUseCase` | `execute(uuid) -> PhoneRow` |
+| `ListPhonesUseCase` | `execute(contact_id) -> Vec<PhoneRow>` |
+| `AddPhoneUseCase` | `execute(contact_id, phone) -> PhoneRow` |
+| `AddPhonesUseCase` | `execute(contact_id, phones) -> Vec<PhoneRow>` |
+| `UpdatePhoneUseCase` | `execute(uuid, phone) -> PhoneRow` |
+| `RemovePhoneUseCase` | `execute(uuid) -> PhoneRow` |
 
 **Input structs:** `RegisterContactInput`
 
@@ -140,30 +132,34 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | Trait | Method |
 |-------|--------|
 | `FindLocationById` | `find_by_id(uuid) -> Option<LocationRow>` |
-| `FindLocationByHash` | `find_by_hash(hash) -> Option<LocationRow>` |
 | `FindAllLocations` | `find_all() -> Vec<LocationRow>` |
 | `CreateLocation` | `create(input: CreateLocationRow) -> LocationRow` |
 | `UpdateLocation` | `update(uuid, input) -> LocationRow` |
 | `DeleteLocation` | `delete(uuid) -> LocationRow` |
 
-**Super-traits:** `FindOrCreateLocation`, `FindAndUpdateLocation`, `FindAndDeleteLocation`
+**Composite trait:** `LocationRepository` (bundles all 5 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/location_use_cases.rs`)
 
+All use case traits end with `UseCase` suffix.
+
 | Trait | Method |
 |-------|--------|
-| `FindLocation` | `execute(uuid) -> LocationRow` |
-| `ListLocations` | `execute() -> Vec<LocationRow>` |
-| `CreateLocation` | `execute(input: CreateLocationInput) -> LocationRow` |
-| `FindOrCreateLocation` | `execute(input: CreateLocationInput) -> LocationRow` |
-| `UpdateLocation` | `execute(uuid, input: UpdateLocationInput) -> LocationRow` |
-| `DeleteLocation` | `execute(uuid) -> LocationRow` |
+| `FindLocationUseCase` | `execute(uuid) -> LocationRow` |
+| `ListLocationsUseCase` | `execute() -> Vec<LocationRow>` |
+| `CreateLocationUseCase` | `execute(input: CreateLocationInput) -> LocationRow` |
+| `UpdateLocationUseCase` | `execute(uuid, input: UpdateLocationInput) -> LocationRow` |
+| `DeleteLocationUseCase` | `execute(uuid) -> LocationRow` |
 
-**Input structs:** `CreateLocationInput`, `UpdateLocationInput`
+**Input structs:** `CreateLocationInput` (no `hash` field — hash is `GENERATED ALWAYS AS` in DB), `UpdateLocationInput`
 
 ### Service (`application/location_service.rs`)
 
-`LocationService<R>` — generic over repository traits. `ConcreteLocationService` type alias for production (`LocationService<PgLocationRepository>`). 16 unit tests with `MockRepo`.
+`LocationService<R>` — generic over repository traits. `ConcreteLocationService` type alias for production (`LocationService<PgLocationRepository>`). 14 unit tests with `MockRepo`.
+
+### Location Hash
+
+`nr_hash` is a database-generated column: `GENERATED ALWAYS AS (hashtext(concat_ws('|', tx_street, tx_number, tx_city, tx_state, tx_zipcode))) STORED`. The `PgLocationRepository::find_or_create_with_executor` method uses `ON CONFLICT (nr_hash) DO UPDATE` for atomic find-or-create in a single query.
 
 ---
 
@@ -189,30 +185,31 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `FindStagesByProjectId` | `find_stages_by_project_id(project_id) -> Vec<ProjectStageRow>` |
 | `FindAllocationsByCollaboratorId` | `find_allocations_by_collaborator_id(collaborator_id) -> Vec<AllocationWithProjectName>` |
 
-**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`, `FindAndCreateAllocation`, `FindAndUpdateAllocation`
+**Composite trait:** `ProjectRepository` (bundles all 15 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/project_use_cases.rs`)
 
+All use case traits end with `UseCase` suffix.
+
 | Trait                  | Method                                                                      |
 | ---------------------- | --------------------------------------------------------------------------- |
-| `FindProject`          | `execute(uuid) -> ProjectRow`                                               |
-| `ListProjects`         | `execute() -> Vec<ProjectRow>`                                              |
-| `ListProjectsByClient` | `execute(client_id) -> Vec<ProjectRow>`                                     |
-| `CreateProject`        | `execute(input: CreateProjectInput) -> ProjectRow`                          |
-| `UpdateProject`        | `execute(uuid, input: UpdateProjectInput) -> ProjectRow`                    |
-| `StartProject`         | `execute(uuid) -> ProjectRow`                                               |
-| `PauseProject`         | `execute(uuid) -> ProjectRow`                                               |
-| `CompleteProject`      | `execute(uuid) -> ProjectRow`                                               |
-| `CancelProject`        | `execute(uuid) -> ProjectRow`                                               |
-| `DeleteProject`        | `execute(uuid) -> ProjectRow`                                               |
-| `CreateStage`          | `execute(project_id, input: CreateStageInput) -> ProjectStageRow`           |
-| `UpdateStage`          | `execute(project_id, stage_id, input: UpdateStageInput) -> ProjectStageRow` |
-| `CreateAllocation`     | `execute(project_id, input: CreateAllocationInput) -> ProjectDailyAllocationRow` |
-| `ListAllocations`      | `execute(project_id) -> Vec<ProjectDailyAllocationRow>`                     |
-| `UpdateAllocation`     | `execute(project_id, allocation_id, input: UpdateAllocationInput) -> ProjectDailyAllocationRow` |
-| `GetCostReport`        | `execute(project_id) -> CostReportData`                                     |
-| `GetProgressReport`    | `execute(project_id) -> ProgressReportData`                                 |
-| `GetHistoryReport`     | `execute(collaborator_id) -> HistoryReportData`                             |
+| `FindProjectUseCase`          | `execute(uuid) -> ProjectRow`                                               |
+| `ListProjectsUseCase`         | `execute() -> Vec<ProjectRow>`                                              |
+| `CreateProjectUseCase`        | `execute(input: CreateProjectInput) -> ProjectRow`                          |
+| `UpdateProjectUseCase`        | `execute(uuid, input: UpdateProjectInput) -> ProjectRow`                    |
+| `StartProjectUseCase`         | `execute(uuid) -> ProjectRow`                                               |
+| `PauseProjectUseCase`         | `execute(uuid) -> ProjectRow`                                               |
+| `CompleteProjectUseCase`      | `execute(uuid) -> ProjectRow`                                               |
+| `CancelProjectUseCase`        | `execute(uuid) -> ProjectRow`                                               |
+| `DeleteProjectUseCase`        | `execute(uuid) -> ProjectRow`                                               |
+| `CreateStageUseCase`          | `execute(project_id, input: CreateStageInput) -> ProjectStageRow`           |
+| `UpdateStageUseCase`          | `execute(project_id, stage_id, input: UpdateStageInput) -> ProjectStageRow` |
+| `CreateAllocationUseCase`     | `execute(project_id, input: CreateAllocationInput) -> ProjectDailyAllocationRow` |
+| `ListAllocationsUseCase`      | `execute(project_id) -> Vec<ProjectDailyAllocationRow>`                     |
+| `UpdateAllocationUseCase`     | `execute(project_id, allocation_id, input: UpdateAllocationInput) -> ProjectDailyAllocationRow` |
+| `GetCostReportUseCase`        | `execute(project_id) -> CostReportData`                                     |
+| `GetProgressReportUseCase`    | `execute(project_id) -> ProgressReportData`                                 |
+| `GetHistoryReportUseCase`     | `execute(collaborator_id) -> HistoryReportData`                             |
 
 **Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`, `CreateAllocationInput`, `UpdateAllocationInput`
 

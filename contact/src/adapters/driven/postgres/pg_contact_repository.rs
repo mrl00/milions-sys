@@ -15,6 +15,27 @@ impl PgContactRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn create_with_executor<'a, E>(
+        executor: E,
+        input: CreateContactRow,
+    ) -> Result<ContactRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            ContactRow,
+            r#"
+            INSERT INTO contacts.tb_contact (pk_contact, tx_email)
+            VALUES ($1, $2)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &input.tx_email,
+        )
+        .fetch_one(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {
@@ -37,7 +58,7 @@ impl FindContactById for PgContactRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar contato por id"))
+        .map_err(sqlx_err("find contact by id"))
     }
 }
 
@@ -55,7 +76,7 @@ impl FindContactByEmail for PgContactRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar contato por email"))
+        .map_err(sqlx_err("find contact by email"))
     }
 }
 
@@ -72,7 +93,7 @@ impl FindAllContacts for PgContactRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar contatos"))
+        .map_err(sqlx_err("list contacts"))
     }
 }
 
@@ -91,7 +112,7 @@ impl CreateContact for PgContactRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar contato"))
+        .map_err(sqlx_err("create contact"))
     }
 }
 
@@ -111,7 +132,7 @@ impl UpdateContactEmail for PgContactRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar email do contato"))
+        .map_err(sqlx_err("update contact email"))
     }
 }
 

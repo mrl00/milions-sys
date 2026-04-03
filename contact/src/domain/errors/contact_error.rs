@@ -3,16 +3,16 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ContactError {
-    #[error("contato com email '{email}' já existe")]
+    #[error("contact with email '{email}' already exists")]
     AlreadyExists { email: String },
 
-    #[error("contato não encontrado: {uuid}")]
+    #[error("contact not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("telefone '{phone}' já existe")]
+    #[error("phone '{phone}' already exists")]
     PhoneAlreadyExists { phone: String },
 
-    #[error("telefone não encontrado: {uuid}")]
+    #[error("phone not found: {uuid}")]
     PhoneNotFound { uuid: Uuid },
 
     #[error(transparent)]

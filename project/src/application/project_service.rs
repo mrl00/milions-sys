@@ -9,44 +9,21 @@ use crate::domain::models::db::project_rows::{
     ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
     UpdateProjectRow,
 };
-use crate::domain::ports::project_repository::{
-    CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
-    FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
-    FindProjectByClientId, FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation,
-    UpdateProject, UpdateStage,
-};
+use crate::domain::ports::project_repository::ProjectRepository;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
-    CreateAllocationInput, CreateProject as CreateProjectTrait, CreateProjectInput,
-    CreateStage as CreateStageTrait, CreateStageInput, DeleteProject as DeleteProjectTrait,
-    FindProject, GetCostReport, GetHistoryReport, GetProgressReport, ListAllocations, ListProjects,
-    ListProjectsByClient, PauseProject, StartProject, UpdateAllocation as UpdateAllocationTrait,
-    UpdateAllocationInput, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
-    UpdateStage as UpdateStageTrait, UpdateStageInput,
+    CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
+    CreateProjectInput, CreateProjectUseCase, CreateStageInput, CreateStageUseCase,
+    DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase, GetHistoryReportUseCase,
+    GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsUseCase, PauseProjectUseCase,
+    StartProjectUseCase, UpdateAllocationInput, UpdateAllocationUseCase, UpdateProjectInput,
+    UpdateProjectUseCase, UpdateStageInput, UpdateStageUseCase,
 };
 
 pub struct ProjectService<R> {
     repo: R,
 }
 
-impl<R> ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId,
-{
+impl<R: ProjectRepository> ProjectService<R> {
     pub fn new(repo: R) -> Self {
         Self { repo }
     }
@@ -55,26 +32,7 @@ where
 pub type ConcreteProjectService = ProjectService<PgProjectRepository>;
 
 #[async_trait]
-impl<R> FindProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> FindProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -84,78 +42,14 @@ where
 }
 
 #[async_trait]
-impl<R> ListProjects for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> ListProjectsUseCase for ProjectService<R> {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R> ListProjectsByClient for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
-    async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
-        self.repo.find_by_client_id(client_id).await
-    }
-}
-
-#[async_trait]
-impl<R> CreateProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateProjectUseCase for ProjectService<R> {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
             tx_name: input.name,
@@ -175,26 +69,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -227,26 +102,7 @@ where
 }
 
 #[async_trait]
-impl<R> StartProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> StartProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -283,26 +139,7 @@ where
 }
 
 #[async_trait]
-impl<R> PauseProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> PauseProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -339,26 +176,7 @@ where
 }
 
 #[async_trait]
-impl<R> CompleteProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CompleteProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -395,26 +213,7 @@ where
 }
 
 #[async_trait]
-impl<R> CancelProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CancelProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -451,26 +250,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeleteProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> DeleteProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -482,26 +262,7 @@ where
 }
 
 #[async_trait]
-impl<R> CreateStageTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateStageUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -527,26 +288,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateStageTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateStageUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -591,26 +333,7 @@ where
 }
 
 #[async_trait]
-impl<R> CreateAllocationTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateAllocationUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -636,26 +359,7 @@ where
 }
 
 #[async_trait]
-impl<R> ListAllocations for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> ListAllocationsUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -670,26 +374,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateAllocationTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateAllocationUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -730,26 +415,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetCostReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetCostReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -787,26 +453,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetProgressReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetProgressReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -841,26 +488,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetHistoryReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetHistoryReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         collaborator_id: Uuid,
@@ -918,9 +546,8 @@ mod tests {
         UpdateAllocation, UpdateProject, UpdateStage,
     };
     use crate::domain::ports::project_use_cases::{
-        CancelProject, CompleteProject, CreateProject as CreateProjectTrait,
-        DeleteProject as DeleteProjectTrait, FindProject, ListProjects, PauseProject, StartProject,
-        UpdateProject as UpdateProjectTrait,
+        CancelProjectUseCase, CompleteProjectUseCase, DeleteProjectUseCase, FindProjectUseCase,
+        ListProjectsUseCase, PauseProjectUseCase, StartProjectUseCase, UpdateProjectUseCase,
     };
 
     #[derive(Default)]
@@ -1100,7 +727,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = FindProject::execute(&service, uuid).await.unwrap();
+        let result = FindProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
         assert_eq!(result.tx_name, "Test Project");
     }
@@ -1110,7 +737,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ProjectService::new(repo);
-        let result = FindProject::execute(&service, uuid).await;
+        let result = FindProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 
@@ -1121,7 +748,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![p1, p2];
         let service = ProjectService::new(repo);
-        let result = ListProjects::execute(&service).await.unwrap();
+        let result = ListProjectsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -1132,7 +759,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = StartProject::execute(&service, uuid).await.unwrap();
+        let result = StartProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -1144,7 +771,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = StartProject::execute(&service, uuid).await;
+        let result = StartProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
     }
 
@@ -1156,7 +783,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = PauseProject::execute(&service, uuid).await.unwrap();
+        let result = PauseProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -1168,7 +795,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = PauseProject::execute(&service, uuid).await;
+        let result = PauseProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
     }
 
@@ -1179,7 +806,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = CompleteProject::execute(&service, uuid).await.unwrap();
+        let result = CompleteProjectUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -1190,7 +819,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = CancelProject::execute(&service, uuid).await.unwrap();
+        let result = CancelProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -1201,7 +830,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = DeleteProjectTrait::execute(&service, uuid).await.unwrap();
+        let result = DeleteProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -1210,7 +839,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ProjectService::new(repo);
-        let result = DeleteProjectTrait::execute(&service, uuid).await;
+        let result = DeleteProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 
@@ -1231,7 +860,7 @@ mod tests {
             notes: None,
             active: None,
         };
-        let result = UpdateProjectTrait::execute(&service, uuid, input).await;
+        let result = UpdateProjectUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 
@@ -1241,7 +870,7 @@ mod tests {
         let err = ProjectError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 
     #[test]

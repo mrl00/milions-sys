@@ -5,7 +5,8 @@ use super::dto::{CreateLocationRequest, LocationResponse, UpdateLocationRequest}
 use crate::application::location_service::ConcreteLocationService;
 use crate::domain::errors::LocationError;
 use crate::domain::ports::location_use_cases::{
-    CreateLocation, DeleteLocation, FindLocation, ListLocations, UpdateLocation,
+    CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
+    UpdateLocationUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -22,24 +23,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-fn compute_hash(input: &CreateLocationRequest) -> i64 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-
-    let mut hasher = DefaultHasher::new();
-    input.street.hash(&mut hasher);
-    input.number.hash(&mut hasher);
-    input.city.hash(&mut hasher);
-    input.state.hash(&mut hasher);
-    input.zipcode.hash(&mut hasher);
-    hasher.finish() as i64
-}
-
 async fn create_location(
     service: web::Data<ConcreteLocationService>,
     body: web::Json<CreateLocationRequest>,
 ) -> HttpResponse {
-    let hash = compute_hash(&body);
     let input = crate::domain::ports::location_use_cases::CreateLocationInput {
         street: body.street.clone(),
         number: body.number.clone(),
@@ -56,17 +43,16 @@ async fn create_location(
         gia: body.gia.clone(),
         ddd: body.ddd.clone(),
         siafi: body.siafi.clone(),
-        hash,
     };
 
-    match CreateLocation::execute(&**service, input).await {
+    match CreateLocationUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }
 
 async fn list_locations(service: web::Data<ConcreteLocationService>) -> HttpResponse {
-    match ListLocations::execute(&**service).await {
+    match ListLocationsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<LocationResponse> =
                 rows.into_iter().map(LocationResponse::from).collect();
@@ -81,7 +67,7 @@ async fn get_location(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match FindLocation::execute(&**service, uuid).await {
+    match FindLocationUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -111,7 +97,7 @@ async fn update_location(
         siafi: body.siafi.clone(),
     };
 
-    match UpdateLocation::execute(&**service, uuid, input).await {
+    match UpdateLocationUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -122,7 +108,7 @@ async fn delete_location(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match DeleteLocation::execute(&**service, uuid).await {
+    match DeleteLocationUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }

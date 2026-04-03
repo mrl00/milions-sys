@@ -15,6 +15,58 @@ impl PgPhoneRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn create_with_executor<'a, E>(
+        executor: E,
+        contact_id: Uuid,
+        phone: String,
+    ) -> Result<PhoneRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &phone,
+            &contact_id,
+        )
+        .fetch_one(executor)
+        .await
+    }
+
+    pub async fn create_many_with_executor<'a, E>(
+        executor: E,
+        contact_id: Uuid,
+        phones: Vec<String>,
+    ) -> Result<Vec<PhoneRow>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        let pks: Vec<Uuid> = phones.iter().map(|_| Uuid::now_v7()).collect();
+        let fks: Vec<Uuid> = std::iter::repeat_n(contact_id, phones.len()).collect();
+
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            INSERT INTO contacts.tb_phone (pk_phone, fk_contact, tx_phone)
+            SELECT * FROM UNNEST(
+            $1::uuid[],
+            $2::uuid[],
+            $3::text[])
+            RETURNING *
+            "#,
+            &pks as &[Uuid],
+            &fks as &[Uuid],
+            &phones as &[String],
+        )
+        .fetch_all(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {
@@ -37,7 +89,7 @@ impl FindPhoneById for PgPhoneRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar telefone por id"))
+        .map_err(sqlx_err("find phone by id"))
     }
 }
 
@@ -55,7 +107,7 @@ impl FindPhoneByContactId for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("buscar telefones por contato"))
+        .map_err(sqlx_err("find phones by contact"))
     }
 }
 
@@ -75,7 +127,7 @@ impl CreatePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar telefone"))
+        .map_err(sqlx_err("create phone"))
     }
 }
 
@@ -105,7 +157,7 @@ impl CreateManyPhones for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("criar telefones"))
+        .map_err(sqlx_err("create phones"))
     }
 }
 
@@ -125,7 +177,7 @@ impl UpdatePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar telefone"))
+        .map_err(sqlx_err("update phone"))
     }
 }
 
@@ -143,7 +195,7 @@ impl DeletePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover telefone"))
+        .map_err(sqlx_err("remove phone"))
     }
 }
 
@@ -162,7 +214,7 @@ impl FindNonexistentPhones for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("verificar telefones inexistentes"))?
+        .map_err(sqlx_err("check nonexistent phones"))?
         .iter()
         .filter_map(|p| p.clone())
         .collect();
