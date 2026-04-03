@@ -4,7 +4,7 @@ use uuid::Uuid;
 use super::dto::{
     CollaboratorResponse, RegisterCollaboratorRequest, StatusRequest, UpdateCollaboratorRequest,
 };
-use crate::application::collaborator_service::CollaboratorService;
+use crate::application::collaborator_service::ConcreteCollaboratorService;
 use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::ports::collaborator_use_cases::{
     ActivateCollaborator, DeactivateCollaborator, DeleteCollaborator, FindCollaborator,
@@ -30,7 +30,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_collaborator(
-    service: web::Data<CollaboratorService>,
+    service: web::Data<ConcreteCollaboratorService>,
     body: web::Json<RegisterCollaboratorRequest>,
 ) -> HttpResponse {
     let input = crate::domain::ports::collaborator_use_cases::RegisterCollaboratorInput {
@@ -44,7 +44,7 @@ async fn register_collaborator(
     }
 }
 
-async fn list_collaborators(service: web::Data<CollaboratorService>) -> HttpResponse {
+async fn list_collaborators(service: web::Data<ConcreteCollaboratorService>) -> HttpResponse {
     match ListCollaborators::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<CollaboratorResponse> =
@@ -56,7 +56,7 @@ async fn list_collaborators(service: web::Data<CollaboratorService>) -> HttpResp
 }
 
 async fn get_collaborator(
-    service: web::Data<CollaboratorService>,
+    service: web::Data<ConcreteCollaboratorService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -67,7 +67,7 @@ async fn get_collaborator(
 }
 
 async fn update_collaborator(
-    service: web::Data<CollaboratorService>,
+    service: web::Data<ConcreteCollaboratorService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateCollaboratorRequest>,
 ) -> HttpResponse {
@@ -85,7 +85,7 @@ async fn update_collaborator(
 }
 
 async fn delete_collaborator(
-    service: web::Data<CollaboratorService>,
+    service: web::Data<ConcreteCollaboratorService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -96,7 +96,7 @@ async fn delete_collaborator(
 }
 
 async fn update_collaborator_status(
-    service: web::Data<CollaboratorService>,
+    service: web::Data<ConcreteCollaboratorService>,
     path: web::Path<Uuid>,
     body: web::Json<StatusRequest>,
 ) -> HttpResponse {
