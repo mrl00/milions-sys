@@ -36,7 +36,6 @@ impl<R: LocationRepository> LocationService<R> {
             tx_gia: input.gia,
             tx_ddd: input.ddd,
             tx_siafi: input.siafi,
-            nr_hash: input.hash,
         }
     }
 
@@ -119,8 +118,7 @@ impl<R: LocationRepository> DeleteLocationUseCase for LocationService<R> {
 mod tests {
     use super::*;
     use crate::domain::ports::location_repository::{
-        CreateLocation, DeleteLocation, FindAllLocations, FindLocationByHash, FindLocationById,
-        UpdateLocation,
+        CreateLocation, DeleteLocation, FindAllLocations, FindLocationById, UpdateLocation,
     };
     use crate::domain::ports::location_use_cases::{
         CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
@@ -133,11 +131,6 @@ mod tests {
         NotFound,
     }
 
-    enum FindByHashResult {
-        Found(LocationRow),
-        NotFound,
-    }
-
     enum FindAllResult {
         Found(Vec<LocationRow>),
     }
@@ -145,7 +138,6 @@ mod tests {
     #[derive(Default)]
     struct MockRepo {
         find_by_id_result: Option<FindByIdResult>,
-        find_by_hash_result: Option<FindByHashResult>,
         find_all_result: Option<FindAllResult>,
     }
 
@@ -220,16 +212,6 @@ mod tests {
     }
 
     #[async_trait]
-    impl FindLocationByHash for MockRepo {
-        async fn find_by_hash(&self, _hash: i64) -> Result<Option<LocationRow>, LocationError> {
-            match &self.find_by_hash_result {
-                Some(FindByHashResult::Found(row)) => Ok(Some(row.clone())),
-                Some(FindByHashResult::NotFound) | None => Ok(None),
-            }
-        }
-    }
-
-    #[async_trait]
     impl FindAllLocations for MockRepo {
         async fn find_all(&self) -> Result<Vec<LocationRow>, LocationError> {
             match &self.find_all_result {
@@ -260,7 +242,7 @@ mod tests {
                 tx_city: input.tx_city,
                 tx_state: input.tx_state,
                 tx_zipcode: input.tx_zipcode,
-                nr_hash: input.nr_hash,
+                nr_hash: 0,
                 ts_location_created_at: now(),
                 ts_location_updated_at: now(),
             })
@@ -343,7 +325,6 @@ mod tests {
             gia: Some("1004".to_string()),
             ddd: "11".to_string(),
             siafi: Some("7107".to_string()),
-            hash: 123456789,
         };
         let repo = MockRepo::new();
         let service = LocationService::new(repo);
@@ -351,7 +332,6 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(result.tx_street, "Paulista");
-        assert_eq!(result.nr_hash, 123456789);
     }
 
     #[tokio::test]

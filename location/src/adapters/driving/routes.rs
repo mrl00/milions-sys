@@ -23,24 +23,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-fn compute_hash(input: &CreateLocationRequest) -> i64 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-
-    let mut hasher = DefaultHasher::new();
-    input.street.hash(&mut hasher);
-    input.number.hash(&mut hasher);
-    input.city.hash(&mut hasher);
-    input.state.hash(&mut hasher);
-    input.zipcode.hash(&mut hasher);
-    hasher.finish() as i64
-}
-
 async fn create_location(
     service: web::Data<ConcreteLocationService>,
     body: web::Json<CreateLocationRequest>,
 ) -> HttpResponse {
-    let hash = compute_hash(&body);
     let input = crate::domain::ports::location_use_cases::CreateLocationInput {
         street: body.street.clone(),
         number: body.number.clone(),
@@ -57,7 +43,6 @@ async fn create_location(
         gia: body.gia.clone(),
         ddd: body.ddd.clone(),
         siafi: body.siafi.clone(),
-        hash,
     };
 
     match CreateLocationUseCase::execute(&**service, input).await {

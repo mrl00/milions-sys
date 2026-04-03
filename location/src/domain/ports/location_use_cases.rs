@@ -20,7 +20,6 @@ pub struct CreateLocationInput {
     pub gia: Option<String>,
     pub ddd: String,
     pub siafi: Option<String>,
-    pub hash: i64,
 }
 
 pub struct UpdateLocationInput {
