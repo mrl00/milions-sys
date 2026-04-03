@@ -10,8 +10,12 @@ pub struct RegisterClientInput {
     pub email: String,
     pub phones: Vec<String>,
     pub cep: String,
+    pub street: String,
     pub number: String,
     pub complement: String,
+    pub neighborhood: String,
+    pub city: String,
+    pub state: String,
 }
 
 pub struct UpdateClientInput {
