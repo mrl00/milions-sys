@@ -12,6 +12,9 @@ pub enum ProjectError {
     #[error("etapa não encontrada: {uuid}")]
     StageNotFound { uuid: Uuid },
 
+    #[error("alocação não encontrada: {uuid}")]
+    AllocationNotFound { uuid: Uuid },
+
     #[error("campo inválido: {field} — {reason}")]
     InvalidField { field: &'static str, reason: String },
 

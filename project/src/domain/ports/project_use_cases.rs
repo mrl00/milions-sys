@@ -4,7 +4,9 @@ use sqlx::types::chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
-use crate::domain::models::db::project_rows::{ProjectRow, ProjectStageRow};
+use crate::domain::models::db::project_rows::{
+    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
+};
 
 pub struct CreateProjectInput {
     pub name: String,
@@ -46,6 +48,22 @@ pub struct UpdateStageInput {
     pub status: Option<String>,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
+}
+
+pub struct CreateAllocationInput {
+    pub collaborator_id: Uuid,
+    pub work_date: NaiveDate,
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub notes: Option<String>,
+    pub present: bool,
+}
+
+pub struct UpdateAllocationInput {
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub notes: Option<String>,
+    pub present: Option<bool>,
 }
 
 #[async_trait]
@@ -119,4 +137,31 @@ pub trait UpdateStage: Send + Sync {
         stage_id: Uuid,
         input: UpdateStageInput,
     ) -> Result<ProjectStageRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait CreateAllocation: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait ListAllocations: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError>;
+}
+
+#[async_trait]
+pub trait UpdateAllocation: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        allocation_id: Uuid,
+        input: UpdateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError>;
 }

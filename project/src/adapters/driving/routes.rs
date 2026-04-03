@@ -3,14 +3,16 @@ use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use super::dto::{
-    CreateProjectRequest, CreateStageRequest, ProjectResponse, ProjectStatusRequest, StageResponse,
+    AllocationResponse, CreateAllocationRequest, CreateProjectRequest, CreateStageRequest,
+    ProjectResponse, ProjectStatusRequest, StageResponse, UpdateAllocationRequest,
     UpdateProjectRequest, UpdateStageRequest,
 };
 use crate::application::project_service::ProjectService;
 use crate::domain::errors::ProjectError;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateProject, CreateStage, DeleteProject, FindProject,
-    ListProjects, PauseProject, StartProject, UpdateProject, UpdateStage,
+    CancelProject, CompleteProject, CreateAllocation, CreateProject, CreateStage, DeleteProject,
+    FindProject, ListAllocations, ListProjects, PauseProject, StartProject, UpdateAllocation,
+    UpdateProject, UpdateStage,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -30,6 +32,15 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     .service(
         web::resource("/projects/{project_id}/stages/{stage_id}")
             .route(web::put().to(update_stage)),
+    )
+    .service(
+        web::resource("/projects/{project_id}/allocations")
+            .route(web::post().to(create_allocation))
+            .route(web::get().to(list_allocations)),
+    )
+    .service(
+        web::resource("/projects/{project_id}/allocations/{allocation_id}")
+            .route(web::put().to(update_allocation)),
     );
 }
 
@@ -152,6 +163,10 @@ fn error_to_response(err: ProjectError) -> HttpResponse {
             "error": "not_found",
             "message": err.to_string(),
         })),
+        AllocationNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
+            "error": "not_found",
+            "message": err.to_string(),
+        })),
         AlreadyInStatus { .. } => HttpResponse::Conflict().json(serde_json::json!({
             "error": "conflict",
             "message": err.to_string(),
@@ -204,6 +219,61 @@ async fn update_stage(
 
     match UpdateStage::execute(&**service, project_id, stage_id, input).await {
         Ok(row) => HttpResponse::Ok().json(StageResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn create_allocation(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+    body: web::Json<CreateAllocationRequest>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::CreateAllocationInput {
+        collaborator_id: body.collaborator_id,
+        work_date: body.work_date,
+        hours_worked: parse_bd(&body.hours_worked),
+        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        notes: body.notes.clone(),
+        present: body.present,
+    };
+
+    match CreateAllocation::execute(&**service, project_id, input).await {
+        Ok(row) => HttpResponse::Created().json(AllocationResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn list_allocations(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    match ListAllocations::execute(&**service, project_id).await {
+        Ok(rows) => {
+            let resp: Vec<AllocationResponse> =
+                rows.into_iter().map(AllocationResponse::from).collect();
+            HttpResponse::Ok().json(resp)
+        }
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn update_allocation(
+    service: web::Data<ProjectService>,
+    path: web::Path<(Uuid, Uuid)>,
+    body: web::Json<UpdateAllocationRequest>,
+) -> HttpResponse {
+    let (project_id, allocation_id) = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::UpdateAllocationInput {
+        hours_worked: parse_bd(&body.hours_worked),
+        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        notes: body.notes.clone(),
+        present: body.present,
+    };
+
+    match UpdateAllocation::execute(&**service, project_id, allocation_id, input).await {
+        Ok(row) => HttpResponse::Ok().json(AllocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }

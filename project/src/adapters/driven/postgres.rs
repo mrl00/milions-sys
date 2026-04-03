@@ -4,8 +4,9 @@ use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectRow, CreateProjectStageRow, ProjectRow, ProjectStageRow, UpdateProjectRow,
-    UpdateProjectStageRow,
+    CreateProjectDailyAllocationRow, CreateProjectRow, CreateProjectStageRow,
+    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, UpdateProjectDailyAllocationRow,
+    UpdateProjectRow, UpdateProjectStageRow,
 };
 use crate::domain::ports::project_repository::*;
 use types::errors::infra_error::InfraError;
@@ -258,3 +259,111 @@ impl UpdateStage for PgProjectRepository {
 
 impl FindAndCreateStage for PgProjectRepository {}
 impl FindAndUpdateStage for PgProjectRepository {}
+
+#[async_trait]
+impl FindAllocationById for PgProjectRepository {
+    async fn find_allocation_by_id(
+        &self,
+        uuid: Uuid,
+    ) -> Result<Option<ProjectDailyAllocationRow>, ProjectError> {
+        sqlx::query_as!(
+            ProjectDailyAllocationRow,
+            r#"
+            SELECT *
+            FROM clients.tb_project_daily_allocation
+            WHERE pk_project_daily_allocation = $1
+            "#,
+            &uuid,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("buscar alocação por id"))
+    }
+}
+
+#[async_trait]
+impl FindAllocationsByProjectId for PgProjectRepository {
+    async fn find_allocations_by_project_id(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError> {
+        sqlx::query_as!(
+            ProjectDailyAllocationRow,
+            r#"
+            SELECT *
+            FROM clients.tb_project_daily_allocation
+            WHERE fk_project = $1
+            ORDER BY dt_work_date DESC
+            "#,
+            &project_id,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("listar alocações por projeto"))
+    }
+}
+
+#[async_trait]
+impl CreateAllocation for PgProjectRepository {
+    async fn create_allocation(
+        &self,
+        input: CreateProjectDailyAllocationRow,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        sqlx::query_as!(
+            ProjectDailyAllocationRow,
+            r#"
+            INSERT INTO clients.tb_project_daily_allocation (
+                pk_project_daily_allocation, fk_project, fk_collaborator,
+                dt_work_date, nr_hours_worked, nr_hourly_rate_snapshot,
+                tx_notes, bl_present
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &input.fk_project,
+            &input.fk_collaborator,
+            input.dt_work_date,
+            input.nr_hours_worked,
+            input.nr_hourly_rate_snapshot,
+            input.tx_notes,
+            input.bl_present,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("criar alocação"))
+    }
+}
+
+#[async_trait]
+impl UpdateAllocation for PgProjectRepository {
+    async fn update_allocation(
+        &self,
+        uuid: Uuid,
+        u: UpdateProjectDailyAllocationRow,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        sqlx::query_as!(
+            ProjectDailyAllocationRow,
+            r#"
+            UPDATE clients.tb_project_daily_allocation
+            SET nr_hours_worked = COALESCE($1, nr_hours_worked),
+                nr_hourly_rate_snapshot = COALESCE($2, nr_hourly_rate_snapshot),
+                tx_notes = COALESCE($3, tx_notes),
+                bl_present = COALESCE($4, bl_present)
+            WHERE pk_project_daily_allocation = $5
+            RETURNING *
+            "#,
+            u.nr_hours_worked,
+            u.nr_hourly_rate_snapshot,
+            u.tx_notes,
+            u.bl_present,
+            &uuid,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("atualizar alocação"))
+    }
+}
+
+impl FindAndCreateAllocation for PgProjectRepository {}
+impl FindAndUpdateAllocation for PgProjectRepository {}

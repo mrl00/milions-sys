@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM clients.tb_project_daily_allocation\n            WHERE pk_project_daily_allocation = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_project_daily_allocation",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_project_daily_allocation",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_project",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "fk_collaborator",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "dt_work_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 5,
+        "name": "nr_hours_worked",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "nr_hourly_rate_snapshot",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "tx_notes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "bl_present",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "ts_allocated_collaborator_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "ts_allocated_collaborator_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "464d16d15a2691dfc956bea1bdeca3e4e6154fdcd39236c85033dc2e39efddc0"
+}

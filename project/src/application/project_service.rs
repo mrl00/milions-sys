@@ -5,18 +5,22 @@ use uuid::Uuid;
 use crate::adapters::driven::postgres::PgProjectRepository;
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectRow, CreateProjectStageRow, ProjectRow, ProjectStageRow, ProjectStageStatus,
-    ProjectStatus, UpdateProjectRow,
+    CreateProjectDailyAllocationRow, CreateProjectRow, CreateProjectStageRow,
+    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
+    UpdateProjectRow,
 };
 use crate::domain::ports::project_repository::{
-    CreateProject as _, CreateStage as _, DeleteProject as _, FindAllProjects as _,
-    FindProjectByClientId as _, FindProjectById as _, FindStageById as _, UpdateProject as _,
-    UpdateStage as _,
+    CreateAllocation as _, CreateProject as _, CreateStage as _, DeleteProject as _,
+    FindAllProjects as _, FindAllocationById as _, FindAllocationsByProjectId as _,
+    FindProjectByClientId as _, FindProjectById as _, FindStageById as _, UpdateAllocation as _,
+    UpdateProject as _, UpdateStage as _,
 };
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateProject as CreateProjectTrait, CreateProjectInput,
+    CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
+    CreateAllocationInput, CreateProject as CreateProjectTrait, CreateProjectInput,
     CreateStage as CreateStageTrait, CreateStageInput, DeleteProject as DeleteProjectTrait,
-    FindProject, ListProjects, ListProjectsByClient, PauseProject, StartProject,
+    FindProject, ListAllocations, ListProjects, ListProjectsByClient, PauseProject, StartProject,
+    UpdateAllocation as UpdateAllocationTrait, UpdateAllocationInput,
     UpdateProject as UpdateProjectTrait, UpdateProjectInput, UpdateStage as UpdateStageTrait,
     UpdateStageInput,
 };
@@ -335,6 +339,88 @@ impl UpdateStageTrait for ProjectService {
                     }),
                     dt_start_date: input.start_date,
                     dt_end_date: input.end_date,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl CreateAllocationTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let row = CreateProjectDailyAllocationRow {
+            fk_project: project_id,
+            fk_collaborator: input.collaborator_id,
+            dt_work_date: input.work_date,
+            nr_hours_worked: input.hours_worked,
+            nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+            tx_notes: input.notes,
+            bl_present: input.present,
+        };
+
+        self.repo.create_allocation(row).await
+    }
+}
+
+#[async_trait]
+impl ListAllocations for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        self.repo.find_allocations_by_project_id(project_id).await
+    }
+}
+
+#[async_trait]
+impl UpdateAllocationTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        allocation_id: Uuid,
+        input: UpdateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let current = self
+            .repo
+            .find_allocation_by_id(allocation_id)
+            .await?
+            .ok_or(ProjectError::AllocationNotFound {
+                uuid: allocation_id,
+            })?;
+
+        if current.fk_project != project_id {
+            return Err(ProjectError::AllocationNotFound {
+                uuid: allocation_id,
+            });
+        }
+
+        self.repo
+            .update_allocation(
+                allocation_id,
+                crate::domain::models::db::project_rows::UpdateProjectDailyAllocationRow {
+                    nr_hours_worked: input.hours_worked,
+                    nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+                    tx_notes: input.notes,
+                    bl_present: input.present,
                 },
             )
             .await
