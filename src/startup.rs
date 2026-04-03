@@ -13,7 +13,14 @@ pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
         collaborator::application::collaborator_service::CollaboratorService::new(pool.clone()),
     );
     let contact_service = web::Data::new(
-        contact::application::contact_service::ContactService::new(pool.clone()),
+        contact::application::contact_service::ConcreteContactService::new(
+            contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository::new(
+                pool.clone(),
+            ),
+            contact::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository::new(
+                pool.clone(),
+            ),
+        ),
     );
     let location_service = web::Data::new(
         location::application::location_service::ConcreteLocationService::new(

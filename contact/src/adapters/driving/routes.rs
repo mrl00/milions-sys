@@ -5,7 +5,7 @@ use super::dto::{
     AddPhoneRequest, ContactResponse, PhoneResponse, RegisterContactRequest,
     UpdateContactEmailRequest, UpdatePhoneRequest,
 };
-use crate::application::contact_service::ContactService;
+use crate::application::contact_service::ConcreteContactService;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::ports::contact_use_cases::{
     AddPhone, FindContact, ListContacts, ListPhones, RegisterContact, RemovePhone,
@@ -36,7 +36,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_contact(
-    service: web::Data<ContactService>,
+    service: web::Data<ConcreteContactService>,
     body: web::Json<RegisterContactRequest>,
 ) -> HttpResponse {
     let input = crate::domain::ports::contact_use_cases::RegisterContactInput {
@@ -49,7 +49,7 @@ async fn register_contact(
     }
 }
 
-async fn list_contacts(service: web::Data<ContactService>) -> HttpResponse {
+async fn list_contacts(service: web::Data<ConcreteContactService>) -> HttpResponse {
     match ListContacts::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ContactResponse> = rows.into_iter().map(ContactResponse::from).collect();
@@ -59,7 +59,10 @@ async fn list_contacts(service: web::Data<ContactService>) -> HttpResponse {
     }
 }
 
-async fn get_contact(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn get_contact(
+    service: web::Data<ConcreteContactService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let uuid = path.into_inner();
     match FindContact::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ContactResponse::from(row)),
@@ -68,7 +71,7 @@ async fn get_contact(service: web::Data<ContactService>, path: web::Path<Uuid>) 
 }
 
 async fn update_contact_email(
-    service: web::Data<ContactService>,
+    service: web::Data<ConcreteContactService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateContactEmailRequest>,
 ) -> HttpResponse {
@@ -80,7 +83,7 @@ async fn update_contact_email(
 }
 
 async fn add_phone(
-    service: web::Data<ContactService>,
+    service: web::Data<ConcreteContactService>,
     path: web::Path<Uuid>,
     body: web::Json<AddPhoneRequest>,
 ) -> HttpResponse {
@@ -91,7 +94,10 @@ async fn add_phone(
     }
 }
 
-async fn list_phones(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn list_phones(
+    service: web::Data<ConcreteContactService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let contact_id = path.into_inner();
     match ListPhones::execute(&**service, contact_id).await {
         Ok(rows) => {
@@ -103,7 +109,7 @@ async fn list_phones(service: web::Data<ContactService>, path: web::Path<Uuid>) 
 }
 
 async fn update_phone(
-    service: web::Data<ContactService>,
+    service: web::Data<ConcreteContactService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdatePhoneRequest>,
 ) -> HttpResponse {
@@ -114,7 +120,10 @@ async fn update_phone(
     }
 }
 
-async fn remove_phone(service: web::Data<ContactService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn remove_phone(
+    service: web::Data<ConcreteContactService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let uuid = path.into_inner();
     match RemovePhone::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(PhoneResponse::from(row)),
