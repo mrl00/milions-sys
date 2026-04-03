@@ -1,37 +1,73 @@
 # project
 
-A Rust project using hexagonal architecture (ports and adapters).
+Bounded context for managing **projects**, **stages**, **allocations**, and **reports** in the milions-sys construction project management system.
 
-## Project Structure
+## Domain
 
-```
-src/
-├── adapters/
-│   ├── driven/      # Outgoing adapters (repositories, external services)
-│   └── driving/     # Incoming adapters (controllers, handlers)
-├── application/     # Application services / use cases
-└── domain/
-    ├── model.rs     # Domain models
-    └── ports.rs     # Port interfaces (traits)
-```
+Projects represent construction/engineering works commissioned by clients. Each project has stages (phases), daily collaborator allocations (time tracking), and cost/progress reports.
+
+### Sub-entities
+
+- **Project** — Main entity with status lifecycle (draft → in_progress → paused/completed/cancelled), costs, dates, and area
+- **Stage** — Project phase with order, status (pending/in_progress/completed/skipped), and dates
+- **Allocation** — Daily collaborator time tracking with hours worked, hourly rate, and attendance
+- **Reports** — Read-only queries for cost variance, progress by stage, and collaborator history
 
 ## Architecture
 
-### Domain Layer
+Follows hexagonal architecture (ports and adapters):
 
-Contains core business logic with no external dependencies. Defines domain models and port interfaces (traits) that abstract external concerns.
+```
+project/
+├── src/
+│   ├── domain/
+│   │   ├── errors/mod.rs          # ProjectError enum
+│   │   ├── models/db/             # ProjectRow, ProjectStageRow, ProjectDailyAllocationRow + create/update variants
+│   │   └── ports/
+│   │       ├── project_repository.rs   # 14 repository port traits (project + stage + allocation)
+│   │       └── project_use_cases.rs    # 18 use case traits (project + stage + allocation + reports)
+│   ├── application/
+│   │   └── project_service.rs     # ProjectService — implements all use case traits
+│   └── adapters/
+│       ├── driven/
+│       │   └── postgres.rs        # PostgreSQL implementation (all repository traits)
+│       └── driving/
+│           ├── dto.rs             # Request/response DTOs
+│           └── routes.rs          # HTTP route handlers
+└── Cargo.toml
+```
 
-### Application Layer
+## Dependencies
 
-Orchestrates use cases by coordinating domain objects and ports. Contains application services that implement business workflows.
+- `types` — shared value objects (`BigDecimal` for monetary values)
 
-### Adapters Layer
+## API Endpoints
 
-Implements ports to connect the application to external systems.
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/projects` | Create a new project |
+| GET | `/api/projects` | List all projects |
+| GET | `/api/projects/{uuid}` | Find project by ID |
+| PUT | `/api/projects/{uuid}` | Update a project |
+| DELETE | `/api/projects/{uuid}` | Delete a project |
+| PUT | `/api/projects/{uuid}/status` | Change project status |
+| POST | `/api/projects/{project_id}/stages` | Create a stage |
+| PUT | `/api/projects/{project_id}/stages/{stage_id}` | Update a stage |
+| POST | `/api/projects/{project_id}/allocations` | Create an allocation |
+| GET | `/api/projects/{project_id}/allocations` | List allocations for a project |
+| PUT | `/api/projects/{project_id}/allocations/{allocation_id}` | Update an allocation |
+| GET | `/api/reports/projects/{project_id}/cost` | Cost report (actual vs estimated) |
+| GET | `/api/reports/projects/{project_id}/progress` | Progress report (by stage) |
+| GET | `/api/reports/collaborators/{collaborator_id}/history` | Collaborator allocation history |
 
-- **Driving adapters** (inbound): Receive input and invoke application services (e.g., HTTP handlers, CLI commands)
-- **Driven adapters** (outbound): Implement output interfaces (e.g., database repositories, external API clients)
+## Error Types
 
-## License
-
-This project is licensed under the MIT License.
+| Variant | HTTP Status | Description |
+|---------|-------------|-------------|
+| `NotFound` | 404 | Project not found |
+| `AlreadyInStatus` | 409 | Project already has the requested status |
+| `StageNotFound` | 404 | Stage not found |
+| `AllocationNotFound` | 404 | Allocation not found |
+| `CollaboratorNotFound` | 404 | Collaborator not found |
+| `InvalidField` | 422 | Validation error on a field |
+| `Infra` | 500 | Infrastructure/database error |
