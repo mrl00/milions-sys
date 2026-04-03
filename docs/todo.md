@@ -23,13 +23,25 @@
 - [x] Implement Stage CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Allocation CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Reports — cost, progress, history queries
-- [x] Add unit tests per bounded context (location: 16, contact: 21, collaborator: 17, client: 17, project: 14)
+- [x] Add unit tests per bounded context (location: 16, contact: 21, collaborator: 17, client: 16, project: 14)
 - [ ] Add structured tracing/logging middleware
 - [ ] Implement Keycloak JWT auth (currently standby per `05-security.md`)
 - [ ] Implement pagination (`page`/`per_page`) for list endpoints
+
+## Low Priority (code quality)
+
+- [ ] Implement complete collaborator registration (contact, phones, address, join tables)
+- [ ] Fix `collaborator_name` in history report (project crate can't access collaborator data)
+- [ ] Implement Service Types & Project Services CRUD (tables exist, zero code)
+- [ ] Remove `dead_code = "allow"` lints and clean up unused code
+- [ ] Extract duplicate DTOs (`ContactDto`/`AddressDto`) into shared crate
 
 ---
 
 ## Context
 
-All 29 API endpoints are wired and compiling. Routes are registered under `/api` scope in `startup.rs`.
+All 29 API endpoints are wired and registering via `configure()` functions.
+Startup wiring uses `pub fn build(pool: PgPool)` per context.
+86 unit tests pass across all crates.
+All error messages are in English.
+Composite repository traits replace bloated trait bounds.
