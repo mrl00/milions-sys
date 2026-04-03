@@ -16,7 +16,7 @@ pub struct UpdateCollaboratorInput {
 }
 
 #[async_trait]
-pub trait RegisterCollaborator: Send + Sync {
+pub trait RegisterCollaboratorUseCase: Send + Sync {
     async fn execute(
         &self,
         input: RegisterCollaboratorInput,
@@ -24,22 +24,23 @@ pub trait RegisterCollaborator: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindCollaborator: Send + Sync {
+pub trait FindCollaboratorUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
+#[allow(dead_code)]
 #[async_trait]
-pub trait FindCollaboratorByCpf: Send + Sync {
+pub trait FindCollaboratorByDocumentUseCase: Send + Sync {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError>;
 }
 
 #[async_trait]
-pub trait ListCollaborators: Send + Sync {
+pub trait ListCollaboratorsUseCase: Send + Sync {
     async fn execute(&self) -> Result<Vec<CollaboratorRow>, CollaboratorError>;
 }
 
 #[async_trait]
-pub trait UpdateCollaborator: Send + Sync {
+pub trait UpdateCollaboratorUseCase: Send + Sync {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -48,16 +49,16 @@ pub trait UpdateCollaborator: Send + Sync {
 }
 
 #[async_trait]
-pub trait ActivateCollaborator: Send + Sync {
+pub trait ActivateCollaboratorUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
 #[async_trait]
-pub trait DeactivateCollaborator: Send + Sync {
+pub trait DeactivateCollaboratorUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }
 
 #[async_trait]
-pub trait DeleteCollaborator: Send + Sync {
+pub trait DeleteCollaboratorUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError>;
 }

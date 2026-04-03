@@ -10,11 +10,6 @@ pub trait FindLocationById: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindLocationByHash: Send + Sync {
-    async fn find_by_hash(&self, hash: i64) -> Result<Option<LocationRow>, LocationError>;
-}
-
-#[async_trait]
 pub trait FindAllLocations: Send + Sync {
     async fn find_all(&self) -> Result<Vec<LocationRow>, LocationError>;
 }
@@ -38,24 +33,12 @@ pub trait DeleteLocation: Send + Sync {
     async fn delete(&self, uuid: Uuid) -> Result<LocationRow, LocationError>;
 }
 
-pub trait FindOrCreateLocation: FindLocationByHash + CreateLocation {}
-pub trait FindAndUpdateLocation: FindLocationById + UpdateLocation {}
-pub trait FindAndDeleteLocation: FindLocationById + DeleteLocation {}
-
 pub trait LocationRepository:
-    FindLocationById
-    + FindLocationByHash
-    + FindAllLocations
-    + CreateLocation
-    + UpdateLocation
-    + DeleteLocation
-    + Send
-    + Sync
+    FindLocationById + FindAllLocations + CreateLocation + UpdateLocation + DeleteLocation + Send + Sync
 {
 }
 impl<T> LocationRepository for T where
     T: FindLocationById
-        + FindLocationByHash
         + FindAllLocations
         + CreateLocation
         + UpdateLocation

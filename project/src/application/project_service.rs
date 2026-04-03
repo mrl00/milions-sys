@@ -11,13 +11,12 @@ use crate::domain::models::db::project_rows::{
 };
 use crate::domain::ports::project_repository::ProjectRepository;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
-    CreateAllocationInput, CreateProject as CreateProjectTrait, CreateProjectInput,
-    CreateStage as CreateStageTrait, CreateStageInput, DeleteProject as DeleteProjectTrait,
-    FindProject, GetCostReport, GetHistoryReport, GetProgressReport, ListAllocations, ListProjects,
-    ListProjectsByClient, PauseProject, StartProject, UpdateAllocation as UpdateAllocationTrait,
-    UpdateAllocationInput, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
-    UpdateStage as UpdateStageTrait, UpdateStageInput,
+    CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
+    CreateProjectInput, CreateProjectUseCase, CreateStageInput, CreateStageUseCase,
+    DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase, GetHistoryReportUseCase,
+    GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsUseCase, PauseProjectUseCase,
+    StartProjectUseCase, UpdateAllocationInput, UpdateAllocationUseCase, UpdateProjectInput,
+    UpdateProjectUseCase, UpdateStageInput, UpdateStageUseCase,
 };
 
 pub struct ProjectService<R> {
@@ -33,7 +32,7 @@ impl<R: ProjectRepository> ProjectService<R> {
 pub type ConcreteProjectService = ProjectService<PgProjectRepository>;
 
 #[async_trait]
-impl<R: ProjectRepository> FindProject for ProjectService<R> {
+impl<R: ProjectRepository> FindProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -43,21 +42,14 @@ impl<R: ProjectRepository> FindProject for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> ListProjects for ProjectService<R> {
+impl<R: ProjectRepository> ListProjectsUseCase for ProjectService<R> {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R: ProjectRepository> ListProjectsByClient for ProjectService<R> {
-    async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
-        self.repo.find_by_client_id(client_id).await
-    }
-}
-
-#[async_trait]
-impl<R: ProjectRepository> CreateProjectTrait for ProjectService<R> {
+impl<R: ProjectRepository> CreateProjectUseCase for ProjectService<R> {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
             tx_name: input.name,
@@ -77,7 +69,7 @@ impl<R: ProjectRepository> CreateProjectTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> UpdateProjectTrait for ProjectService<R> {
+impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -110,7 +102,7 @@ impl<R: ProjectRepository> UpdateProjectTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> StartProject for ProjectService<R> {
+impl<R: ProjectRepository> StartProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -147,7 +139,7 @@ impl<R: ProjectRepository> StartProject for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> PauseProject for ProjectService<R> {
+impl<R: ProjectRepository> PauseProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -184,7 +176,7 @@ impl<R: ProjectRepository> PauseProject for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> CompleteProject for ProjectService<R> {
+impl<R: ProjectRepository> CompleteProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -221,7 +213,7 @@ impl<R: ProjectRepository> CompleteProject for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> CancelProject for ProjectService<R> {
+impl<R: ProjectRepository> CancelProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -258,7 +250,7 @@ impl<R: ProjectRepository> CancelProject for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> DeleteProjectTrait for ProjectService<R> {
+impl<R: ProjectRepository> DeleteProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -270,7 +262,7 @@ impl<R: ProjectRepository> DeleteProjectTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> CreateStageTrait for ProjectService<R> {
+impl<R: ProjectRepository> CreateStageUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -296,7 +288,7 @@ impl<R: ProjectRepository> CreateStageTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> UpdateStageTrait for ProjectService<R> {
+impl<R: ProjectRepository> UpdateStageUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -341,7 +333,7 @@ impl<R: ProjectRepository> UpdateStageTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> CreateAllocationTrait for ProjectService<R> {
+impl<R: ProjectRepository> CreateAllocationUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -367,7 +359,7 @@ impl<R: ProjectRepository> CreateAllocationTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> ListAllocations for ProjectService<R> {
+impl<R: ProjectRepository> ListAllocationsUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -382,7 +374,7 @@ impl<R: ProjectRepository> ListAllocations for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> UpdateAllocationTrait for ProjectService<R> {
+impl<R: ProjectRepository> UpdateAllocationUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -423,7 +415,7 @@ impl<R: ProjectRepository> UpdateAllocationTrait for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> GetCostReport for ProjectService<R> {
+impl<R: ProjectRepository> GetCostReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -461,7 +453,7 @@ impl<R: ProjectRepository> GetCostReport for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> GetProgressReport for ProjectService<R> {
+impl<R: ProjectRepository> GetProgressReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -496,7 +488,7 @@ impl<R: ProjectRepository> GetProgressReport for ProjectService<R> {
 }
 
 #[async_trait]
-impl<R: ProjectRepository> GetHistoryReport for ProjectService<R> {
+impl<R: ProjectRepository> GetHistoryReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         collaborator_id: Uuid,
@@ -554,8 +546,8 @@ mod tests {
         UpdateAllocation, UpdateProject, UpdateStage,
     };
     use crate::domain::ports::project_use_cases::{
-        CancelProject, CompleteProject, DeleteProject as DeleteProjectTrait, FindProject,
-        ListProjects, PauseProject, StartProject, UpdateProject as UpdateProjectTrait,
+        CancelProjectUseCase, CompleteProjectUseCase, DeleteProjectUseCase, FindProjectUseCase,
+        ListProjectsUseCase, PauseProjectUseCase, StartProjectUseCase, UpdateProjectUseCase,
     };
 
     #[derive(Default)]
@@ -735,7 +727,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = FindProject::execute(&service, uuid).await.unwrap();
+        let result = FindProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
         assert_eq!(result.tx_name, "Test Project");
     }
@@ -745,7 +737,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ProjectService::new(repo);
-        let result = FindProject::execute(&service, uuid).await;
+        let result = FindProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 
@@ -756,7 +748,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![p1, p2];
         let service = ProjectService::new(repo);
-        let result = ListProjects::execute(&service).await.unwrap();
+        let result = ListProjectsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -767,7 +759,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = StartProject::execute(&service, uuid).await.unwrap();
+        let result = StartProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -779,7 +771,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = StartProject::execute(&service, uuid).await;
+        let result = StartProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
     }
 
@@ -791,7 +783,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = PauseProject::execute(&service, uuid).await.unwrap();
+        let result = PauseProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -803,7 +795,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = PauseProject::execute(&service, uuid).await;
+        let result = PauseProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
     }
 
@@ -814,7 +806,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = CompleteProject::execute(&service, uuid).await.unwrap();
+        let result = CompleteProjectUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -825,7 +819,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = CancelProject::execute(&service, uuid).await.unwrap();
+        let result = CancelProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -836,7 +830,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
-        let result = DeleteProjectTrait::execute(&service, uuid).await.unwrap();
+        let result = DeleteProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
     }
 
@@ -845,7 +839,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ProjectService::new(repo);
-        let result = DeleteProjectTrait::execute(&service, uuid).await;
+        let result = DeleteProjectUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 
@@ -866,7 +860,7 @@ mod tests {
             notes: None,
             active: None,
         };
-        let result = UpdateProjectTrait::execute(&service, uuid, input).await;
+        let result = UpdateProjectUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(ProjectError::NotFound { .. })));
     }
 

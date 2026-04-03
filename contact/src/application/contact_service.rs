@@ -8,9 +8,9 @@ use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::contact_repository::ContactRepository;
 use crate::domain::ports::contact_use_cases::{
-    AddPhone, AddPhones, FindContact, FindPhone, ListContacts, ListPhones, RegisterContact,
-    RegisterContactInput, RemovePhone, UpdateContactEmail as UpdateContactEmailTrait,
-    UpdatePhone as UpdatePhoneTrait,
+    AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase, ListContactsUseCase,
+    ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase, RemovePhoneUseCase,
+    UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
 use crate::domain::ports::phone_repository::PhoneRepository;
 use types::phone::Phone;
@@ -34,7 +34,7 @@ impl<C: ContactRepository, P: PhoneRepository> ContactService<C, P> {
 // --- Contact ---
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> RegisterContact for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> RegisterContactUseCase for ContactService<C, P> {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError> {
         if self
             .contact_repo
@@ -54,7 +54,7 @@ impl<C: ContactRepository, P: PhoneRepository> RegisterContact for ContactServic
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> FindContact for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> FindContactUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<ContactRow, ContactError> {
         self.contact_repo
             .find_by_id(uuid)
@@ -64,14 +64,14 @@ impl<C: ContactRepository, P: PhoneRepository> FindContact for ContactService<C,
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> ListContacts for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> ListContactsUseCase for ContactService<C, P> {
     async fn execute(&self) -> Result<Vec<ContactRow>, ContactError> {
         self.contact_repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> UpdateContactEmailTrait for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> UpdateContactEmailUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid, email: String) -> Result<ContactRow, ContactError> {
         self.contact_repo
             .find_by_id(uuid)
@@ -95,7 +95,7 @@ fn validate_phone(phone: &str) -> Result<Phone, ContactError> {
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> FindPhone for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> FindPhoneUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError> {
         self.phone_repo
             .find_by_id(uuid)
@@ -105,14 +105,14 @@ impl<C: ContactRepository, P: PhoneRepository> FindPhone for ContactService<C, P
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> ListPhones for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> ListPhonesUseCase for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError> {
         self.phone_repo.find_by_contact_id(contact_id).await
     }
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> AddPhone for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> AddPhoneUseCase for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
         validate_phone(&phone)?;
 
@@ -127,7 +127,7 @@ impl<C: ContactRepository, P: PhoneRepository> AddPhone for ContactService<C, P>
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> AddPhones for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> AddPhonesUseCase for ContactService<C, P> {
     async fn execute(
         &self,
         contact_id: Uuid,
@@ -155,7 +155,7 @@ impl<C: ContactRepository, P: PhoneRepository> AddPhones for ContactService<C, P
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneTrait for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
         validate_phone(&phone)?;
 
@@ -169,7 +169,7 @@ impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneTrait for ContactServi
 }
 
 #[async_trait]
-impl<C: ContactRepository, P: PhoneRepository> RemovePhone for ContactService<C, P> {
+impl<C: ContactRepository, P: PhoneRepository> RemovePhoneUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError> {
         self.phone_repo
             .find_by_id(uuid)
@@ -190,9 +190,9 @@ mod tests {
         CreateContact, FindAllContacts, FindContactByEmail, FindContactById, UpdateContactEmail,
     };
     use crate::domain::ports::contact_use_cases::{
-        AddPhone, AddPhones, FindContact, FindPhone, ListContacts, ListPhones, RegisterContact,
-        RegisterContactInput, RemovePhone, UpdateContactEmail as UpdateContactEmailTrait,
-        UpdatePhone as UpdatePhoneTrait,
+        AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase,
+        ListContactsUseCase, ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase,
+        RemovePhoneUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
     };
     use crate::domain::ports::phone_repository::{
         CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
@@ -395,7 +395,9 @@ mod tests {
         let input = RegisterContactInput {
             email: "new@example.com".to_string(),
         };
-        let result = RegisterContact::execute(&service, input).await.unwrap();
+        let result = RegisterContactUseCase::execute(&service, input)
+            .await
+            .unwrap();
         assert_eq!(result.tx_email, Some("new@example.com".to_string()));
     }
 
@@ -408,7 +410,7 @@ mod tests {
         let input = RegisterContactInput {
             email: "test@example.com".to_string(),
         };
-        let result = RegisterContact::execute(&service, input).await;
+        let result = RegisterContactUseCase::execute(&service, input).await;
         assert!(matches!(result, Err(ContactError::AlreadyExists { .. })));
     }
 
@@ -420,7 +422,7 @@ mod tests {
         repo.find_by_id_result = Some(contact);
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = FindContact::execute(&service, uuid).await.unwrap();
+        let result = FindContactUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_contact, uuid);
     }
 
@@ -430,7 +432,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = FindContact::execute(&service, uuid).await;
+        let result = FindContactUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ContactError::NotFound { .. })));
     }
 
@@ -442,7 +444,7 @@ mod tests {
         repo.find_all_result = vec![c1, c2];
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = ListContacts::execute(&service).await.unwrap();
+        let result = ListContactsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -455,7 +457,7 @@ mod tests {
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
         let result =
-            UpdateContactEmailTrait::execute(&service, uuid, "updated@example.com".to_string())
+            UpdateContactEmailUseCase::execute(&service, uuid, "updated@example.com".to_string())
                 .await
                 .unwrap();
         assert_eq!(result.tx_email, Some("updated@example.com".to_string()));
@@ -473,7 +475,8 @@ mod tests {
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
         let result =
-            UpdateContactEmailTrait::execute(&service, uuid, "other@example.com".to_string()).await;
+            UpdateContactEmailUseCase::execute(&service, uuid, "other@example.com".to_string())
+                .await;
         assert!(matches!(result, Err(ContactError::AlreadyExists { .. })));
     }
 
@@ -485,7 +488,7 @@ mod tests {
         phone_repo.find_by_id_result = Some(phone);
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = FindPhone::execute(&service, uuid).await.unwrap();
+        let result = FindPhoneUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_phone, uuid);
     }
 
@@ -495,7 +498,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = FindPhone::execute(&service, uuid).await;
+        let result = FindPhoneUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ContactError::PhoneNotFound { .. })));
     }
 
@@ -507,7 +510,9 @@ mod tests {
         phone_repo.find_by_contact_id_result = vec![p1, p2];
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = ListPhones::execute(&service, Uuid::now_v7()).await.unwrap();
+        let result = ListPhonesUseCase::execute(&service, Uuid::now_v7())
+            .await
+            .unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -517,7 +522,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhone::execute(&service, contact_id, "+5511999999999".to_string())
+        let result = AddPhoneUseCase::execute(&service, contact_id, "+5511999999999".to_string())
             .await
             .unwrap();
         assert_eq!(result.tx_phone, "+5511999999999");
@@ -532,7 +537,8 @@ mod tests {
         phone_repo.find_by_contact_id_result = vec![existing];
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhone::execute(&service, contact_id, "+5511999999999".to_string()).await;
+        let result =
+            AddPhoneUseCase::execute(&service, contact_id, "+5511999999999".to_string()).await;
         assert!(matches!(
             result,
             Err(ContactError::PhoneAlreadyExists { .. })
@@ -545,7 +551,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhone::execute(&service, contact_id, "invalid".to_string()).await;
+        let result = AddPhoneUseCase::execute(&service, contact_id, "invalid".to_string()).await;
         assert!(matches!(result, Err(ContactError::InvalidPhone(_))));
     }
 
@@ -557,7 +563,7 @@ mod tests {
             vec!["+5511999999999".to_string(), "+5511888888888".to_string()];
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhones::execute(
+        let result = AddPhonesUseCase::execute(
             &service,
             contact_id,
             vec!["+5511999999999".to_string(), "+5511888888888".to_string()],
@@ -575,7 +581,7 @@ mod tests {
         phone_repo.find_by_id_result = Some(phone);
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = UpdatePhoneTrait::execute(&service, uuid, "+5511888888888".to_string())
+        let result = UpdatePhoneUseCase::execute(&service, uuid, "+5511888888888".to_string())
             .await
             .unwrap();
         assert_eq!(result.tx_phone, "+5511888888888");
@@ -587,7 +593,8 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = UpdatePhoneTrait::execute(&service, uuid, "+5511999999999".to_string()).await;
+        let result =
+            UpdatePhoneUseCase::execute(&service, uuid, "+5511999999999".to_string()).await;
         assert!(matches!(result, Err(ContactError::PhoneNotFound { .. })));
     }
 
@@ -599,7 +606,7 @@ mod tests {
         phone_repo.find_by_id_result = Some(phone);
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = RemovePhone::execute(&service, uuid).await.unwrap();
+        let result = RemovePhoneUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_phone, uuid);
     }
 
@@ -609,7 +616,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = RemovePhone::execute(&service, uuid).await;
+        let result = RemovePhoneUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ContactError::PhoneNotFound { .. })));
     }
 

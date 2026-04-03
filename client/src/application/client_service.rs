@@ -10,9 +10,9 @@ use crate::domain::ports::client_repository::{
     FindById, UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::client_use_cases::{
-    ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
-    FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
-    UpdateClientInput,
+    ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
+    FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
+    RegisterClientUseCase, UpdateClientInput, UpdateClientUseCase,
 };
 use contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository;
 use contact::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository;
@@ -46,26 +46,8 @@ impl ConcreteClientService {
     }
 }
 
-fn compute_location_hash(
-    street: &str,
-    number: &str,
-    city: &str,
-    state: &str,
-    zipcode: &str,
-) -> i64 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
-    street.hash(&mut hasher);
-    number.hash(&mut hasher);
-    city.hash(&mut hasher);
-    state.hash(&mut hasher);
-    zipcode.hash(&mut hasher);
-    hasher.finish() as i64
-}
-
 #[async_trait]
-impl RegisterClient for ConcreteClientService {
+impl RegisterClientUseCase for ConcreteClientService {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         let _doc: Doc = input.doc.clone().try_into()?;
         let _cep: types::cep::Cep = input.cep.clone().try_into()?;
@@ -86,53 +68,33 @@ impl RegisterClient for ConcreteClientService {
             })
         })?;
 
-        let location_hash = compute_location_hash(
-            &input.street,
-            &input.number,
-            &input.city,
-            &input.state,
-            &input.cep,
-        );
-
-        let location_row =
-            match PgLocationRepository::find_by_hash_with_executor(&mut *tx, location_hash)
-                .await
-                .map_err(|e| {
-                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "find location",
-                        source: e,
-                    })
-                })? {
-                Some(existing) => existing,
-                None => PgLocationRepository::create_with_executor(
-                    &mut *tx,
-                    CreateLocationRow {
-                        tx_street: input.street.clone(),
-                        tx_number: input.number.clone(),
-                        tx_city: input.city.clone(),
-                        tx_state: input.state.clone(),
-                        tx_zipcode: input.cep.clone(),
-                        tx_public_space: "".to_string(),
-                        tx_address_complement: input.complement.clone(),
-                        tx_unit: "".to_string(),
-                        tx_neighborhood: "".to_string(),
-                        tx_locality: input.city.clone(),
-                        tx_region: input.state.clone(),
-                        tx_ibge: None,
-                        tx_gia: None,
-                        tx_ddd: "".to_string(),
-                        tx_siafi: None,
-                        nr_hash: location_hash,
-                    },
-                )
-                .await
-                .map_err(|e| {
-                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "create location",
-                        source: e,
-                    })
-                })?,
-            };
+        let location_row = PgLocationRepository::find_or_create_with_executor(
+            &mut *tx,
+            CreateLocationRow {
+                tx_street: input.street.clone(),
+                tx_number: input.number.clone(),
+                tx_city: input.city.clone(),
+                tx_state: input.state.clone(),
+                tx_zipcode: input.cep.clone(),
+                tx_public_space: "".to_string(),
+                tx_address_complement: input.complement.clone(),
+                tx_unit: "".to_string(),
+                tx_neighborhood: input.neighborhood.clone(),
+                tx_locality: input.city.clone(),
+                tx_region: input.state.clone(),
+                tx_ibge: None,
+                tx_gia: None,
+                tx_ddd: "".to_string(),
+                tx_siafi: None,
+            },
+        )
+        .await
+        .map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                action: "find or create location",
+                source: e,
+            })
+        })?;
 
         let contact_row = PgContactRepository::create_with_executor(
             &mut *tx,
@@ -207,7 +169,7 @@ impl RegisterClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl FindClientById for ConcreteClientService {
+impl FindClientByIdUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -217,21 +179,21 @@ impl FindClientById for ConcreteClientService {
 }
 
 #[async_trait]
-impl FindClientByDocument for ConcreteClientService {
+impl FindClientByDocumentUseCase for ConcreteClientService {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl ListClients for ConcreteClientService {
+impl ListClientsUseCase for ConcreteClientService {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl UpdateClient for ConcreteClientService {
+impl UpdateClientUseCase for ConcreteClientService {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -260,7 +222,7 @@ impl UpdateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl ActivateClient for ConcreteClientService {
+impl ActivateClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -286,7 +248,7 @@ impl ActivateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl DeactivateClient for ConcreteClientService {
+impl DeactivateClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -312,7 +274,7 @@ impl DeactivateClient for ConcreteClientService {
 }
 
 #[async_trait]
-impl DeleteClientTrait for ConcreteClientService {
+impl DeleteClientUseCase for ConcreteClientService {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -324,7 +286,7 @@ impl DeleteClientTrait for ConcreteClientService {
 }
 
 #[async_trait]
-impl<R: ClientRepository> FindClientById for ClientService<R> {
+impl<R: ClientRepository> FindClientByIdUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -334,21 +296,21 @@ impl<R: ClientRepository> FindClientById for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> FindClientByDocument for ClientService<R> {
+impl<R: ClientRepository> FindClientByDocumentUseCase for ClientService<R> {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl<R: ClientRepository> ListClients for ClientService<R> {
+impl<R: ClientRepository> ListClientsUseCase for ClientService<R> {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R: ClientRepository> UpdateClient for ClientService<R> {
+impl<R: ClientRepository> UpdateClientUseCase for ClientService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -377,7 +339,7 @@ impl<R: ClientRepository> UpdateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> ActivateClient for ClientService<R> {
+impl<R: ClientRepository> ActivateClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -403,7 +365,7 @@ impl<R: ClientRepository> ActivateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> DeactivateClient for ClientService<R> {
+impl<R: ClientRepository> DeactivateClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -429,7 +391,7 @@ impl<R: ClientRepository> DeactivateClient for ClientService<R> {
 }
 
 #[async_trait]
-impl<R: ClientRepository> DeleteClientTrait for ClientService<R> {
+impl<R: ClientRepository> DeleteClientUseCase for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -450,8 +412,9 @@ mod tests {
         UpdateClient as UpdateClientRepo,
     };
     use crate::domain::ports::client_use_cases::{
-        ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
-        FindClientById, ListClients, UpdateClient, UpdateClientInput,
+        ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
+        FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, UpdateClientInput,
+        UpdateClientUseCase,
     };
 
     #[derive(Default)]
@@ -562,7 +525,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = FindClientById::execute(&service, uuid).await.unwrap();
+        let result = FindClientByIdUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
         assert_eq!(result.tx_name, "Test Client");
     }
@@ -572,7 +537,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = FindClientById::execute(&service, uuid).await;
+        let result = FindClientByIdUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 
@@ -582,7 +547,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_document_result = Some(row.clone());
         let service = ClientService::new(repo);
-        let result = FindClientByDocument::execute(&service, "12345678909")
+        let result = FindClientByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
         assert!(result.is_some());
@@ -596,7 +561,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![r1, r2];
         let service = ClientService::new(repo);
-        let result = ListClients::execute(&service).await.unwrap();
+        let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -604,7 +569,7 @@ mod tests {
     async fn list_clients_returns_empty() {
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = ListClients::execute(&service).await.unwrap();
+        let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert!(result.is_empty());
     }
 
@@ -617,7 +582,7 @@ mod tests {
             name: Some("Updated".to_string()),
             doc: None,
         };
-        let result = UpdateClient::execute(&service, uuid, input).await;
+        let result = UpdateClientUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 
@@ -629,7 +594,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = ActivateClient::execute(&service, uuid).await.unwrap();
+        let result = ActivateClientUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -640,7 +607,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = ActivateClient::execute(&service, uuid).await;
+        let result = ActivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyActive { .. })));
     }
 
@@ -651,7 +618,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeactivateClient::execute(&service, uuid).await.unwrap();
+        let result = DeactivateClientUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -663,7 +632,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeactivateClient::execute(&service, uuid).await;
+        let result = DeactivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyInactive { .. })));
     }
 
@@ -674,7 +643,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = ClientService::new(repo);
-        let result = DeleteClientTrait::execute(&service, uuid).await.unwrap();
+        let result = DeleteClientUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_client, uuid);
     }
 
@@ -683,7 +652,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = ClientService::new(repo);
-        let result = DeleteClientTrait::execute(&service, uuid).await;
+        let result = DeleteClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
 

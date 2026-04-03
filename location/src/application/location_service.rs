@@ -6,10 +6,8 @@ use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use crate::domain::ports::location_repository::LocationRepository;
 use crate::domain::ports::location_use_cases::{
-    CreateLocation as CreateLocationTrait, CreateLocationInput,
-    DeleteLocation as DeleteLocationTrait, FindLocation,
-    FindOrCreateLocation as FindOrCreateLocationTrait, ListLocations,
-    UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
+    CreateLocationInput, CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase,
+    ListLocationsUseCase, UpdateLocationInput, UpdateLocationUseCase,
 };
 
 pub struct LocationService<R> {
@@ -38,7 +36,6 @@ impl<R: LocationRepository> LocationService<R> {
             tx_gia: input.gia,
             tx_ddd: input.ddd,
             tx_siafi: input.siafi,
-            nr_hash: input.hash,
         }
     }
 
@@ -66,7 +63,7 @@ impl<R: LocationRepository> LocationService<R> {
 pub type ConcreteLocationService = LocationService<PgLocationRepository>;
 
 #[async_trait]
-impl<R: LocationRepository> FindLocation for LocationService<R> {
+impl<R: LocationRepository> FindLocationUseCase for LocationService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -76,32 +73,21 @@ impl<R: LocationRepository> FindLocation for LocationService<R> {
 }
 
 #[async_trait]
-impl<R: LocationRepository> ListLocations for LocationService<R> {
+impl<R: LocationRepository> ListLocationsUseCase for LocationService<R> {
     async fn execute(&self) -> Result<Vec<LocationRow>, LocationError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R: LocationRepository> CreateLocationTrait for LocationService<R> {
+impl<R: LocationRepository> CreateLocationUseCase for LocationService<R> {
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         self.repo.create(Self::to_create_row(input)).await
     }
 }
 
 #[async_trait]
-impl<R: LocationRepository> FindOrCreateLocationTrait for LocationService<R> {
-    async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
-        if let Some(existing) = self.repo.find_by_hash(input.hash).await? {
-            return Ok(existing);
-        }
-
-        self.repo.create(Self::to_create_row(input)).await
-    }
-}
-
-#[async_trait]
-impl<R: LocationRepository> UpdateLocationTrait for LocationService<R> {
+impl<R: LocationRepository> UpdateLocationUseCase for LocationService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -117,7 +103,7 @@ impl<R: LocationRepository> UpdateLocationTrait for LocationService<R> {
 }
 
 #[async_trait]
-impl<R: LocationRepository> DeleteLocationTrait for LocationService<R> {
+impl<R: LocationRepository> DeleteLocationUseCase for LocationService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -132,21 +118,15 @@ impl<R: LocationRepository> DeleteLocationTrait for LocationService<R> {
 mod tests {
     use super::*;
     use crate::domain::ports::location_repository::{
-        CreateLocation, DeleteLocation, FindAllLocations, FindLocationByHash, FindLocationById,
-        UpdateLocation,
+        CreateLocation, DeleteLocation, FindAllLocations, FindLocationById, UpdateLocation,
     };
     use crate::domain::ports::location_use_cases::{
-        CreateLocation as CreateLocationTrait, DeleteLocation as DeleteLocationTrait, FindLocation,
-        FindOrCreateLocation, ListLocations, UpdateLocation as UpdateLocationTrait,
+        CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
+        UpdateLocationUseCase,
     };
     use sqlx::types::chrono::NaiveDateTime;
 
     enum FindByIdResult {
-        Found(LocationRow),
-        NotFound,
-    }
-
-    enum FindByHashResult {
         Found(LocationRow),
         NotFound,
     }
@@ -158,7 +138,6 @@ mod tests {
     #[derive(Default)]
     struct MockRepo {
         find_by_id_result: Option<FindByIdResult>,
-        find_by_hash_result: Option<FindByHashResult>,
         find_all_result: Option<FindAllResult>,
     }
 
@@ -233,16 +212,6 @@ mod tests {
     }
 
     #[async_trait]
-    impl FindLocationByHash for MockRepo {
-        async fn find_by_hash(&self, _hash: i64) -> Result<Option<LocationRow>, LocationError> {
-            match &self.find_by_hash_result {
-                Some(FindByHashResult::Found(row)) => Ok(Some(row.clone())),
-                Some(FindByHashResult::NotFound) | None => Ok(None),
-            }
-        }
-    }
-
-    #[async_trait]
     impl FindAllLocations for MockRepo {
         async fn find_all(&self) -> Result<Vec<LocationRow>, LocationError> {
             match &self.find_all_result {
@@ -273,7 +242,7 @@ mod tests {
                 tx_city: input.tx_city,
                 tx_state: input.tx_state,
                 tx_zipcode: input.tx_zipcode,
-                nr_hash: input.nr_hash,
+                nr_hash: 0,
                 ts_location_created_at: now(),
                 ts_location_updated_at: now(),
             })
@@ -305,7 +274,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(FindByIdResult::Found(row));
         let service = LocationService::new(repo);
-        let result = FindLocation::execute(&service, uuid).await.unwrap();
+        let result = FindLocationUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_location, uuid);
         assert_eq!(result.tx_street, "Paulista");
     }
@@ -315,7 +284,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = LocationService::new(repo);
-        let result = FindLocation::execute(&service, uuid).await;
+        let result = FindLocationUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(LocationError::NotFound { .. })));
     }
 
@@ -326,7 +295,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = Some(FindAllResult::Found(vec![row1, row2]));
         let service = LocationService::new(repo);
-        let result = ListLocations::execute(&service).await.unwrap();
+        let result = ListLocationsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -334,7 +303,7 @@ mod tests {
     async fn list_locations_returns_empty_when_none() {
         let repo = MockRepo::new();
         let service = LocationService::new(repo);
-        let result = ListLocations::execute(&service).await.unwrap();
+        let result = ListLocationsUseCase::execute(&service).await.unwrap();
         assert!(result.is_empty());
     }
 
@@ -356,75 +325,13 @@ mod tests {
             gia: Some("1004".to_string()),
             ddd: "11".to_string(),
             siafi: Some("7107".to_string()),
-            hash: 123456789,
         };
         let repo = MockRepo::new();
         let service = LocationService::new(repo);
-        let result = CreateLocationTrait::execute(&service, input).await.unwrap();
+        let result = CreateLocationUseCase::execute(&service, input)
+            .await
+            .unwrap();
         assert_eq!(result.tx_street, "Paulista");
-        assert_eq!(result.nr_hash, 123456789);
-    }
-
-    #[tokio::test]
-    async fn find_or_create_returns_existing_when_hash_matches() {
-        let existing = make_row();
-        let hash = existing.nr_hash;
-        let mut repo = MockRepo::new();
-        repo.find_by_hash_result = Some(FindByHashResult::Found(existing.clone()));
-        let input = CreateLocationInput {
-            street: "Test".to_string(),
-            number: "1".to_string(),
-            city: "Test".to_string(),
-            state: "SP".to_string(),
-            zipcode: "00000000".to_string(),
-            complement: "".to_string(),
-            public_space: "Rua".to_string(),
-            unit: "".to_string(),
-            neighborhood: "Test".to_string(),
-            locality: "Test".to_string(),
-            region: "SP".to_string(),
-            ibge: None,
-            gia: None,
-            ddd: "11".to_string(),
-            siafi: None,
-            hash,
-        };
-        let service = LocationService::new(repo);
-        let result = FindOrCreateLocation::execute(&service, input)
-            .await
-            .unwrap();
-        assert_eq!(result.pk_location, existing.pk_location);
-        assert_eq!(result.tx_street, existing.tx_street);
-    }
-
-    #[tokio::test]
-    async fn find_or_create_creates_when_hash_not_found() {
-        let mut repo = MockRepo::new();
-        repo.find_by_hash_result = Some(FindByHashResult::NotFound);
-        let input = CreateLocationInput {
-            street: "New".to_string(),
-            number: "999".to_string(),
-            city: "New".to_string(),
-            state: "RJ".to_string(),
-            zipcode: "20000000".to_string(),
-            complement: "".to_string(),
-            public_space: "Av".to_string(),
-            unit: "".to_string(),
-            neighborhood: "New".to_string(),
-            locality: "New".to_string(),
-            region: "RJ".to_string(),
-            ibge: None,
-            gia: None,
-            ddd: "21".to_string(),
-            siafi: None,
-            hash: 999,
-        };
-        let service = LocationService::new(repo);
-        let result = FindOrCreateLocation::execute(&service, input)
-            .await
-            .unwrap();
-        assert_eq!(result.tx_street, "New");
-        assert_eq!(result.nr_hash, 999);
     }
 
     #[tokio::test]
@@ -449,7 +356,7 @@ mod tests {
             ddd: None,
             siafi: None,
         };
-        let result = UpdateLocationTrait::execute(&service, uuid, input).await;
+        let result = UpdateLocationUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(LocationError::NotFound { .. })));
     }
 
@@ -477,7 +384,7 @@ mod tests {
             siafi: None,
         };
         let service = LocationService::new(repo);
-        let result = UpdateLocationTrait::execute(&service, uuid, input)
+        let result = UpdateLocationUseCase::execute(&service, uuid, input)
             .await
             .unwrap();
         assert_eq!(result.pk_location, uuid);
@@ -488,7 +395,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = LocationService::new(repo);
-        let result = DeleteLocationTrait::execute(&service, uuid).await;
+        let result = DeleteLocationUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(LocationError::NotFound { .. })));
     }
 
@@ -499,7 +406,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(FindByIdResult::Found(row));
         let service = LocationService::new(repo);
-        let result = DeleteLocationTrait::execute(&service, uuid).await.unwrap();
+        let result = DeleteLocationUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_location, uuid);
     }
 

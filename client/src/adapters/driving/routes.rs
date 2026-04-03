@@ -5,8 +5,8 @@ use super::dto::{ClientResponse, RegisterClientRequest, StatusRequest, UpdateCli
 use crate::application::client_service::ConcreteClientService;
 use crate::domain::errors::ClientError;
 use crate::domain::ports::client_use_cases::{
-    ActivateClient, DeactivateClient, DeleteClient, FindClientById, ListClients, RegisterClient,
-    UpdateClient,
+    ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase, FindClientByIdUseCase,
+    ListClientsUseCase, RegisterClientUseCase, UpdateClientUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -42,14 +42,14 @@ async fn register_client(
         state: body.address.state.clone(),
     };
 
-    match RegisterClient::execute(&**service, input).await {
+    match RegisterClientUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(ClientResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }
 
 async fn list_clients(service: web::Data<ConcreteClientService>) -> HttpResponse {
-    match ListClients::execute(&**service).await {
+    match ListClientsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ClientResponse> = rows.into_iter().map(ClientResponse::from).collect();
             HttpResponse::Ok().json(resp)
@@ -63,7 +63,7 @@ async fn get_client(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match FindClientById::execute(&**service, uuid).await {
+    match FindClientByIdUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -80,7 +80,7 @@ async fn update_client(
         doc: body.document.clone(),
     };
 
-    match UpdateClient::execute(&**service, uuid, input).await {
+    match UpdateClientUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -91,7 +91,7 @@ async fn delete_client(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match DeleteClient::execute(&**service, uuid).await {
+    match DeleteClientUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -104,10 +104,10 @@ async fn update_client_status(
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
-        "active" => ActivateClient::execute(&**service, uuid)
+        "active" => ActivateClientUseCase::execute(&**service, uuid)
             .await
             .map(ClientResponse::from),
-        "inactive" => DeactivateClient::execute(&**service, uuid)
+        "inactive" => DeactivateClientUseCase::execute(&**service, uuid)
             .await
             .map(ClientResponse::from),
         _ => return HttpResponse::BadRequest().body("invalid status: use 'active' or 'inactive'"),

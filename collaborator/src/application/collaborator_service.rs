@@ -9,13 +9,13 @@ use crate::domain::models::db::collaborator_row::{
 };
 use crate::domain::ports::collaborator_repository::{
     CollaboratorRepository, CreateCollaborator, DeleteCollaborator, FindAllCollaborators,
-    FindCollaboratorByCpf, FindCollaboratorById, UpdateCollaborator,
+    FindCollaboratorByDocument, FindCollaboratorById, UpdateCollaborator,
 };
 use crate::domain::ports::collaborator_use_cases::{
-    ActivateCollaborator, DeactivateCollaborator, DeleteCollaborator as DeleteCollaboratorTrait,
-    FindCollaborator, FindCollaboratorByCpf as FindCollaboratorByCpfTrait, ListCollaborators,
-    RegisterCollaborator as RegisterCollaboratorTrait, RegisterCollaboratorInput,
-    UpdateCollaborator as UpdateCollaboratorTrait, UpdateCollaboratorInput,
+    ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
+    FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+    RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
+    UpdateCollaboratorUseCase,
 };
 use types::cpf::Cpf;
 
@@ -26,7 +26,7 @@ pub struct CollaboratorService<R> {
 impl<R> CollaboratorService<R>
 where
     R: FindCollaboratorById
-        + FindCollaboratorByCpf
+        + FindCollaboratorByDocument
         + FindAllCollaborators
         + CreateCollaborator
         + UpdateCollaborator
@@ -40,7 +40,7 @@ where
 pub type ConcreteCollaboratorService = CollaboratorService<PgCollaboratorRepository>;
 
 #[async_trait]
-impl<R: CollaboratorRepository> FindCollaborator for CollaboratorService<R> {
+impl<R: CollaboratorRepository> FindCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
@@ -50,28 +50,28 @@ impl<R: CollaboratorRepository> FindCollaborator for CollaboratorService<R> {
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> FindCollaboratorByCpfTrait for CollaboratorService<R> {
+impl<R: CollaboratorRepository> FindCollaboratorByDocumentUseCase for CollaboratorService<R> {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
-        self.repo.find_by_cpf(cpf).await
+        self.repo.find_by_document(cpf).await
     }
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> ListCollaborators for CollaboratorService<R> {
+impl<R: CollaboratorRepository> ListCollaboratorsUseCase for CollaboratorService<R> {
     async fn execute(&self) -> Result<Vec<CollaboratorRow>, CollaboratorError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> RegisterCollaboratorTrait for CollaboratorService<R> {
+impl<R: CollaboratorRepository> RegisterCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(
         &self,
         input: RegisterCollaboratorInput,
     ) -> Result<CollaboratorRow, CollaboratorError> {
         let _validated_cpf: Cpf = input.cpf.clone().try_into()?;
 
-        if self.repo.find_by_cpf(&input.cpf).await?.is_some() {
+        if self.repo.find_by_document(&input.cpf).await?.is_some() {
             return Err(CollaboratorError::CpfAlreadyExists { cpf: input.cpf });
         }
 
@@ -87,7 +87,7 @@ impl<R: CollaboratorRepository> RegisterCollaboratorTrait for CollaboratorServic
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> UpdateCollaboratorTrait for CollaboratorService<R> {
+impl<R: CollaboratorRepository> UpdateCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -117,7 +117,7 @@ impl<R: CollaboratorRepository> UpdateCollaboratorTrait for CollaboratorService<
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> ActivateCollaborator for CollaboratorService<R> {
+impl<R: CollaboratorRepository> ActivateCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -144,7 +144,7 @@ impl<R: CollaboratorRepository> ActivateCollaborator for CollaboratorService<R> 
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> DeactivateCollaborator for CollaboratorService<R> {
+impl<R: CollaboratorRepository> DeactivateCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         let current = self
             .repo
@@ -171,7 +171,7 @@ impl<R: CollaboratorRepository> DeactivateCollaborator for CollaboratorService<R
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> DeleteCollaboratorTrait for CollaboratorService<R> {
+impl<R: CollaboratorRepository> DeleteCollaboratorUseCase for CollaboratorService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<CollaboratorRow, CollaboratorError> {
         self.repo
             .find_by_id(uuid)
@@ -190,21 +190,20 @@ mod tests {
         CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
     };
     use crate::domain::ports::collaborator_repository::{
-        CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByCpf,
+        CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByDocument,
         FindCollaboratorById, UpdateCollaborator,
     };
     use crate::domain::ports::collaborator_use_cases::{
-        ActivateCollaborator, DeactivateCollaborator,
-        DeleteCollaborator as DeleteCollaboratorTrait, FindCollaborator,
-        FindCollaboratorByCpf as FindCollaboratorByCpfTrait, ListCollaborators,
-        RegisterCollaborator as RegisterCollaboratorTrait, RegisterCollaboratorInput,
-        UpdateCollaborator as UpdateCollaboratorTrait, UpdateCollaboratorInput,
+        ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
+        FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+        RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
+        UpdateCollaboratorUseCase,
     };
 
     #[derive(Default)]
     struct MockRepo {
         find_by_id_result: Option<CollaboratorRow>,
-        find_by_cpf_result: Option<CollaboratorRow>,
+        find_by_document_result: Option<CollaboratorRow>,
         find_all_result: Vec<CollaboratorRow>,
     }
 
@@ -242,12 +241,12 @@ mod tests {
     }
 
     #[async_trait]
-    impl FindCollaboratorByCpf for MockRepo {
-        async fn find_by_cpf(
+    impl FindCollaboratorByDocument for MockRepo {
+        async fn find_by_document(
             &self,
             _cpf: &str,
         ) -> Result<Option<CollaboratorRow>, CollaboratorError> {
-            Ok(self.find_by_cpf_result.clone())
+            Ok(self.find_by_document_result.clone())
         }
     }
 
@@ -320,7 +319,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = FindCollaborator::execute(&service, uuid).await.unwrap();
+        let result = FindCollaboratorUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_collaborator, uuid);
         assert_eq!(result.tx_name, "John Doe");
     }
@@ -330,7 +331,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = CollaboratorService::new(repo);
-        let result = FindCollaborator::execute(&service, uuid).await;
+        let result = FindCollaboratorUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(CollaboratorError::NotFound { .. })));
     }
 
@@ -338,9 +339,9 @@ mod tests {
     async fn find_collaborator_by_cpf_returns_row() {
         let row = make_row();
         let mut repo = MockRepo::new();
-        repo.find_by_cpf_result = Some(row.clone());
+        repo.find_by_document_result = Some(row.clone());
         let service = CollaboratorService::new(repo);
-        let result = FindCollaboratorByCpfTrait::execute(&service, "12345678909")
+        let result = FindCollaboratorByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
         assert!(result.is_some());
@@ -354,7 +355,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![r1, r2];
         let service = CollaboratorService::new(repo);
-        let result = ListCollaborators::execute(&service).await.unwrap();
+        let result = ListCollaboratorsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
 
@@ -362,20 +363,20 @@ mod tests {
     async fn list_collaborators_returns_empty() {
         let repo = MockRepo::new();
         let service = CollaboratorService::new(repo);
-        let result = ListCollaborators::execute(&service).await.unwrap();
+        let result = ListCollaboratorsUseCase::execute(&service).await.unwrap();
         assert!(result.is_empty());
     }
 
     #[tokio::test]
     async fn register_collaborator_fails_when_cpf_exists() {
         let mut repo = MockRepo::new();
-        repo.find_by_cpf_result = Some(make_row());
+        repo.find_by_document_result = Some(make_row());
         let service = CollaboratorService::new(repo);
         let input = RegisterCollaboratorInput {
             name: "Jane".to_string(),
             cpf: "12345678909".to_string(),
         };
-        let result = RegisterCollaboratorTrait::execute(&service, input).await;
+        let result = RegisterCollaboratorUseCase::execute(&service, input).await;
         assert!(matches!(
             result,
             Err(CollaboratorError::CpfAlreadyExists { .. })
@@ -392,7 +393,7 @@ mod tests {
             cpf: None,
             level: None,
         };
-        let result = UpdateCollaboratorTrait::execute(&service, uuid, input).await;
+        let result = UpdateCollaboratorUseCase::execute(&service, uuid, input).await;
         assert!(matches!(result, Err(CollaboratorError::NotFound { .. })));
     }
 
@@ -404,7 +405,9 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = ActivateCollaborator::execute(&service, uuid).await.unwrap();
+        let result = ActivateCollaboratorUseCase::execute(&service, uuid)
+            .await
+            .unwrap();
         assert_eq!(result.pk_collaborator, uuid);
     }
 
@@ -415,7 +418,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = ActivateCollaborator::execute(&service, uuid).await;
+        let result = ActivateCollaboratorUseCase::execute(&service, uuid).await;
         assert!(matches!(
             result,
             Err(CollaboratorError::AlreadyActive { .. })
@@ -429,7 +432,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = DeactivateCollaborator::execute(&service, uuid)
+        let result = DeactivateCollaboratorUseCase::execute(&service, uuid)
             .await
             .unwrap();
         assert_eq!(result.pk_collaborator, uuid);
@@ -443,7 +446,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = DeactivateCollaborator::execute(&service, uuid).await;
+        let result = DeactivateCollaboratorUseCase::execute(&service, uuid).await;
         assert!(matches!(
             result,
             Err(CollaboratorError::AlreadyInactive { .. })
@@ -457,7 +460,7 @@ mod tests {
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
         let service = CollaboratorService::new(repo);
-        let result = DeleteCollaboratorTrait::execute(&service, uuid)
+        let result = DeleteCollaboratorUseCase::execute(&service, uuid)
             .await
             .unwrap();
         assert_eq!(result.pk_collaborator, uuid);
@@ -468,7 +471,7 @@ mod tests {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
         let service = CollaboratorService::new(repo);
-        let result = DeleteCollaboratorTrait::execute(&service, uuid).await;
+        let result = DeleteCollaboratorUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(CollaboratorError::NotFound { .. })));
     }
 

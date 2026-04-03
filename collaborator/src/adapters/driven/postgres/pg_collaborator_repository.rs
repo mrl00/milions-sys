@@ -91,8 +91,11 @@ impl FindCollaboratorById for PgCollaboratorRepository {
 }
 
 #[async_trait]
-impl FindCollaboratorByCpf for PgCollaboratorRepository {
-    async fn find_by_cpf(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
+impl FindCollaboratorByDocument for PgCollaboratorRepository {
+    async fn find_by_document(
+        &self,
+        cpf: &str,
+    ) -> Result<Option<CollaboratorRow>, CollaboratorError> {
         sqlx::query_as!(
             CollaboratorRow,
             r#"
@@ -193,7 +196,3 @@ impl DeleteCollaborator for PgCollaboratorRepository {
         .map_err(sqlx_err("remove collaborator"))
     }
 }
-
-impl FindAndCreateCollaborator for PgCollaboratorRepository {}
-impl FindAndUpdateCollaborator for PgCollaboratorRepository {}
-impl FindAndDeleteCollaborator for PgCollaboratorRepository {}

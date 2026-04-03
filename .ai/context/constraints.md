@@ -20,9 +20,8 @@ Hard rules that must not be violated.
 
 ## Naming
 
-- Repository port traits: short names (`FindById`, `CreateClient`)
-- Use case traits: prefixed with entity (`FindClientById`, `RegisterContact`)
-- Super-traits: `FindAnd*` pattern
+- Repository port traits: short names (`FindById`, `CreateClient`, `FindByDocument`)
+- Use case traits: entity name + `UseCase` suffix (`FindClientByIdUseCase`, `RegisterContactUseCase`)
 - Composite repository traits: `<Entity>Repository` (e.g. `ClientRepository`)
 - Services: `<Entity>Service`
 - Adapters: `Pg<Entity>Repository`
