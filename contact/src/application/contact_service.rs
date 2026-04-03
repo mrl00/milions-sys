@@ -6,18 +6,13 @@ use crate::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::models::db::phone_row::PhoneRow;
-use crate::domain::ports::contact_repository::{
-    CreateContact, FindAllContacts, FindContactByEmail, FindContactById, UpdateContactEmail,
-};
+use crate::domain::ports::contact_repository::ContactRepository;
 use crate::domain::ports::contact_use_cases::{
     AddPhone, AddPhones, FindContact, FindPhone, ListContacts, ListPhones, RegisterContact,
     RegisterContactInput, RemovePhone, UpdateContactEmail as UpdateContactEmailTrait,
     UpdatePhone as UpdatePhoneTrait,
 };
-use crate::domain::ports::phone_repository::{
-    CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
-    FindPhoneById, UpdatePhone,
-};
+use crate::domain::ports::phone_repository::PhoneRepository;
 use types::phone::Phone;
 
 pub type ConcreteContactService = ContactService<PgContactRepository, PgPhoneRepository>;
@@ -27,17 +22,7 @@ pub struct ContactService<C, P> {
     phone_repo: P,
 }
 
-impl<C, P> ContactService<C, P>
-where
-    C: FindContactById + FindContactByEmail + FindAllContacts + CreateContact + UpdateContactEmail,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones,
-{
+impl<C: ContactRepository, P: PhoneRepository> ContactService<C, P> {
     pub fn new(contact_repo: C, phone_repo: P) -> Self {
         Self {
             contact_repo,
@@ -49,25 +34,7 @@ where
 // --- Contact ---
 
 #[async_trait]
-impl<C, P> RegisterContact for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> RegisterContact for ContactService<C, P> {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError> {
         if self
             .contact_repo
@@ -87,25 +54,7 @@ where
 }
 
 #[async_trait]
-impl<C, P> FindContact for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> FindContact for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<ContactRow, ContactError> {
         self.contact_repo
             .find_by_id(uuid)
@@ -115,50 +64,14 @@ where
 }
 
 #[async_trait]
-impl<C, P> ListContacts for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> ListContacts for ContactService<C, P> {
     async fn execute(&self) -> Result<Vec<ContactRow>, ContactError> {
         self.contact_repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<C, P> UpdateContactEmailTrait for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> UpdateContactEmailTrait for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid, email: String) -> Result<ContactRow, ContactError> {
         self.contact_repo
             .find_by_id(uuid)
@@ -182,25 +95,7 @@ fn validate_phone(phone: &str) -> Result<Phone, ContactError> {
 }
 
 #[async_trait]
-impl<C, P> FindPhone for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> FindPhone for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError> {
         self.phone_repo
             .find_by_id(uuid)
@@ -210,50 +105,14 @@ where
 }
 
 #[async_trait]
-impl<C, P> ListPhones for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> ListPhones for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError> {
         self.phone_repo.find_by_contact_id(contact_id).await
     }
 }
 
 #[async_trait]
-impl<C, P> AddPhone for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> AddPhone for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
         validate_phone(&phone)?;
 
@@ -268,25 +127,7 @@ where
 }
 
 #[async_trait]
-impl<C, P> AddPhones for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> AddPhones for ContactService<C, P> {
     async fn execute(
         &self,
         contact_id: Uuid,
@@ -314,25 +155,7 @@ where
 }
 
 #[async_trait]
-impl<C, P> UpdatePhoneTrait for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneTrait for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
         validate_phone(&phone)?;
 
@@ -346,25 +169,7 @@ where
 }
 
 #[async_trait]
-impl<C, P> RemovePhone for ContactService<C, P>
-where
-    C: FindContactById
-        + FindContactByEmail
-        + FindAllContacts
-        + CreateContact
-        + UpdateContactEmail
-        + Send
-        + Sync,
-    P: FindPhoneById
-        + FindPhoneByContactId
-        + CreatePhone
-        + CreateManyPhones
-        + UpdatePhone
-        + DeletePhone
-        + FindNonexistentPhones
-        + Send
-        + Sync,
-{
+impl<C: ContactRepository, P: PhoneRepository> RemovePhone for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError> {
         self.phone_repo
             .find_by_id(uuid)

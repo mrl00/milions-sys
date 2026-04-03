@@ -9,12 +9,7 @@ use crate::domain::models::db::project_rows::{
     ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
     UpdateProjectRow,
 };
-use crate::domain::ports::project_repository::{
-    CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
-    FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
-    FindProjectByClientId, FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation,
-    UpdateProject, UpdateStage,
-};
+use crate::domain::ports::project_repository::ProjectRepository;
 use crate::domain::ports::project_use_cases::{
     CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
     CreateAllocationInput, CreateProject as CreateProjectTrait, CreateProjectInput,
@@ -29,24 +24,7 @@ pub struct ProjectService<R> {
     repo: R,
 }
 
-impl<R> ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId,
-{
+impl<R: ProjectRepository> ProjectService<R> {
     pub fn new(repo: R) -> Self {
         Self { repo }
     }
@@ -55,26 +33,7 @@ where
 pub type ConcreteProjectService = ProjectService<PgProjectRepository>;
 
 #[async_trait]
-impl<R> FindProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> FindProject for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -84,78 +43,21 @@ where
 }
 
 #[async_trait]
-impl<R> ListProjects for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> ListProjects for ProjectService<R> {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R> ListProjectsByClient for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> ListProjectsByClient for ProjectService<R> {
     async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_by_client_id(client_id).await
     }
 }
 
 #[async_trait]
-impl<R> CreateProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateProjectTrait for ProjectService<R> {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
             tx_name: input.name,
@@ -175,26 +77,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateProjectTrait for ProjectService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -227,26 +110,7 @@ where
 }
 
 #[async_trait]
-impl<R> StartProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> StartProject for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -283,26 +147,7 @@ where
 }
 
 #[async_trait]
-impl<R> PauseProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> PauseProject for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -339,26 +184,7 @@ where
 }
 
 #[async_trait]
-impl<R> CompleteProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CompleteProject for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -395,26 +221,7 @@ where
 }
 
 #[async_trait]
-impl<R> CancelProject for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CancelProject for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -451,26 +258,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeleteProjectTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> DeleteProjectTrait for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -482,26 +270,7 @@ where
 }
 
 #[async_trait]
-impl<R> CreateStageTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateStageTrait for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -527,26 +296,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateStageTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateStageTrait for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -591,26 +341,7 @@ where
 }
 
 #[async_trait]
-impl<R> CreateAllocationTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> CreateAllocationTrait for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -636,26 +367,7 @@ where
 }
 
 #[async_trait]
-impl<R> ListAllocations for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> ListAllocations for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -670,26 +382,7 @@ where
 }
 
 #[async_trait]
-impl<R> UpdateAllocationTrait for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> UpdateAllocationTrait for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -730,26 +423,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetCostReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetCostReport for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -787,26 +461,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetProgressReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetProgressReport for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
@@ -841,26 +496,7 @@ where
 }
 
 #[async_trait]
-impl<R> GetHistoryReport for ProjectService<R>
-where
-    R: FindProjectById
-        + FindProjectByClientId
-        + FindAllProjects
-        + CreateProject
-        + UpdateProject
-        + DeleteProject
-        + FindStageById
-        + CreateStage
-        + UpdateStage
-        + FindAllocationById
-        + FindAllocationsByProjectId
-        + CreateAllocation
-        + UpdateAllocation
-        + FindStagesByProjectId
-        + FindAllocationsByCollaboratorId
-        + Send
-        + Sync,
-{
+impl<R: ProjectRepository> GetHistoryReport for ProjectService<R> {
     async fn execute(
         &self,
         collaborator_id: Uuid,

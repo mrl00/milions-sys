@@ -31,3 +31,24 @@ pub trait UpdateContactEmail: Send + Sync {
 
 pub trait FindAndCreateContact: FindContactByEmail + CreateContact {}
 pub trait FindAndUpdateContact: FindContactById + FindContactByEmail + UpdateContactEmail {}
+
+pub trait ContactRepository:
+    FindContactById
+    + FindContactByEmail
+    + FindAllContacts
+    + CreateContact
+    + UpdateContactEmail
+    + Send
+    + Sync
+{
+}
+impl<T> ContactRepository for T where
+    T: FindContactById
+        + FindContactByEmail
+        + FindAllContacts
+        + CreateContact
+        + UpdateContactEmail
+        + Send
+        + Sync
+{
+}

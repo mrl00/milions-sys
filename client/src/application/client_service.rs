@@ -6,8 +6,8 @@ use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::ports::client_repository::{
-    CreateClient, CreateClientWithTx, DeleteClient, FindAll, FindByDocument, FindById,
-    UpdateClient as UpdateClientRepo,
+    ClientRepository, CreateClient, CreateClientWithTx, DeleteClient, FindAll, FindByDocument,
+    FindById, UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::client_use_cases::{
     ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
@@ -324,17 +324,7 @@ impl DeleteClientTrait for ConcreteClientService {
 }
 
 #[async_trait]
-impl<R> FindClientById for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> FindClientById for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -344,51 +334,21 @@ where
 }
 
 #[async_trait]
-impl<R> FindClientByDocument for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> FindClientByDocument for ClientService<R> {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl<R> ListClients for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> ListClients for ClientService<R> {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl<R> UpdateClient for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> UpdateClient for ClientService<R> {
     async fn execute(
         &self,
         uuid: Uuid,
@@ -417,17 +377,7 @@ where
 }
 
 #[async_trait]
-impl<R> ActivateClient for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> ActivateClient for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -453,17 +403,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeactivateClient for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> DeactivateClient for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -489,17 +429,7 @@ where
 }
 
 #[async_trait]
-impl<R> DeleteClientTrait for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl<R: ClientRepository> DeleteClientTrait for ClientService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)

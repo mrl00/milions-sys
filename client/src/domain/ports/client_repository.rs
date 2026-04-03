@@ -46,3 +46,19 @@ pub trait CreateClientWithTx: Send + Sync {
 pub trait FindAndCreate: FindByDocument + CreateClient {}
 pub trait FindAndUpdate: FindById + UpdateClient {}
 pub trait FindAndDelete: FindById + DeleteClient {}
+
+pub trait ClientRepository:
+    FindById + FindByDocument + FindAll + CreateClient + UpdateClient + DeleteClient + Send + Sync
+{
+}
+impl<T> ClientRepository for T where
+    T: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClient
+        + DeleteClient
+        + Send
+        + Sync
+{
+}
