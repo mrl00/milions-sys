@@ -91,8 +91,11 @@ impl FindCollaboratorById for PgCollaboratorRepository {
 }
 
 #[async_trait]
-impl FindCollaboratorByCpf for PgCollaboratorRepository {
-    async fn find_by_cpf(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
+impl FindCollaboratorByDocument for PgCollaboratorRepository {
+    async fn find_by_document(
+        &self,
+        cpf: &str,
+    ) -> Result<Option<CollaboratorRow>, CollaboratorError> {
         sqlx::query_as!(
             CollaboratorRow,
             r#"
