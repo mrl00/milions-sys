@@ -14,10 +14,9 @@ use crate::domain::ports::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
     CreateProjectInput, CreateProjectUseCase, CreateStageInput, CreateStageUseCase,
     DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase, GetHistoryReportUseCase,
-    GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsByClientUseCase,
-    ListProjectsUseCase, PauseProjectUseCase, StartProjectUseCase, UpdateAllocationInput,
-    UpdateAllocationUseCase, UpdateProjectInput, UpdateProjectUseCase, UpdateStageInput,
-    UpdateStageUseCase,
+    GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsUseCase, PauseProjectUseCase,
+    StartProjectUseCase, UpdateAllocationInput, UpdateAllocationUseCase, UpdateProjectInput,
+    UpdateProjectUseCase, UpdateStageInput, UpdateStageUseCase,
 };
 
 pub struct ProjectService<R> {
@@ -46,13 +45,6 @@ impl<R: ProjectRepository> FindProjectUseCase for ProjectService<R> {
 impl<R: ProjectRepository> ListProjectsUseCase for ProjectService<R> {
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
-    }
-}
-
-#[async_trait]
-impl<R: ProjectRepository> ListProjectsByClientUseCase for ProjectService<R> {
-    async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
-        self.repo.find_by_client_id(client_id).await
     }
 }
 
