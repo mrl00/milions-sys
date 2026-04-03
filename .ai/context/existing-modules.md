@@ -220,4 +220,4 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits (project + stage + allocation + reports). Depends on `PgProjectRepository`.
+`ProjectService<R>` — generic over repository traits. `ConcreteProjectService` type alias for production (`ProjectService<PgProjectRepository>`). 14 unit tests with `MockRepo`.

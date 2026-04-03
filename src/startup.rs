@@ -38,7 +38,9 @@ pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
         ),
     );
     let project_service = web::Data::new(
-        project::application::project_service::ProjectService::new(pool.clone()),
+        project::application::project_service::ConcreteProjectService::new(
+            project::adapters::driven::postgres::PgProjectRepository::new(pool.clone()),
+        ),
     );
 
     let server = HttpServer::new(move || {
