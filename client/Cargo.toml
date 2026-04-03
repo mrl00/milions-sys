@@ -7,6 +7,7 @@ license = "MIT"
 [dependencies]
 types = { path = "../types" }
 location = { path = "../location" }
+contact = { path = "../contact" }
 viacep = {path = "../viacep"}
 sqlx = { workspace = true }
 uuid = { workspace = true }
