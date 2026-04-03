@@ -3,14 +3,17 @@ use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use super::dto::{
-    CreateProjectRequest, CreateStageRequest, ProjectResponse, ProjectStatusRequest, StageResponse,
-    UpdateProjectRequest, UpdateStageRequest,
+    AllocationResponse, CostReportResponse, CreateAllocationRequest, CreateProjectRequest,
+    CreateStageRequest, HistoryReportResponse, ProgressReportResponse, ProjectResponse,
+    ProjectStatusRequest, StageResponse, UpdateAllocationRequest, UpdateProjectRequest,
+    UpdateStageRequest,
 };
 use crate::application::project_service::ProjectService;
 use crate::domain::errors::ProjectError;
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateProject, CreateStage, DeleteProject, FindProject,
-    ListProjects, PauseProject, StartProject, UpdateProject, UpdateStage,
+    CancelProject, CompleteProject, CreateAllocation, CreateProject, CreateStage, DeleteProject,
+    FindProject, GetCostReport, GetHistoryReport, GetProgressReport, ListAllocations, ListProjects,
+    PauseProject, StartProject, UpdateAllocation, UpdateProject, UpdateStage,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -30,6 +33,26 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     .service(
         web::resource("/projects/{project_id}/stages/{stage_id}")
             .route(web::put().to(update_stage)),
+    )
+    .service(
+        web::resource("/projects/{project_id}/allocations")
+            .route(web::post().to(create_allocation))
+            .route(web::get().to(list_allocations)),
+    )
+    .service(
+        web::resource("/projects/{project_id}/allocations/{allocation_id}")
+            .route(web::put().to(update_allocation)),
+    )
+    .service(
+        web::resource("/reports/projects/{project_id}/cost").route(web::get().to(get_cost_report)),
+    )
+    .service(
+        web::resource("/reports/projects/{project_id}/progress")
+            .route(web::get().to(get_progress_report)),
+    )
+    .service(
+        web::resource("/reports/collaborators/{collaborator_id}/history")
+            .route(web::get().to(get_history_report)),
     );
 }
 
@@ -152,6 +175,14 @@ fn error_to_response(err: ProjectError) -> HttpResponse {
             "error": "not_found",
             "message": err.to_string(),
         })),
+        AllocationNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
+            "error": "not_found",
+            "message": err.to_string(),
+        })),
+        CollaboratorNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
+            "error": "not_found",
+            "message": err.to_string(),
+        })),
         AlreadyInStatus { .. } => HttpResponse::Conflict().json(serde_json::json!({
             "error": "conflict",
             "message": err.to_string(),
@@ -204,6 +235,140 @@ async fn update_stage(
 
     match UpdateStage::execute(&**service, project_id, stage_id, input).await {
         Ok(row) => HttpResponse::Ok().json(StageResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn create_allocation(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+    body: web::Json<CreateAllocationRequest>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::CreateAllocationInput {
+        collaborator_id: body.collaborator_id,
+        work_date: body.work_date,
+        hours_worked: parse_bd(&body.hours_worked),
+        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        notes: body.notes.clone(),
+        present: body.present,
+    };
+
+    match CreateAllocation::execute(&**service, project_id, input).await {
+        Ok(row) => HttpResponse::Created().json(AllocationResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn list_allocations(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    match ListAllocations::execute(&**service, project_id).await {
+        Ok(rows) => {
+            let resp: Vec<AllocationResponse> =
+                rows.into_iter().map(AllocationResponse::from).collect();
+            HttpResponse::Ok().json(resp)
+        }
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn update_allocation(
+    service: web::Data<ProjectService>,
+    path: web::Path<(Uuid, Uuid)>,
+    body: web::Json<UpdateAllocationRequest>,
+) -> HttpResponse {
+    let (project_id, allocation_id) = path.into_inner();
+    let input = crate::domain::ports::project_use_cases::UpdateAllocationInput {
+        hours_worked: parse_bd(&body.hours_worked),
+        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        notes: body.notes.clone(),
+        present: body.present,
+    };
+
+    match UpdateAllocation::execute(&**service, project_id, allocation_id, input).await {
+        Ok(row) => HttpResponse::Ok().json(AllocationResponse::from(row)),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn get_cost_report(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    match GetCostReport::execute(&**service, project_id).await {
+        Ok(report) => HttpResponse::Ok().json(CostReportResponse {
+            project_id: report.project_id,
+            project_name: report.project_name,
+            estimated_cost: report.estimated_cost.map(|v| v.to_string()),
+            actual_cost: report.actual_cost.to_string(),
+            variance: report.variance.to_string(),
+            variance_pct: report
+                .variance_pct
+                .map(|v| v.to_string())
+                .unwrap_or_default(),
+        }),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn get_progress_report(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
+    let project_id = path.into_inner();
+    match GetProgressReport::execute(&**service, project_id).await {
+        Ok(report) => HttpResponse::Ok().json(ProgressReportResponse {
+            project_id: report.project_id,
+            project_name: report.project_name,
+            stages: report
+                .stages
+                .into_iter()
+                .map(|s| crate::adapters::driving::dto::StageProgress {
+                    stage_id: s.pk_project_stage,
+                    name: s.tx_name,
+                    order: s.nr_order,
+                    status: s.tx_status,
+                    start_date: s.dt_start_date,
+                    end_date: s.dt_end_date,
+                })
+                .collect(),
+            total_stages: report.total_stages,
+            completed_stages: report.completed_stages,
+            progress_pct: report.progress_pct.to_string(),
+        }),
+        Err(e) => error_to_response(e),
+    }
+}
+
+async fn get_history_report(
+    service: web::Data<ProjectService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
+    let collaborator_id = path.into_inner();
+    match GetHistoryReport::execute(&**service, collaborator_id).await {
+        Ok(report) => HttpResponse::Ok().json(HistoryReportResponse {
+            collaborator_id: report.collaborator_id,
+            collaborator_name: report.collaborator_name,
+            allocations: report
+                .allocations
+                .into_iter()
+                .map(|a| crate::adapters::driving::dto::AllocationHistory {
+                    allocation_id: a.allocation_id,
+                    project_id: a.project_id,
+                    project_name: a.project_name,
+                    work_date: a.work_date,
+                    hours_worked: a.hours_worked.map(|v| v.to_string()),
+                    hourly_rate_snapshot: a.hourly_rate_snapshot.map(|v| v.to_string()),
+                    present: a.present,
+                })
+                .collect(),
+            total_days: report.total_days,
+            total_hours: report.total_hours.to_string(),
+        }),
         Err(e) => error_to_response(e),
     }
 }
