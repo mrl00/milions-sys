@@ -549,6 +549,7 @@ dependencies = [
  "snafu",
  "sqlx",
  "thiserror",
+ "tokio",
  "types",
  "uuid",
 ]
