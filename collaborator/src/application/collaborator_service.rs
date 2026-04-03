@@ -9,11 +9,11 @@ use crate::domain::models::db::collaborator_row::{
 };
 use crate::domain::ports::collaborator_repository::{
     CollaboratorRepository, CreateCollaborator, DeleteCollaborator, FindAllCollaborators,
-    FindCollaboratorByCpf, FindCollaboratorById, UpdateCollaborator,
+    FindCollaboratorByDocument, FindCollaboratorById, UpdateCollaborator,
 };
 use crate::domain::ports::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
-    FindCollaboratorByCpfUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+    FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
     RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
     UpdateCollaboratorUseCase,
 };
@@ -26,7 +26,7 @@ pub struct CollaboratorService<R> {
 impl<R> CollaboratorService<R>
 where
     R: FindCollaboratorById
-        + FindCollaboratorByCpf
+        + FindCollaboratorByDocument
         + FindAllCollaborators
         + CreateCollaborator
         + UpdateCollaborator
@@ -50,9 +50,9 @@ impl<R: CollaboratorRepository> FindCollaboratorUseCase for CollaboratorService<
 }
 
 #[async_trait]
-impl<R: CollaboratorRepository> FindCollaboratorByCpfUseCase for CollaboratorService<R> {
+impl<R: CollaboratorRepository> FindCollaboratorByDocumentUseCase for CollaboratorService<R> {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError> {
-        self.repo.find_by_cpf(cpf).await
+        self.repo.find_by_document(cpf).await
     }
 }
 
@@ -71,7 +71,7 @@ impl<R: CollaboratorRepository> RegisterCollaboratorUseCase for CollaboratorServ
     ) -> Result<CollaboratorRow, CollaboratorError> {
         let _validated_cpf: Cpf = input.cpf.clone().try_into()?;
 
-        if self.repo.find_by_cpf(&input.cpf).await?.is_some() {
+        if self.repo.find_by_document(&input.cpf).await?.is_some() {
             return Err(CollaboratorError::CpfAlreadyExists { cpf: input.cpf });
         }
 
@@ -190,12 +190,12 @@ mod tests {
         CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
     };
     use crate::domain::ports::collaborator_repository::{
-        CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByCpf,
+        CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByDocument,
         FindCollaboratorById, UpdateCollaborator,
     };
     use crate::domain::ports::collaborator_use_cases::{
         ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
-        FindCollaboratorByCpfUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+        FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
         RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
         UpdateCollaboratorUseCase,
     };
@@ -203,7 +203,7 @@ mod tests {
     #[derive(Default)]
     struct MockRepo {
         find_by_id_result: Option<CollaboratorRow>,
-        find_by_cpf_result: Option<CollaboratorRow>,
+        find_by_document_result: Option<CollaboratorRow>,
         find_all_result: Vec<CollaboratorRow>,
     }
 
@@ -241,12 +241,12 @@ mod tests {
     }
 
     #[async_trait]
-    impl FindCollaboratorByCpf for MockRepo {
-        async fn find_by_cpf(
+    impl FindCollaboratorByDocument for MockRepo {
+        async fn find_by_document(
             &self,
             _cpf: &str,
         ) -> Result<Option<CollaboratorRow>, CollaboratorError> {
-            Ok(self.find_by_cpf_result.clone())
+            Ok(self.find_by_document_result.clone())
         }
     }
 
@@ -339,9 +339,9 @@ mod tests {
     async fn find_collaborator_by_cpf_returns_row() {
         let row = make_row();
         let mut repo = MockRepo::new();
-        repo.find_by_cpf_result = Some(row.clone());
+        repo.find_by_document_result = Some(row.clone());
         let service = CollaboratorService::new(repo);
-        let result = FindCollaboratorByCpfUseCase::execute(&service, "12345678909")
+        let result = FindCollaboratorByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
         assert!(result.is_some());
@@ -370,7 +370,7 @@ mod tests {
     #[tokio::test]
     async fn register_collaborator_fails_when_cpf_exists() {
         let mut repo = MockRepo::new();
-        repo.find_by_cpf_result = Some(make_row());
+        repo.find_by_document_result = Some(make_row());
         let service = CollaboratorService::new(repo);
         let input = RegisterCollaboratorInput {
             name: "Jane".to_string(),

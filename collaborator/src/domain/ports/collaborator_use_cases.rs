@@ -29,7 +29,7 @@ pub trait FindCollaboratorUseCase: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindCollaboratorByCpfUseCase: Send + Sync {
+pub trait FindCollaboratorByDocumentUseCase: Send + Sync {
     async fn execute(&self, cpf: &str) -> Result<Option<CollaboratorRow>, CollaboratorError>;
 }
 
