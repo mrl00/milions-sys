@@ -171,17 +171,17 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Repository Ports (`domain/ports/project_repository.rs`)
 
-| Trait                   | Method                                            |
-| ----------------------- | ------------------------------------------------- |
-| `FindProjectById`       | `find_by_id(uuid) -> Option<ProjectRow>`          |
-| `FindProjectByClientId` | `find_by_client_id(client_id) -> Vec<ProjectRow>` |
-| `FindAllProjects`       | `find_all() -> Vec<ProjectRow>`                   |
-| `CreateProject`         | `create(input: CreateProjectRow) -> ProjectRow`   |
-| `UpdateProject`         | `update(uuid, input) -> ProjectRow`               |
-| `DeleteProject`         | `delete(uuid) -> ProjectRow`                      |
-| `FindStageById` | `find_stage_by_id(uuid) -> Option<ProjectStageRow>` |
-| `CreateStage` | `create_stage(input: CreateProjectStageRow) -> ProjectStageRow` |
-| `UpdateStage` | `update_stage(uuid, input: UpdateProjectStageRow) -> ProjectStageRow` |
+| Trait                   | Method                                                                |
+| ----------------------- | --------------------------------------------------------------------- |
+| `FindProjectById`       | `find_by_id(uuid) -> Option<ProjectRow>`                              |
+| `FindProjectByClientId` | `find_by_client_id(client_id) -> Vec<ProjectRow>`                     |
+| `FindAllProjects`       | `find_all() -> Vec<ProjectRow>`                                       |
+| `CreateProject`         | `create(input: CreateProjectRow) -> ProjectRow`                       |
+| `UpdateProject`         | `update(uuid, input) -> ProjectRow`                                   |
+| `DeleteProject`         | `delete(uuid) -> ProjectRow`                                          |
+| `FindStageById`         | `find_stage_by_id(uuid) -> Option<ProjectStageRow>`                   |
+| `CreateStage`           | `create_stage(input: CreateProjectStageRow) -> ProjectStageRow`       |
+| `UpdateStage`           | `update_stage(uuid, input: UpdateProjectStageRow) -> ProjectStageRow` |
 
 **Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`
 
