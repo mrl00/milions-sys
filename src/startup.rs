@@ -6,43 +6,11 @@ use std::io::Error;
 use std::net::TcpListener;
 
 pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
-    let client_service = web::Data::new(
-        client::application::client_service::ConcreteClientService::new(
-            client::adapters::driven::postgres::pg_client_repository::PgClientRepository::new(
-                pool.clone(),
-            ),
-            pool.clone(),
-        ),
-    );
-    let collaborator_service = web::Data::new(
-        collaborator::application::collaborator_service::ConcreteCollaboratorService::new(
-            collaborator::adapters::driven::postgres::pg_collaborator_repository::PgCollaboratorRepository::new(
-                pool.clone(),
-            ),
-        ),
-    );
-    let contact_service = web::Data::new(
-        contact::application::contact_service::ConcreteContactService::new(
-            contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository::new(
-                pool.clone(),
-            ),
-            contact::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository::new(
-                pool.clone(),
-            ),
-        ),
-    );
-    let location_service = web::Data::new(
-        location::application::location_service::ConcreteLocationService::new(
-            location::adapters::driven::postgres::pg_location_repository::PgLocationRepository::new(
-                pool.clone(),
-            ),
-        ),
-    );
-    let project_service = web::Data::new(
-        project::application::project_service::ConcreteProjectService::new(
-            project::adapters::driven::postgres::PgProjectRepository::new(pool.clone()),
-        ),
-    );
+    let client_service = web::Data::new(client::build(pool.clone()));
+    let collaborator_service = web::Data::new(collaborator::build(pool.clone()));
+    let contact_service = web::Data::new(contact::build(pool.clone()));
+    let location_service = web::Data::new(location::build(pool.clone()));
+    let project_service = web::Data::new(project::build(pool.clone()));
 
     let server = HttpServer::new(move || {
         App::new()
