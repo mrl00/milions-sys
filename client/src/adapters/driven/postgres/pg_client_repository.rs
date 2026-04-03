@@ -81,7 +81,7 @@ impl FindById for PgClientRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar cliente por id"))
+        .map_err(sqlx_err("find client by id"))
     }
 }
 
@@ -97,7 +97,7 @@ impl FindByDocument for PgClientRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar cliente por documento"))
+        .map_err(sqlx_err("find client by document"))
     }
 }
 
@@ -112,7 +112,7 @@ impl FindAll for PgClientRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar clientes"))
+        .map_err(sqlx_err("list clients"))
     }
 }
 
@@ -133,7 +133,7 @@ impl CreateClient for PgClientRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar cliente"))
+        .map_err(sqlx_err("create client"))
     }
 }
 
@@ -157,7 +157,7 @@ impl UpdateClient for PgClientRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar cliente"))
+        .map_err(sqlx_err("update client"))
     }
 }
 
@@ -175,7 +175,7 @@ impl DeleteClient for PgClientRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover cliente"))
+        .map_err(sqlx_err("remove client"))
     }
 }
 
@@ -200,7 +200,7 @@ impl CreateClientWithTx for PgClientRepository {
         )
         .fetch_one(&mut **tx)
         .await
-        .map_err(sqlx_err("criar cliente em transação"))
+        .map_err(sqlx_err("create client in transaction"))
     }
 }
 

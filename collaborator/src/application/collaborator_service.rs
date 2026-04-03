@@ -558,7 +558,7 @@ mod tests {
         let err = CollaboratorError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 
     #[test]
@@ -568,7 +568,7 @@ mod tests {
         };
         let msg = err.to_string();
         assert!(msg.contains("12345678909"));
-        assert!(msg.contains("já cadastrado"));
+        assert!(msg.contains("already registered"));
     }
 
     #[test]
@@ -577,7 +577,7 @@ mod tests {
         let err = CollaboratorError::AlreadyActive { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("já está ativo"));
+        assert!(msg.contains("already active"));
     }
 
     #[test]
@@ -586,6 +586,6 @@ mod tests {
         let err = CollaboratorError::AlreadyInactive { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("já está inativo"));
+        assert!(msg.contains("already inactive"));
     }
 }

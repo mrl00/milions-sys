@@ -5,16 +5,16 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CollaboratorError {
-    #[error("colaborador não encontrado: {uuid}")]
+    #[error("collaborator not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("CPF '{cpf}' já cadastrado")]
+    #[error("CPF '{cpf}' already registered")]
     CpfAlreadyExists { cpf: String },
 
-    #[error("colaborador já está ativo: {uuid}")]
+    #[error("collaborator is already active: {uuid}")]
     AlreadyActive { uuid: Uuid },
 
-    #[error("colaborador já está inativo: {uuid}")]
+    #[error("collaborator is already inactive: {uuid}")]
     AlreadyInactive { uuid: Uuid },
 
     #[error(transparent)]

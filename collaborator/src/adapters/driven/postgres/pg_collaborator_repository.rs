@@ -86,7 +86,7 @@ impl FindCollaboratorById for PgCollaboratorRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar colaborador por id"))
+        .map_err(sqlx_err("find collaborator by id"))
     }
 }
 
@@ -104,7 +104,7 @@ impl FindCollaboratorByCpf for PgCollaboratorRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar colaborador por cpf"))
+        .map_err(sqlx_err("find collaborator by CPF"))
     }
 }
 
@@ -120,7 +120,7 @@ impl FindAllCollaborators for PgCollaboratorRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar colaboradores"))
+        .map_err(sqlx_err("list collaborators"))
     }
 }
 
@@ -142,7 +142,7 @@ impl CreateCollaborator for PgCollaboratorRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar colaborador"))
+        .map_err(sqlx_err("create collaborator"))
     }
 }
 
@@ -172,7 +172,7 @@ impl UpdateCollaborator for PgCollaboratorRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar colaborador"))
+        .map_err(sqlx_err("update collaborator"))
     }
 }
 
@@ -190,7 +190,7 @@ impl DeleteCollaborator for PgCollaboratorRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover colaborador"))
+        .map_err(sqlx_err("remove collaborator"))
     }
 }
 

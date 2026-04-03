@@ -9,7 +9,7 @@ pub enum DocError {
     #[error(transparent)]
     DocCnpj(#[from] CnpjError),
 
-    #[error("documento inválido")]
+    #[error("invalid document")]
     InvalidDocument,
 }
 

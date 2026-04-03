@@ -99,7 +99,7 @@ impl RegisterClient for ConcreteClientService {
                 .await
                 .map_err(|e| {
                     ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "buscar localização",
+                        action: "find location",
                         source: e,
                     })
                 })? {
@@ -128,7 +128,7 @@ impl RegisterClient for ConcreteClientService {
                 .await
                 .map_err(|e| {
                     ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "criar localização",
+                        action: "create location",
                         source: e,
                     })
                 })?,
@@ -143,7 +143,7 @@ impl RegisterClient for ConcreteClientService {
         .await
         .map_err(|e| {
             ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                action: "criar contato",
+                action: "create contact",
                 source: e,
             })
         })?;
@@ -157,7 +157,7 @@ impl RegisterClient for ConcreteClientService {
             .await
             .map_err(|e| {
                 ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                    action: "criar telefones",
+                    action: "create phones",
                     source: e,
                 })
             })?;
@@ -178,7 +178,7 @@ impl RegisterClient for ConcreteClientService {
             .await
             .map_err(|e| {
                 ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                    action: "criar vínculo com contato",
+                    action: "create client-contact link",
                     source: e,
                 })
             })?;
@@ -191,7 +191,7 @@ impl RegisterClient for ConcreteClientService {
         .await
         .map_err(|e| {
             ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                action: "criar vínculo com endereço",
+                action: "create client-address link",
                 source: e,
             })
         })?;
@@ -763,7 +763,7 @@ mod tests {
         let err = ClientError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 
     #[test]
@@ -772,7 +772,7 @@ mod tests {
             doc: "12345678909".to_string(),
         };
         let msg = err.to_string();
-        assert!(msg.contains("documento já cadastrado"));
+        assert!(msg.contains("document already registered"));
     }
 
     #[test]
@@ -781,7 +781,7 @@ mod tests {
         let err = ClientError::AlreadyActive { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("já está ativo"));
+        assert!(msg.contains("already active"));
     }
 
     #[test]
@@ -790,6 +790,6 @@ mod tests {
         let err = ClientError::AlreadyInactive { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("já está inativo"));
+        assert!(msg.contains("already inactive"));
     }
 }

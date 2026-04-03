@@ -89,7 +89,7 @@ impl FindPhoneById for PgPhoneRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar telefone por id"))
+        .map_err(sqlx_err("find phone by id"))
     }
 }
 
@@ -107,7 +107,7 @@ impl FindPhoneByContactId for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("buscar telefones por contato"))
+        .map_err(sqlx_err("find phones by contact"))
     }
 }
 
@@ -127,7 +127,7 @@ impl CreatePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar telefone"))
+        .map_err(sqlx_err("create phone"))
     }
 }
 
@@ -157,7 +157,7 @@ impl CreateManyPhones for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("criar telefones"))
+        .map_err(sqlx_err("create phones"))
     }
 }
 
@@ -177,7 +177,7 @@ impl UpdatePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar telefone"))
+        .map_err(sqlx_err("update phone"))
     }
 }
 
@@ -195,7 +195,7 @@ impl DeletePhone for PgPhoneRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover telefone"))
+        .map_err(sqlx_err("remove phone"))
     }
 }
 
@@ -214,7 +214,7 @@ impl FindNonexistentPhones for PgPhoneRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("verificar telefones inexistentes"))?
+        .map_err(sqlx_err("check nonexistent phones"))?
         .iter()
         .filter_map(|p| p.clone())
         .collect();

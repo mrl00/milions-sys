@@ -7,31 +7,31 @@ use viacep::domain::ports::viacep_port::ViaCepError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientError {
-    #[error("cliente '{name}' já existe")]
+    #[error("client '{name}' already exists")]
     AlreadyExists { name: String },
 
-    #[error("cliente não encontrado: {uuid}")]
+    #[error("client not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("cliente já está ativo: {uuid}")]
+    #[error("client is already active: {uuid}")]
     AlreadyActive { uuid: Uuid },
 
-    #[error("cliente já está inativo: {uuid}")]
+    #[error("client is already inactive: {uuid}")]
     AlreadyInactive { uuid: Uuid },
 
-    #[error("contato não encontrado: {uuid}")]
+    #[error("contact not found: {uuid}")]
     ContactNotFound { uuid: Uuid },
 
-    #[error("endereço não encontrado: {uuid}")]
+    #[error("address not found: {uuid}")]
     LocationNotFound { uuid: Uuid },
 
-    #[error("documento já cadastrado")]
+    #[error("document already registered")]
     DocumentAlreadyExists { doc: String },
 
-    #[error("email já cadastrado")]
+    #[error("email already registered")]
     EmailAlreadyExists { email: String },
 
-    #[error("telefone '{phone}' já existe")]
+    #[error("phone '{phone}' already exists")]
     PhoneAlreadyExists { phone: String },
 
     #[error(transparent)]

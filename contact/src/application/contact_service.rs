@@ -814,7 +814,7 @@ mod tests {
         let err = ContactError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 
     #[test]
@@ -824,7 +824,7 @@ mod tests {
         };
         let msg = err.to_string();
         assert!(msg.contains("test@example.com"));
-        assert!(msg.contains("já existe"));
+        assert!(msg.contains("already exists"));
     }
 
     #[test]
@@ -833,6 +833,6 @@ mod tests {
         let err = ContactError::PhoneNotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 }

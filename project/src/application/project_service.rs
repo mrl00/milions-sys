@@ -1240,7 +1240,7 @@ mod tests {
         let err = ProjectError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("não encontrado"));
+        assert!(msg.contains("not found"));
     }
 
     #[test]

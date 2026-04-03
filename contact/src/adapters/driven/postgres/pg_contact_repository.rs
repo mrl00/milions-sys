@@ -58,7 +58,7 @@ impl FindContactById for PgContactRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar contato por id"))
+        .map_err(sqlx_err("find contact by id"))
     }
 }
 
@@ -76,7 +76,7 @@ impl FindContactByEmail for PgContactRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar contato por email"))
+        .map_err(sqlx_err("find contact by email"))
     }
 }
 
@@ -93,7 +93,7 @@ impl FindAllContacts for PgContactRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar contatos"))
+        .map_err(sqlx_err("list contacts"))
     }
 }
 
@@ -112,7 +112,7 @@ impl CreateContact for PgContactRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar contato"))
+        .map_err(sqlx_err("create contact"))
     }
 }
 
@@ -132,7 +132,7 @@ impl UpdateContactEmail for PgContactRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar email do contato"))
+        .map_err(sqlx_err("update contact email"))
     }
 }
 
