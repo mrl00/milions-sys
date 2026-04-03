@@ -1,13 +1,11 @@
 use async_trait::async_trait;
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::ports::client_repository::{
-    CreateClient as _, DeleteClient as _, FindAll as _, FindByDocument as _, FindById as _,
-    UpdateClient as _,
+    CreateClient, DeleteClient, FindAll, FindByDocument, FindById, UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::client_use_cases::{
     ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
@@ -17,20 +15,33 @@ use crate::domain::ports::client_use_cases::{
 use types::doc::Doc;
 use types::phone::Phone;
 
-pub struct ClientService {
-    repo: PgClientRepository,
+pub struct ClientService<R> {
+    repo: R,
 }
 
-impl ClientService {
-    pub fn new(pool: PgPool) -> Self {
-        Self {
-            repo: PgClientRepository::new(pool),
-        }
+impl<R> ClientService<R>
+where
+    R: FindById + FindByDocument + FindAll + CreateClient + UpdateClientRepo + DeleteClient,
+{
+    pub fn new(repo: R) -> Self {
+        Self { repo }
     }
 }
 
+pub type ConcreteClientService = ClientService<PgClientRepository>;
+
 #[async_trait]
-impl RegisterClient for ClientService {
+impl<R> RegisterClient for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         let _doc: Doc = input.doc.clone().try_into()?;
         let _cep: types::cep::Cep = input.cep.clone().try_into()?;
@@ -56,7 +67,17 @@ impl RegisterClient for ClientService {
 }
 
 #[async_trait]
-impl FindClientById for ClientService {
+impl<R> FindClientById for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -66,21 +87,51 @@ impl FindClientById for ClientService {
 }
 
 #[async_trait]
-impl FindClientByDocument for ClientService {
+impl<R> FindClientByDocument for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
         self.repo.find_by_document(doc).await
     }
 }
 
 #[async_trait]
-impl ListClients for ClientService {
+impl<R> ListClients for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl UpdateClient for ClientService {
+impl<R> UpdateClient for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         uuid: Uuid,
@@ -109,7 +160,17 @@ impl UpdateClient for ClientService {
 }
 
 #[async_trait]
-impl ActivateClient for ClientService {
+impl<R> ActivateClient for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -135,7 +196,17 @@ impl ActivateClient for ClientService {
 }
 
 #[async_trait]
-impl DeactivateClient for ClientService {
+impl<R> DeactivateClient for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         let current = self
             .repo
@@ -161,7 +232,17 @@ impl DeactivateClient for ClientService {
 }
 
 #[async_trait]
-impl DeleteClientTrait for ClientService {
+impl<R> DeleteClientTrait for ClientService<R>
+where
+    R: FindById
+        + FindByDocument
+        + FindAll
+        + CreateClient
+        + UpdateClientRepo
+        + DeleteClient
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
         self.repo
             .find_by_id(uuid)
@@ -169,5 +250,311 @@ impl DeleteClientTrait for ClientService {
             .ok_or(ClientError::NotFound { uuid })?;
 
         self.repo.delete(uuid).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::errors::ClientError;
+    use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
+    use crate::domain::ports::client_repository::{
+        CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
+        UpdateClient as UpdateClientRepo,
+    };
+    use crate::domain::ports::client_use_cases::{
+        ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
+        FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
+        UpdateClientInput,
+    };
+
+    #[derive(Default)]
+    struct MockRepo {
+        find_by_id_result: Option<ClientRow>,
+        find_by_document_result: Option<ClientRow>,
+        find_all_result: Vec<ClientRow>,
+    }
+
+    impl MockRepo {
+        fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    use sqlx::types::chrono::NaiveDateTime;
+
+    fn now() -> NaiveDateTime {
+        NaiveDateTime::default()
+    }
+
+    fn make_row() -> ClientRow {
+        ClientRow {
+            pk_client: Uuid::now_v7(),
+            idx_client: 1,
+            tx_name: "Test Client".to_string(),
+            tx_status: "active".to_string(),
+            tx_doc: "12345678909".to_string(),
+            ts_client_created_at: now(),
+            ts_client_updated_at: now(),
+        }
+    }
+
+    #[async_trait]
+    impl FindById for MockRepo {
+        async fn find_by_id(&self, _uuid: Uuid) -> Result<Option<ClientRow>, ClientError> {
+            Ok(self.find_by_id_result.clone())
+        }
+    }
+
+    #[async_trait]
+    impl FindByDocument for MockRepo {
+        async fn find_by_document(&self, _doc: &str) -> Result<Option<ClientRow>, ClientError> {
+            Ok(self.find_by_document_result.clone())
+        }
+    }
+
+    #[async_trait]
+    impl FindAll for MockRepo {
+        async fn find_all(&self) -> Result<Vec<ClientRow>, ClientError> {
+            Ok(self.find_all_result.clone())
+        }
+    }
+
+    #[async_trait]
+    impl CreateClient for MockRepo {
+        async fn create(&self, input: CreateClientRow) -> Result<ClientRow, ClientError> {
+            Ok(ClientRow {
+                pk_client: Uuid::now_v7(),
+                idx_client: 0,
+                tx_name: input.tx_name,
+                tx_status: input.tx_status.to_string(),
+                tx_doc: input.tx_doc,
+                ts_client_created_at: now(),
+                ts_client_updated_at: now(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl UpdateClientRepo for MockRepo {
+        async fn update(
+            &self,
+            uuid: Uuid,
+            _input: UpdateClientRow,
+        ) -> Result<ClientRow, ClientError> {
+            Ok(ClientRow {
+                pk_client: uuid,
+                idx_client: 0,
+                tx_name: "".to_string(),
+                tx_status: "".to_string(),
+                tx_doc: "".to_string(),
+                ts_client_created_at: now(),
+                ts_client_updated_at: now(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl DeleteClient for MockRepo {
+        async fn delete(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+            Ok(ClientRow {
+                pk_client: uuid,
+                idx_client: 0,
+                tx_name: "".to_string(),
+                tx_status: "".to_string(),
+                tx_doc: "".to_string(),
+                ts_client_created_at: now(),
+                ts_client_updated_at: now(),
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn find_client_returns_row_when_exists() {
+        let row = make_row();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = FindClientById::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_client, uuid);
+        assert_eq!(result.tx_name, "Test Client");
+    }
+
+    #[tokio::test]
+    async fn find_client_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ClientService::new(repo);
+        let result = FindClientById::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ClientError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn find_client_by_document_returns_row() {
+        let row = make_row();
+        let mut repo = MockRepo::new();
+        repo.find_by_document_result = Some(row.clone());
+        let service = ClientService::new(repo);
+        let result = FindClientByDocument::execute(&service, "12345678909")
+            .await
+            .unwrap();
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().tx_doc, "12345678909");
+    }
+
+    #[tokio::test]
+    async fn list_clients_returns_all() {
+        let r1 = make_row();
+        let r2 = make_row();
+        let mut repo = MockRepo::new();
+        repo.find_all_result = vec![r1, r2];
+        let service = ClientService::new(repo);
+        let result = ListClients::execute(&service).await.unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn list_clients_returns_empty() {
+        let repo = MockRepo::new();
+        let service = ClientService::new(repo);
+        let result = ListClients::execute(&service).await.unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn register_client_fails_when_document_exists() {
+        let mut repo = MockRepo::new();
+        repo.find_by_document_result = Some(make_row());
+        let service = ClientService::new(repo);
+        let input = RegisterClientInput {
+            name: "New Client".to_string(),
+            doc: "12345678909".to_string(),
+            email: "test@example.com".to_string(),
+            phones: vec!["+55119999999999".to_string()],
+            cep: "01310100".to_string(),
+            number: "1000".to_string(),
+            complement: "".to_string(),
+        };
+        let result = RegisterClient::execute(&service, input).await;
+        assert!(matches!(
+            result,
+            Err(ClientError::DocumentAlreadyExists { .. })
+        ));
+    }
+
+    #[tokio::test]
+    async fn update_client_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ClientService::new(repo);
+        let input = UpdateClientInput {
+            name: Some("Updated".to_string()),
+            doc: None,
+        };
+        let result = UpdateClient::execute(&service, uuid, input).await;
+        assert!(matches!(result, Err(ClientError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn activate_client_succeeds_when_inactive() {
+        let mut row = make_row();
+        row.tx_status = "inactive".to_string();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = ActivateClient::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_client, uuid);
+    }
+
+    #[tokio::test]
+    async fn activate_client_fails_when_already_active() {
+        let row = make_row();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = ActivateClient::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ClientError::AlreadyActive { .. })));
+    }
+
+    #[tokio::test]
+    async fn deactivate_client_succeeds_when_active() {
+        let row = make_row();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = DeactivateClient::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_client, uuid);
+    }
+
+    #[tokio::test]
+    async fn deactivate_client_fails_when_already_inactive() {
+        let mut row = make_row();
+        row.tx_status = "inactive".to_string();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = DeactivateClient::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ClientError::AlreadyInactive { .. })));
+    }
+
+    #[tokio::test]
+    async fn delete_client_succeeds_when_exists() {
+        let row = make_row();
+        let uuid = row.pk_client;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ClientService::new(repo);
+        let result = DeleteClientTrait::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_client, uuid);
+    }
+
+    #[tokio::test]
+    async fn delete_client_fails_when_not_found() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ClientService::new(repo);
+        let result = DeleteClientTrait::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ClientError::NotFound { .. })));
+    }
+
+    #[test]
+    fn error_not_found_message_contains_uuid() {
+        let uuid = Uuid::now_v7();
+        let err = ClientError::NotFound { uuid };
+        let msg = err.to_string();
+        assert!(msg.contains(&uuid.to_string()));
+        assert!(msg.contains("não encontrado"));
+    }
+
+    #[test]
+    fn error_document_already_exists_message_contains_doc() {
+        let err = ClientError::DocumentAlreadyExists {
+            doc: "12345678909".to_string(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("documento já cadastrado"));
+    }
+
+    #[test]
+    fn error_already_active_message_contains_uuid() {
+        let uuid = Uuid::now_v7();
+        let err = ClientError::AlreadyActive { uuid };
+        let msg = err.to_string();
+        assert!(msg.contains(&uuid.to_string()));
+        assert!(msg.contains("já está ativo"));
+    }
+
+    #[test]
+    fn error_already_inactive_message_contains_uuid() {
+        let uuid = Uuid::now_v7();
+        let err = ClientError::AlreadyInactive { uuid };
+        let msg = err.to_string();
+        assert!(msg.contains(&uuid.to_string()));
+        assert!(msg.contains("já está inativo"));
     }
 }

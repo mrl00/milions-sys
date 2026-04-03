@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
 use super::dto::{ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest};
-use crate::application::client_service::ClientService;
+use crate::application::client_service::ConcreteClientService;
 use crate::domain::errors::ClientError;
 use crate::domain::ports::client_use_cases::{
     ActivateClient, DeactivateClient, DeleteClient, FindClientById, ListClients, RegisterClient,
@@ -25,7 +25,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_client(
-    service: web::Data<ClientService>,
+    service: web::Data<ConcreteClientService>,
     body: web::Json<RegisterClientRequest>,
 ) -> HttpResponse {
     let input = crate::domain::ports::client_use_cases::RegisterClientInput {
@@ -44,7 +44,7 @@ async fn register_client(
     }
 }
 
-async fn list_clients(service: web::Data<ClientService>) -> HttpResponse {
+async fn list_clients(service: web::Data<ConcreteClientService>) -> HttpResponse {
     match ListClients::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ClientResponse> = rows.into_iter().map(ClientResponse::from).collect();
@@ -54,7 +54,10 @@ async fn list_clients(service: web::Data<ClientService>) -> HttpResponse {
     }
 }
 
-async fn get_client(service: web::Data<ClientService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn get_client(
+    service: web::Data<ConcreteClientService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let uuid = path.into_inner();
     match FindClientById::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
@@ -63,7 +66,7 @@ async fn get_client(service: web::Data<ClientService>, path: web::Path<Uuid>) ->
 }
 
 async fn update_client(
-    service: web::Data<ClientService>,
+    service: web::Data<ConcreteClientService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateClientRequest>,
 ) -> HttpResponse {
@@ -79,7 +82,10 @@ async fn update_client(
     }
 }
 
-async fn delete_client(service: web::Data<ClientService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn delete_client(
+    service: web::Data<ConcreteClientService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let uuid = path.into_inner();
     match DeleteClient::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
@@ -88,7 +94,7 @@ async fn delete_client(service: web::Data<ClientService>, path: web::Path<Uuid>)
 }
 
 async fn update_client_status(
-    service: web::Data<ClientService>,
+    service: web::Data<ConcreteClientService>,
     path: web::Path<Uuid>,
     body: web::Json<StatusRequest>,
 ) -> HttpResponse {

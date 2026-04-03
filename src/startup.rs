@@ -6,9 +6,13 @@ use std::io::Error;
 use std::net::TcpListener;
 
 pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
-    let client_service = web::Data::new(client::application::client_service::ClientService::new(
-        pool.clone(),
-    ));
+    let client_service = web::Data::new(
+        client::application::client_service::ConcreteClientService::new(
+            client::adapters::driven::postgres::pg_client_repository::PgClientRepository::new(
+                pool.clone(),
+            ),
+        ),
+    );
     let collaborator_service = web::Data::new(
         collaborator::application::collaborator_service::ConcreteCollaboratorService::new(
             collaborator::adapters::driven::postgres::pg_collaborator_repository::PgCollaboratorRepository::new(

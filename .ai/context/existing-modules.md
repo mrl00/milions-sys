@@ -35,7 +35,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/client_service.rs`)
 
-`ClientService` — implements all use case traits. Depends on `PgClientRepository`.
+`ClientService<R>` — generic over repository traits. `ConcreteClientService` type alias for production (`ClientService<PgClientRepository>`). 17 unit tests with `MockRepo`.
 
 ---
 

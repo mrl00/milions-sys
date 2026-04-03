@@ -20,3 +20,6 @@ actix-web = { workspace = true }
 
 [lints.rust]
 dead_code = "allow"
+
+[dev-dependencies]
+tokio = { workspace = true }
