@@ -46,24 +46,6 @@ impl ConcreteClientService {
     }
 }
 
-fn compute_location_hash(
-    street: &str,
-    number: &str,
-    city: &str,
-    state: &str,
-    zipcode: &str,
-) -> i64 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
-    street.hash(&mut hasher);
-    number.hash(&mut hasher);
-    city.hash(&mut hasher);
-    state.hash(&mut hasher);
-    zipcode.hash(&mut hasher);
-    hasher.finish() as i64
-}
-
 #[async_trait]
 impl RegisterClientUseCase for ConcreteClientService {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
@@ -86,53 +68,33 @@ impl RegisterClientUseCase for ConcreteClientService {
             })
         })?;
 
-        let location_hash = compute_location_hash(
-            &input.street,
-            &input.number,
-            &input.city,
-            &input.state,
-            &input.cep,
-        );
-
-        let location_row =
-            match PgLocationRepository::find_by_hash_with_executor(&mut *tx, location_hash)
-                .await
-                .map_err(|e| {
-                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "find location",
-                        source: e,
-                    })
-                })? {
-                Some(existing) => existing,
-                None => PgLocationRepository::create_with_executor(
-                    &mut *tx,
-                    CreateLocationRow {
-                        tx_street: input.street.clone(),
-                        tx_number: input.number.clone(),
-                        tx_city: input.city.clone(),
-                        tx_state: input.state.clone(),
-                        tx_zipcode: input.cep.clone(),
-                        tx_public_space: "".to_string(),
-                        tx_address_complement: input.complement.clone(),
-                        tx_unit: "".to_string(),
-                        tx_neighborhood: input.neighborhood.clone(),
-                        tx_locality: input.city.clone(),
-                        tx_region: input.state.clone(),
-                        tx_ibge: None,
-                        tx_gia: None,
-                        tx_ddd: "".to_string(),
-                        tx_siafi: None,
-                        nr_hash: location_hash,
-                    },
-                )
-                .await
-                .map_err(|e| {
-                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
-                        action: "create location",
-                        source: e,
-                    })
-                })?,
-            };
+        let location_row = PgLocationRepository::find_or_create_with_executor(
+            &mut *tx,
+            CreateLocationRow {
+                tx_street: input.street.clone(),
+                tx_number: input.number.clone(),
+                tx_city: input.city.clone(),
+                tx_state: input.state.clone(),
+                tx_zipcode: input.cep.clone(),
+                tx_public_space: "".to_string(),
+                tx_address_complement: input.complement.clone(),
+                tx_unit: "".to_string(),
+                tx_neighborhood: input.neighborhood.clone(),
+                tx_locality: input.city.clone(),
+                tx_region: input.state.clone(),
+                tx_ibge: None,
+                tx_gia: None,
+                tx_ddd: "".to_string(),
+                tx_siafi: None,
+            },
+        )
+        .await
+        .map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                action: "find or create location",
+                source: e,
+            })
+        })?;
 
         let contact_row = PgContactRepository::create_with_executor(
             &mut *tx,

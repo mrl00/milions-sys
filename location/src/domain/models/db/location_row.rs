@@ -42,7 +42,6 @@ pub struct CreateLocationRow {
     pub tx_city: String,
     pub tx_state: String,
     pub tx_zipcode: String,
-    pub nr_hash: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
