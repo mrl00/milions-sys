@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain:: errors::ProjectError;
+use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
     AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
     CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
