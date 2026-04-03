@@ -1,13 +1,12 @@
 use async_trait::async_trait;
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::adapters::driven::postgres::pg_location_repository::PgLocationRepository;
 use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
 use crate::domain::ports::location_repository::{
-    CreateLocation as _, DeleteLocation as _, FindAllLocations as _, FindLocationByHash as _,
-    FindLocationById as _, UpdateLocation as _,
+    CreateLocation, DeleteLocation, FindAllLocations, FindLocationByHash, FindLocationById,
+    UpdateLocation,
 };
 use crate::domain::ports::location_use_cases::{
     CreateLocation as CreateLocationTrait, CreateLocationInput,
@@ -16,15 +15,21 @@ use crate::domain::ports::location_use_cases::{
     UpdateLocation as UpdateLocationTrait, UpdateLocationInput,
 };
 
-pub struct LocationService {
-    repo: PgLocationRepository,
+pub struct LocationService<R> {
+    repo: R,
 }
 
-impl LocationService {
-    pub fn new(pool: PgPool) -> Self {
-        Self {
-            repo: PgLocationRepository::new(pool),
-        }
+impl<R> LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation,
+{
+    pub fn new(repo: R) -> Self {
+        Self { repo }
     }
 
     fn to_create_row(input: CreateLocationInput) -> CreateLocationRow {
@@ -69,8 +74,20 @@ impl LocationService {
     }
 }
 
+pub type ConcreteLocationService = LocationService<PgLocationRepository>;
+
 #[async_trait]
-impl FindLocation for LocationService {
+impl<R> FindLocation for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -80,21 +97,51 @@ impl FindLocation for LocationService {
 }
 
 #[async_trait]
-impl ListLocations for LocationService {
+impl<R> ListLocations for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(&self) -> Result<Vec<LocationRow>, LocationError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl CreateLocationTrait for LocationService {
+impl<R> CreateLocationTrait for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         self.repo.create(Self::to_create_row(input)).await
     }
 }
 
 #[async_trait]
-impl FindOrCreateLocationTrait for LocationService {
+impl<R> FindOrCreateLocationTrait for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(&self, input: CreateLocationInput) -> Result<LocationRow, LocationError> {
         if let Some(existing) = self.repo.find_by_hash(input.hash).await? {
             return Ok(existing);
@@ -105,7 +152,17 @@ impl FindOrCreateLocationTrait for LocationService {
 }
 
 #[async_trait]
-impl UpdateLocationTrait for LocationService {
+impl<R> UpdateLocationTrait for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         uuid: Uuid,
@@ -121,7 +178,17 @@ impl UpdateLocationTrait for LocationService {
 }
 
 #[async_trait]
-impl DeleteLocationTrait for LocationService {
+impl<R> DeleteLocationTrait for LocationService<R>
+where
+    R: FindLocationById
+        + FindLocationByHash
+        + FindAllLocations
+        + CreateLocation
+        + UpdateLocation
+        + DeleteLocation
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
         self.repo
             .find_by_id(uuid)
@@ -129,5 +196,425 @@ impl DeleteLocationTrait for LocationService {
             .ok_or(LocationError::NotFound { uuid })?;
 
         self.repo.delete(uuid).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::ports::location_repository::{
+        CreateLocation, DeleteLocation, FindAllLocations, FindLocationByHash, FindLocationById,
+        UpdateLocation,
+    };
+    use crate::domain::ports::location_use_cases::{
+        CreateLocation as CreateLocationTrait, DeleteLocation as DeleteLocationTrait, FindLocation,
+        FindOrCreateLocation, ListLocations, UpdateLocation as UpdateLocationTrait,
+    };
+    use sqlx::types::chrono::NaiveDateTime;
+
+    enum FindByIdResult {
+        Found(LocationRow),
+        NotFound,
+    }
+
+    enum FindByHashResult {
+        Found(LocationRow),
+        NotFound,
+    }
+
+    enum FindAllResult {
+        Found(Vec<LocationRow>),
+    }
+
+    #[derive(Default)]
+    struct MockRepo {
+        find_by_id_result: Option<FindByIdResult>,
+        find_by_hash_result: Option<FindByHashResult>,
+        find_all_result: Option<FindAllResult>,
+    }
+
+    impl MockRepo {
+        fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    fn now() -> NaiveDateTime {
+        NaiveDateTime::default()
+    }
+
+    fn make_row() -> LocationRow {
+        LocationRow {
+            pk_location: Uuid::now_v7(),
+            idx_location: 1,
+            tx_public_space: "Rua".to_string(),
+            tx_address_complement: Some("Apto 101".to_string()),
+            tx_unit: "101".to_string(),
+            tx_neighborhood: "Centro".to_string(),
+            tx_locality: "São Paulo".to_string(),
+            tx_region: "SP".to_string(),
+            tx_ibge: Some("3550308".to_string()),
+            tx_gia: Some("1004".to_string()),
+            tx_ddd: "11".to_string(),
+            tx_siafi: Some("7107".to_string()),
+            tx_street: "Paulista".to_string(),
+            tx_number: "1000".to_string(),
+            tx_city: "São Paulo".to_string(),
+            tx_state: "SP".to_string(),
+            tx_zipcode: "01310100".to_string(),
+            nr_hash: 123456789,
+            ts_location_created_at: now(),
+            ts_location_updated_at: now(),
+        }
+    }
+
+    fn default_row(uuid: Uuid) -> LocationRow {
+        LocationRow {
+            pk_location: uuid,
+            idx_location: 0,
+            tx_public_space: "".to_string(),
+            tx_address_complement: None,
+            tx_unit: "".to_string(),
+            tx_neighborhood: "".to_string(),
+            tx_locality: "".to_string(),
+            tx_region: "".to_string(),
+            tx_ibge: None,
+            tx_gia: None,
+            tx_ddd: "".to_string(),
+            tx_siafi: None,
+            tx_street: "".to_string(),
+            tx_number: "".to_string(),
+            tx_city: "".to_string(),
+            tx_state: "".to_string(),
+            tx_zipcode: "".to_string(),
+            nr_hash: 0,
+            ts_location_created_at: now(),
+            ts_location_updated_at: now(),
+        }
+    }
+
+    #[async_trait]
+    impl FindLocationById for MockRepo {
+        async fn find_by_id(&self, _uuid: Uuid) -> Result<Option<LocationRow>, LocationError> {
+            match &self.find_by_id_result {
+                Some(FindByIdResult::Found(row)) => Ok(Some(row.clone())),
+                Some(FindByIdResult::NotFound) | None => Ok(None),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl FindLocationByHash for MockRepo {
+        async fn find_by_hash(&self, _hash: i64) -> Result<Option<LocationRow>, LocationError> {
+            match &self.find_by_hash_result {
+                Some(FindByHashResult::Found(row)) => Ok(Some(row.clone())),
+                Some(FindByHashResult::NotFound) | None => Ok(None),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl FindAllLocations for MockRepo {
+        async fn find_all(&self) -> Result<Vec<LocationRow>, LocationError> {
+            match &self.find_all_result {
+                Some(FindAllResult::Found(rows)) => Ok(rows.clone()),
+                None => Ok(vec![]),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl CreateLocation for MockRepo {
+        async fn create(&self, input: CreateLocationRow) -> Result<LocationRow, LocationError> {
+            Ok(LocationRow {
+                pk_location: Uuid::now_v7(),
+                idx_location: 0,
+                tx_public_space: input.tx_public_space,
+                tx_address_complement: Some(input.tx_address_complement),
+                tx_unit: input.tx_unit,
+                tx_neighborhood: input.tx_neighborhood,
+                tx_locality: input.tx_locality,
+                tx_region: input.tx_region,
+                tx_ibge: input.tx_ibge,
+                tx_gia: input.tx_gia,
+                tx_ddd: input.tx_ddd,
+                tx_siafi: input.tx_siafi,
+                tx_street: input.tx_street,
+                tx_number: input.tx_number,
+                tx_city: input.tx_city,
+                tx_state: input.tx_state,
+                tx_zipcode: input.tx_zipcode,
+                nr_hash: input.nr_hash,
+                ts_location_created_at: now(),
+                ts_location_updated_at: now(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl UpdateLocation for MockRepo {
+        async fn update(
+            &self,
+            uuid: Uuid,
+            _input: UpdateLocationRow,
+        ) -> Result<LocationRow, LocationError> {
+            Ok(default_row(uuid))
+        }
+    }
+
+    #[async_trait]
+    impl DeleteLocation for MockRepo {
+        async fn delete(&self, uuid: Uuid) -> Result<LocationRow, LocationError> {
+            Ok(default_row(uuid))
+        }
+    }
+
+    #[tokio::test]
+    async fn find_location_returns_row_when_exists() {
+        let row = make_row();
+        let uuid = row.pk_location;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(FindByIdResult::Found(row));
+        let service = LocationService::new(repo);
+        let result = FindLocation::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_location, uuid);
+        assert_eq!(result.tx_street, "Paulista");
+    }
+
+    #[tokio::test]
+    async fn find_location_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = LocationService::new(repo);
+        let result = FindLocation::execute(&service, uuid).await;
+        assert!(matches!(result, Err(LocationError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn list_locations_returns_all_rows() {
+        let row1 = make_row();
+        let row2 = make_row();
+        let mut repo = MockRepo::new();
+        repo.find_all_result = Some(FindAllResult::Found(vec![row1, row2]));
+        let service = LocationService::new(repo);
+        let result = ListLocations::execute(&service).await.unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn list_locations_returns_empty_when_none() {
+        let repo = MockRepo::new();
+        let service = LocationService::new(repo);
+        let result = ListLocations::execute(&service).await.unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn create_location_delegates_to_repo() {
+        let input = CreateLocationInput {
+            street: "Paulista".to_string(),
+            number: "1000".to_string(),
+            city: "São Paulo".to_string(),
+            state: "SP".to_string(),
+            zipcode: "01310100".to_string(),
+            complement: "Apto 101".to_string(),
+            public_space: "Rua".to_string(),
+            unit: "101".to_string(),
+            neighborhood: "Centro".to_string(),
+            locality: "São Paulo".to_string(),
+            region: "SP".to_string(),
+            ibge: Some("3550308".to_string()),
+            gia: Some("1004".to_string()),
+            ddd: "11".to_string(),
+            siafi: Some("7107".to_string()),
+            hash: 123456789,
+        };
+        let repo = MockRepo::new();
+        let service = LocationService::new(repo);
+        let result = CreateLocationTrait::execute(&service, input).await.unwrap();
+        assert_eq!(result.tx_street, "Paulista");
+        assert_eq!(result.nr_hash, 123456789);
+    }
+
+    #[tokio::test]
+    async fn find_or_create_returns_existing_when_hash_matches() {
+        let existing = make_row();
+        let hash = existing.nr_hash;
+        let mut repo = MockRepo::new();
+        repo.find_by_hash_result = Some(FindByHashResult::Found(existing.clone()));
+        let input = CreateLocationInput {
+            street: "Test".to_string(),
+            number: "1".to_string(),
+            city: "Test".to_string(),
+            state: "SP".to_string(),
+            zipcode: "00000000".to_string(),
+            complement: "".to_string(),
+            public_space: "Rua".to_string(),
+            unit: "".to_string(),
+            neighborhood: "Test".to_string(),
+            locality: "Test".to_string(),
+            region: "SP".to_string(),
+            ibge: None,
+            gia: None,
+            ddd: "11".to_string(),
+            siafi: None,
+            hash,
+        };
+        let service = LocationService::new(repo);
+        let result = FindOrCreateLocation::execute(&service, input)
+            .await
+            .unwrap();
+        assert_eq!(result.pk_location, existing.pk_location);
+        assert_eq!(result.tx_street, existing.tx_street);
+    }
+
+    #[tokio::test]
+    async fn find_or_create_creates_when_hash_not_found() {
+        let mut repo = MockRepo::new();
+        repo.find_by_hash_result = Some(FindByHashResult::NotFound);
+        let input = CreateLocationInput {
+            street: "New".to_string(),
+            number: "999".to_string(),
+            city: "New".to_string(),
+            state: "RJ".to_string(),
+            zipcode: "20000000".to_string(),
+            complement: "".to_string(),
+            public_space: "Av".to_string(),
+            unit: "".to_string(),
+            neighborhood: "New".to_string(),
+            locality: "New".to_string(),
+            region: "RJ".to_string(),
+            ibge: None,
+            gia: None,
+            ddd: "21".to_string(),
+            siafi: None,
+            hash: 999,
+        };
+        let service = LocationService::new(repo);
+        let result = FindOrCreateLocation::execute(&service, input)
+            .await
+            .unwrap();
+        assert_eq!(result.tx_street, "New");
+        assert_eq!(result.nr_hash, 999);
+    }
+
+    #[tokio::test]
+    async fn update_location_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = LocationService::new(repo);
+        let input = UpdateLocationInput {
+            street: Some("Updated".to_string()),
+            number: None,
+            city: None,
+            state: None,
+            zipcode: None,
+            complement: None,
+            public_space: None,
+            unit: None,
+            neighborhood: None,
+            locality: None,
+            region: None,
+            ibge: None,
+            gia: None,
+            ddd: None,
+            siafi: None,
+        };
+        let result = UpdateLocationTrait::execute(&service, uuid, input).await;
+        assert!(matches!(result, Err(LocationError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn update_location_delegates_to_repo_when_exists() {
+        let row = make_row();
+        let uuid = row.pk_location;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(FindByIdResult::Found(row));
+        let input = UpdateLocationInput {
+            street: Some("Updated Street".to_string()),
+            number: Some("2000".to_string()),
+            city: None,
+            state: None,
+            zipcode: None,
+            complement: None,
+            public_space: None,
+            unit: None,
+            neighborhood: None,
+            locality: None,
+            region: None,
+            ibge: None,
+            gia: None,
+            ddd: None,
+            siafi: None,
+        };
+        let service = LocationService::new(repo);
+        let result = UpdateLocationTrait::execute(&service, uuid, input)
+            .await
+            .unwrap();
+        assert_eq!(result.pk_location, uuid);
+    }
+
+    #[tokio::test]
+    async fn delete_location_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = LocationService::new(repo);
+        let result = DeleteLocationTrait::execute(&service, uuid).await;
+        assert!(matches!(result, Err(LocationError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn delete_location_delegates_to_repo_when_exists() {
+        let row = make_row();
+        let uuid = row.pk_location;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(FindByIdResult::Found(row));
+        let service = LocationService::new(repo);
+        let result = DeleteLocationTrait::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_location, uuid);
+    }
+
+    #[test]
+    fn error_not_found_message_contains_uuid() {
+        let uuid = Uuid::now_v7();
+        let err = LocationError::NotFound { uuid };
+        let msg = err.to_string();
+        assert!(msg.contains(&uuid.to_string()));
+        assert!(msg.contains("localização não encontrada"));
+    }
+
+    #[test]
+    fn error_already_exists_message_contains_hash() {
+        let err = LocationError::AlreadyExists { hash: 12345 };
+        let msg = err.to_string();
+        assert!(msg.contains("12345"));
+        assert!(msg.contains("localização já existe"));
+    }
+
+    #[test]
+    fn error_invalid_field_message_contains_field_and_reason() {
+        let err = LocationError::InvalidField {
+            field: "zipcode",
+            reason: "must be 8 digits".to_string(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("zipcode"));
+        assert!(msg.contains("must be 8 digits"));
+        assert!(msg.contains("campo inválido"));
+    }
+
+    #[test]
+    fn location_row_clone_and_eq() {
+        let row = make_row();
+        let cloned = row.clone();
+        assert_eq!(row, cloned);
+    }
+
+    #[test]
+    fn location_row_debug_does_not_panic() {
+        let row = make_row();
+        let debug = format!("{:?}", row);
+        assert!(debug.contains("LocationRow"));
+        assert!(debug.contains("tx_street"));
     }
 }

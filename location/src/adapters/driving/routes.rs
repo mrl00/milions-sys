@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
 use super::dto::{CreateLocationRequest, LocationResponse, UpdateLocationRequest};
-use crate::application::location_service::LocationService;
+use crate::application::location_service::ConcreteLocationService;
 use crate::domain::errors::LocationError;
 use crate::domain::ports::location_use_cases::{
     CreateLocation, DeleteLocation, FindLocation, ListLocations, UpdateLocation,
@@ -36,7 +36,7 @@ fn compute_hash(input: &CreateLocationRequest) -> i64 {
 }
 
 async fn create_location(
-    service: web::Data<LocationService>,
+    service: web::Data<ConcreteLocationService>,
     body: web::Json<CreateLocationRequest>,
 ) -> HttpResponse {
     let hash = compute_hash(&body);
@@ -65,7 +65,7 @@ async fn create_location(
     }
 }
 
-async fn list_locations(service: web::Data<LocationService>) -> HttpResponse {
+async fn list_locations(service: web::Data<ConcreteLocationService>) -> HttpResponse {
     match ListLocations::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<LocationResponse> =
@@ -76,7 +76,10 @@ async fn list_locations(service: web::Data<LocationService>) -> HttpResponse {
     }
 }
 
-async fn get_location(service: web::Data<LocationService>, path: web::Path<Uuid>) -> HttpResponse {
+async fn get_location(
+    service: web::Data<ConcreteLocationService>,
+    path: web::Path<Uuid>,
+) -> HttpResponse {
     let uuid = path.into_inner();
     match FindLocation::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
@@ -85,7 +88,7 @@ async fn get_location(service: web::Data<LocationService>, path: web::Path<Uuid>
 }
 
 async fn update_location(
-    service: web::Data<LocationService>,
+    service: web::Data<ConcreteLocationService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateLocationRequest>,
 ) -> HttpResponse {
@@ -115,7 +118,7 @@ async fn update_location(
 }
 
 async fn delete_location(
-    service: web::Data<LocationService>,
+    service: web::Data<ConcreteLocationService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
