@@ -129,7 +129,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/contact_service.rs`)
 
-`ContactService` — implements all use case traits (contact + phone). Depends on `PgContactRepository` + `PgPhoneRepository`.
+`ContactService<C, P>` — generic over contact and phone repository traits. `ConcreteContactService` type alias for production (`ContactService<PgContactRepository, PgPhoneRepository>`). 21 unit tests with `MockContactRepo` and `MockPhoneRepo`.
 
 ---
 
