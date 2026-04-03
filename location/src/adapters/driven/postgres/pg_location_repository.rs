@@ -15,6 +15,78 @@ impl PgLocationRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn find_by_hash_with_executor<'a, E>(
+        executor: E,
+        hash: i64,
+    ) -> Result<Option<LocationRow>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            LocationRow,
+            r#"
+            SELECT *
+            FROM locations.tb_location
+            WHERE nr_hash = $1
+            "#,
+            hash,
+        )
+        .fetch_optional(executor)
+        .await
+    }
+
+    pub async fn create_with_executor<'a, E>(
+        executor: E,
+        c: CreateLocationRow,
+    ) -> Result<LocationRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            LocationRow,
+            r#"INSERT INTO locations.tb_location (
+            pk_location, 
+            tx_street, 
+            tx_number, 
+            tx_city, 
+            tx_state, 
+            tx_zipcode,  
+            tx_public_space, 
+            tx_address_complement,
+            tx_unit, 
+            tx_neighborhood, 
+            tx_locality, 
+            tx_region, 
+            tx_ibge, 
+            tx_gia, 
+            tx_ddd, 
+            tx_siafi, 
+            nr_hash
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            RETURNING *"#,
+            Uuid::now_v7(),
+            &c.tx_street,
+            &c.tx_number,
+            &c.tx_city,
+            &c.tx_state,
+            &c.tx_zipcode,
+            &c.tx_public_space,
+            &c.tx_address_complement,
+            &c.tx_unit,
+            &c.tx_neighborhood,
+            &c.tx_locality,
+            &c.tx_region,
+            c.tx_ibge,
+            c.tx_gia,
+            &c.tx_ddd,
+            c.tx_siafi,
+            c.nr_hash as i64,
+        )
+        .fetch_one(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> LocationError {

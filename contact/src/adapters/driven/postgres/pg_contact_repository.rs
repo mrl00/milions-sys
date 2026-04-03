@@ -15,6 +15,27 @@ impl PgContactRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn create_with_executor<'a, E>(
+        executor: E,
+        input: CreateContactRow,
+    ) -> Result<ContactRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            ContactRow,
+            r#"
+            INSERT INTO contacts.tb_contact (pk_contact, tx_email)
+            VALUES ($1, $2)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &input.tx_email,
+        )
+        .fetch_one(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {

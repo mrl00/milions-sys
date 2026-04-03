@@ -15,6 +15,58 @@ impl PgPhoneRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub async fn create_with_executor<'a, E>(
+        executor: E,
+        contact_id: Uuid,
+        phone: String,
+    ) -> Result<PhoneRow, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            INSERT INTO contacts.tb_phone (pk_phone, tx_phone, fk_contact)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &phone,
+            &contact_id,
+        )
+        .fetch_one(executor)
+        .await
+    }
+
+    pub async fn create_many_with_executor<'a, E>(
+        executor: E,
+        contact_id: Uuid,
+        phones: Vec<String>,
+    ) -> Result<Vec<PhoneRow>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        let pks: Vec<Uuid> = phones.iter().map(|_| Uuid::now_v7()).collect();
+        let fks: Vec<Uuid> = std::iter::repeat_n(contact_id, phones.len()).collect();
+
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            INSERT INTO contacts.tb_phone (pk_phone, fk_contact, tx_phone)
+            SELECT * FROM UNNEST(
+            $1::uuid[],
+            $2::uuid[],
+            $3::text[])
+            RETURNING *
+            "#,
+            &pks as &[Uuid],
+            &fks as &[Uuid],
+            &phones as &[String],
+        )
+        .fetch_all(executor)
+        .await
+    }
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {
