@@ -918,9 +918,8 @@ mod tests {
         UpdateAllocation, UpdateProject, UpdateStage,
     };
     use crate::domain::ports::project_use_cases::{
-        CancelProject, CompleteProject, CreateProject as CreateProjectTrait,
-        DeleteProject as DeleteProjectTrait, FindProject, ListProjects, PauseProject, StartProject,
-        UpdateProject as UpdateProjectTrait,
+        CancelProject, CompleteProject, DeleteProject as DeleteProjectTrait, FindProject,
+        ListProjects, PauseProject, StartProject, UpdateProject as UpdateProjectTrait,
     };
 
     #[derive(Default)]
