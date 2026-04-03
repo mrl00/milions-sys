@@ -7,8 +7,9 @@ use super::dto::{
 use crate::application::collaborator_service::ConcreteCollaboratorService;
 use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::ports::collaborator_use_cases::{
-    ActivateCollaborator, DeactivateCollaborator, DeleteCollaborator, FindCollaborator,
-    ListCollaborators, RegisterCollaborator, UpdateCollaborator,
+    ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
+    FindCollaboratorUseCase, ListCollaboratorsUseCase, RegisterCollaboratorUseCase,
+    UpdateCollaboratorUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -38,14 +39,14 @@ async fn register_collaborator(
         cpf: body.cpf.clone(),
     };
 
-    match RegisterCollaborator::execute(&**service, input).await {
+    match RegisterCollaboratorUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(CollaboratorResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }
 
 async fn list_collaborators(service: web::Data<ConcreteCollaboratorService>) -> HttpResponse {
-    match ListCollaborators::execute(&**service).await {
+    match ListCollaboratorsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<CollaboratorResponse> =
                 rows.into_iter().map(CollaboratorResponse::from).collect();
@@ -60,7 +61,7 @@ async fn get_collaborator(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match FindCollaborator::execute(&**service, uuid).await {
+    match FindCollaboratorUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -78,7 +79,7 @@ async fn update_collaborator(
         level: body.level.clone(),
     };
 
-    match UpdateCollaborator::execute(&**service, uuid, input).await {
+    match UpdateCollaboratorUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -89,7 +90,7 @@ async fn delete_collaborator(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match DeleteCollaborator::execute(&**service, uuid).await {
+    match DeleteCollaboratorUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -102,10 +103,10 @@ async fn update_collaborator_status(
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
-        "active" => ActivateCollaborator::execute(&**service, uuid)
+        "active" => ActivateCollaboratorUseCase::execute(&**service, uuid)
             .await
             .map(CollaboratorResponse::from),
-        "inactive" => DeactivateCollaborator::execute(&**service, uuid)
+        "inactive" => DeactivateCollaboratorUseCase::execute(&**service, uuid)
             .await
             .map(CollaboratorResponse::from),
         _ => return HttpResponse::BadRequest().body("invalid status: use 'active' or 'inactive'"),

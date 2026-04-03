@@ -5,7 +5,8 @@ use super::dto::{CreateLocationRequest, LocationResponse, UpdateLocationRequest}
 use crate::application::location_service::ConcreteLocationService;
 use crate::domain::errors::LocationError;
 use crate::domain::ports::location_use_cases::{
-    CreateLocation, DeleteLocation, FindLocation, ListLocations, UpdateLocation,
+    CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
+    UpdateLocationUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -59,14 +60,14 @@ async fn create_location(
         hash,
     };
 
-    match CreateLocation::execute(&**service, input).await {
+    match CreateLocationUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
 }
 
 async fn list_locations(service: web::Data<ConcreteLocationService>) -> HttpResponse {
-    match ListLocations::execute(&**service).await {
+    match ListLocationsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<LocationResponse> =
                 rows.into_iter().map(LocationResponse::from).collect();
@@ -81,7 +82,7 @@ async fn get_location(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match FindLocation::execute(&**service, uuid).await {
+    match FindLocationUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -111,7 +112,7 @@ async fn update_location(
         siafi: body.siafi.clone(),
     };
 
-    match UpdateLocation::execute(&**service, uuid, input).await {
+    match UpdateLocationUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }
@@ -122,7 +123,7 @@ async fn delete_location(
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match DeleteLocation::execute(&**service, uuid).await {
+    match DeleteLocationUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => error_to_response(e),
     }

@@ -12,44 +12,44 @@ pub struct RegisterContactInput {
 }
 
 #[async_trait]
-pub trait RegisterContact: Send + Sync {
+pub trait RegisterContactUseCase: Send + Sync {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError>;
 }
 
 #[async_trait]
-pub trait FindContact: Send + Sync {
+pub trait FindContactUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ContactRow, ContactError>;
 }
 
 #[async_trait]
-pub trait ListContacts: Send + Sync {
+pub trait ListContactsUseCase: Send + Sync {
     async fn execute(&self) -> Result<Vec<ContactRow>, ContactError>;
 }
 
 #[async_trait]
-pub trait UpdateContactEmail: Send + Sync {
+pub trait UpdateContactEmailUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid, email: String) -> Result<ContactRow, ContactError>;
 }
 
 // --- Phone ---
 
 #[async_trait]
-pub trait FindPhone: Send + Sync {
+pub trait FindPhoneUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError>;
 }
 
 #[async_trait]
-pub trait ListPhones: Send + Sync {
+pub trait ListPhonesUseCase: Send + Sync {
     async fn execute(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError>;
 }
 
 #[async_trait]
-pub trait AddPhone: Send + Sync {
+pub trait AddPhoneUseCase: Send + Sync {
     async fn execute(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
 }
 
 #[async_trait]
-pub trait AddPhones: Send + Sync {
+pub trait AddPhonesUseCase: Send + Sync {
     async fn execute(
         &self,
         contact_id: Uuid,
@@ -58,11 +58,11 @@ pub trait AddPhones: Send + Sync {
 }
 
 #[async_trait]
-pub trait UpdatePhone: Send + Sync {
+pub trait UpdatePhoneUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
 }
 
 #[async_trait]
-pub trait RemovePhone: Send + Sync {
+pub trait RemovePhoneUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError>;
 }

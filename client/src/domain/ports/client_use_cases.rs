@@ -24,42 +24,42 @@ pub struct UpdateClientInput {
 }
 
 #[async_trait]
-pub trait RegisterClient: Send + Sync {
+pub trait RegisterClientUseCase: Send + Sync {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
-pub trait FindClientById: Send + Sync {
+pub trait FindClientByIdUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
-pub trait FindClientByDocument: Send + Sync {
+pub trait FindClientByDocumentUseCase: Send + Sync {
     async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError>;
 }
 
 #[async_trait]
-pub trait ListClients: Send + Sync {
+pub trait ListClientsUseCase: Send + Sync {
     async fn execute(&self) -> Result<Vec<ClientRow>, ClientError>;
 }
 
 #[async_trait]
-pub trait UpdateClient: Send + Sync {
+pub trait UpdateClientUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid, input: UpdateClientInput)
     -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
-pub trait ActivateClient: Send + Sync {
+pub trait ActivateClientUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
-pub trait DeactivateClient: Send + Sync {
+pub trait DeactivateClientUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
-pub trait DeleteClient: Send + Sync {
+pub trait DeleteClientUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
