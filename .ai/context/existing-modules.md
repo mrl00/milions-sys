@@ -186,6 +186,8 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `FindAllocationsByProjectId` | `find_allocations_by_project_id(project_id) -> Vec<ProjectDailyAllocationRow>` |
 | `CreateAllocation`      | `create_allocation(input: CreateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
 | `UpdateAllocation`      | `update_allocation(uuid, input: UpdateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
+| `FindStagesByProjectId` | `find_stages_by_project_id(project_id) -> Vec<ProjectStageRow>` |
+| `FindAllocationsByCollaboratorId` | `find_allocations_by_collaborator_id(collaborator_id) -> Vec<AllocationWithProjectName>` |
 
 **Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`, `FindAndCreateAllocation`, `FindAndUpdateAllocation`
 
@@ -208,9 +210,14 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `CreateAllocation`     | `execute(project_id, input: CreateAllocationInput) -> ProjectDailyAllocationRow` |
 | `ListAllocations`      | `execute(project_id) -> Vec<ProjectDailyAllocationRow>`                     |
 | `UpdateAllocation`     | `execute(project_id, allocation_id, input: UpdateAllocationInput) -> ProjectDailyAllocationRow` |
+| `GetCostReport`        | `execute(project_id) -> CostReportData`                                     |
+| `GetProgressReport`    | `execute(project_id) -> ProgressReportData`                                 |
+| `GetHistoryReport`     | `execute(collaborator_id) -> HistoryReportData`                             |
 
 **Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`, `CreateAllocationInput`, `UpdateAllocationInput`
 
+**Output structs:** `CostReportData`, `ProgressReportData`, `HistoryReportData`, `AllocationHistoryEntry`
+
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits (project + stage + allocation). Depends on `PgProjectRepository`.
+`ProjectService` — implements all use case traits (project + stage + allocation + reports). Depends on `PgProjectRepository`.
