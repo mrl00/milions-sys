@@ -4,23 +4,17 @@ use actix_web::{App, HttpServer, web};
 use sqlx::PgPool;
 use std::io::Error;
 use std::net::TcpListener;
+use std::sync::Arc;
 
 pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
-    let client_service = web::Data::new(
-        client::application::client_service::ConcreteClientService::new(
-            client::adapters::driven::postgres::pg_client_repository::PgClientRepository::new(
+    let location_service = Arc::new(
+        location::application::location_service::ConcreteLocationService::new(
+            location::adapters::driven::postgres::pg_location_repository::PgLocationRepository::new(
                 pool.clone(),
             ),
         ),
     );
-    let collaborator_service = web::Data::new(
-        collaborator::application::collaborator_service::ConcreteCollaboratorService::new(
-            collaborator::adapters::driven::postgres::pg_collaborator_repository::PgCollaboratorRepository::new(
-                pool.clone(),
-            ),
-        ),
-    );
-    let contact_service = web::Data::new(
+    let contact_service = Arc::new(
         contact::application::contact_service::ConcreteContactService::new(
             contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository::new(
                 pool.clone(),
@@ -30,9 +24,21 @@ pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
             ),
         ),
     );
-    let location_service = web::Data::new(
-        location::application::location_service::ConcreteLocationService::new(
-            location::adapters::driven::postgres::pg_location_repository::PgLocationRepository::new(
+    let client_service = web::Data::new(
+        client::application::client_service::ConcreteClientService::new(
+            client::adapters::driven::postgres::pg_client_repository::PgClientRepository::new(
+                pool.clone(),
+            ),
+            Arc::clone(&location_service),
+            Arc::clone(&contact_service),
+            Some(pool.clone()),
+        ),
+    );
+    let location_service = web::Data::from(location_service);
+    let contact_service = web::Data::from(contact_service);
+    let collaborator_service = web::Data::new(
+        collaborator::application::collaborator_service::ConcreteCollaboratorService::new(
+            collaborator::adapters::driven::postgres::pg_collaborator_repository::PgCollaboratorRepository::new(
                 pool.clone(),
             ),
         ),

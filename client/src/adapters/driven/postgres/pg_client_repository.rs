@@ -18,6 +18,10 @@ impl PgClientRepository {
         Self { pool }
     }
 
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
     pub async fn create_contact<'a, E>(
         executor: E,
         client_uuid: Uuid,
