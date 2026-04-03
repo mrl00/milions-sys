@@ -163,7 +163,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/location_service.rs`)
 
-`LocationService` — implements all use case traits. Depends on `PgLocationRepository`.
+`LocationService<R>` — generic over repository traits. `ConcreteLocationService` type alias for production (`LocationService<PgLocationRepository>`). 16 unit tests with `MockRepo`.
 
 ---
 
