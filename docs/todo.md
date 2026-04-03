@@ -34,7 +34,6 @@
 - [ ] Fix `collaborator_name` in history report (project crate can't access collaborator data)
 - [ ] Implement Service Types & Project Services CRUD (tables exist, zero code)
 - [ ] Remove `dead_code = "allow"` lints and clean up unused code
-- [ ] Extract duplicate DTOs (`ContactDto`/`AddressDto`) into shared crate
 
 ---
 
@@ -45,3 +44,4 @@ Startup wiring uses `pub fn build(pool: PgPool)` per context.
 86 unit tests pass across all crates.
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
+All multi-field UPDATE queries use COALESCE for partial updates.

@@ -140,17 +140,17 @@ Every bounded context follows a hexagonal (ports and adapters) layout:
 
 ### 3.3 Workspace Crates
 
-| Crate | Role |
-|-------|------|
-| `milions-sys` | Binary entrypoint (actix-web server) |
-| `settings` | Configuration from YAML + env vars |
-| `types` | Shared value objects (Phone, Email, Cpf, Cnpj, Doc, Cep) |
-| `viacep` | ViaCEP external API integration |
-| `client` | Client bounded context |
-| `collaborator` | Collaborator bounded context |
-| `contact` | Contact bounded context |
-| `location` | Location bounded context |
-| `project` | Project bounded context |
+| Crate          | Role                                                     |
+| -------------- | -------------------------------------------------------- |
+| `milions-sys`  | Binary entrypoint (actix-web server)                     |
+| `settings`     | Configuration from YAML + env vars                       |
+| `types`        | Shared value objects (Phone, Email, Cpf, Cnpj, Doc, Cep) |
+| `viacep`       | ViaCEP external API integration                          |
+| `client`       | Client bounded context                                   |
+| `collaborator` | Collaborator bounded context                             |
+| `contact`      | Contact bounded context                                  |
+| `location`     | Location bounded context                                 |
+| `project`      | Project bounded context                                  |
 
 ### 3.4 Cross-Context Dependencies
 
