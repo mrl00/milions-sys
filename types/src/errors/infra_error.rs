@@ -1,15 +1,15 @@
 #[derive(Debug, snafu::Snafu)]
 #[snafu(visibility(pub))]
 pub enum InfraError {
-    #[snafu(display("erro de banco ao {action}"))]
+    #[snafu(display("database error while {action}"))]
     Database {
         action: &'static str,
         source: sqlx::Error,
     },
 
-    #[snafu(display("erro ao iniciar transaction"))]
+    #[snafu(display("error starting transaction"))]
     BeginTransaction { source: sqlx::Error },
 
-    #[snafu(display("erro ao commitar transaction"))]
+    #[snafu(display("error committing transaction"))]
     CommitTransaction { source: sqlx::Error },
 }

@@ -580,7 +580,7 @@ mod tests {
         let err = LocationError::NotFound { uuid };
         let msg = err.to_string();
         assert!(msg.contains(&uuid.to_string()));
-        assert!(msg.contains("localização não encontrada"));
+        assert!(msg.contains("location not found"));
     }
 
     #[test]
@@ -588,7 +588,7 @@ mod tests {
         let err = LocationError::AlreadyExists { hash: 12345 };
         let msg = err.to_string();
         assert!(msg.contains("12345"));
-        assert!(msg.contains("localização já existe"));
+        assert!(msg.contains("location already exists"));
     }
 
     #[test]
@@ -600,7 +600,7 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("zipcode"));
         assert!(msg.contains("must be 8 digits"));
-        assert!(msg.contains("campo inválido"));
+        assert!(msg.contains("invalid field"));
     }
 
     #[test]

@@ -109,7 +109,7 @@ impl FindLocationById for PgLocationRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar localização por id"))
+        .map_err(sqlx_err("find location by id"))
     }
 }
 
@@ -127,7 +127,7 @@ impl FindLocationByHash for PgLocationRepository {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("buscar localização por hash"))
+        .map_err(sqlx_err("find location by hash"))
     }
 }
 
@@ -144,7 +144,7 @@ impl FindAllLocations for PgLocationRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(sqlx_err("listar localizações"))
+        .map_err(sqlx_err("list locations"))
     }
 }
 
@@ -194,7 +194,7 @@ impl CreateLocation for PgLocationRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("criar localização"))
+        .map_err(sqlx_err("create location"))
     }
 }
 
@@ -241,7 +241,7 @@ impl UpdateLocation for PgLocationRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("atualizar localização"))
+        .map_err(sqlx_err("update location"))
     }
 }
 
@@ -259,7 +259,7 @@ impl DeleteLocation for PgLocationRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(sqlx_err("remover localização"))
+        .map_err(sqlx_err("remove location"))
     }
 }
 

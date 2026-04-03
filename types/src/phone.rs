@@ -7,7 +7,7 @@ static PHONE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\+\d{12,13}$")
 
 #[derive(Debug, thiserror::Error)]
 pub enum PhoneError {
-    #[error("telefone inválido: '{value}'")]
+    #[error("invalid phone: '{value}'")]
     InvalidPhoneNumber { value: String },
 }
 

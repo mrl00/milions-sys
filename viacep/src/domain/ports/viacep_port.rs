@@ -2,10 +2,10 @@ use crate::domain::models::viacep_model::ViaCepAddressModel;
 use async_trait::async_trait;
 #[derive(Debug, thiserror::Error)]
 pub enum ViaCepError {
-    #[error("CEP '{cep}' não encontrado")]
+    #[error("CEP '{cep}' not found")]
     NotFound { cep: String },
 
-    #[error("erro ao consultar ViaCEP: {0}")]
+    #[error("error querying ViaCEP: {0}")]
     Service(String),
 }
 

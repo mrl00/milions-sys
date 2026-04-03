@@ -3,13 +3,13 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LocationError {
-    #[error("localização já existe: hash '{hash}'")]
+    #[error("location already exists: hash '{hash}'")]
     AlreadyExists { hash: i64 },
 
-    #[error("localização não encontrada: {uuid}")]
+    #[error("location not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("campo inválido: {field} — {reason}")]
+    #[error("invalid field: {field} -- {reason}")]
     InvalidField { field: &'static str, reason: String },
 
     #[error(transparent)]
