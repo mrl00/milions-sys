@@ -182,8 +182,12 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `FindStageById`         | `find_stage_by_id(uuid) -> Option<ProjectStageRow>`                   |
 | `CreateStage`           | `create_stage(input: CreateProjectStageRow) -> ProjectStageRow`       |
 | `UpdateStage`           | `update_stage(uuid, input: UpdateProjectStageRow) -> ProjectStageRow` |
+| `FindAllocationById`    | `find_allocation_by_id(uuid) -> Option<ProjectDailyAllocationRow>`    |
+| `FindAllocationsByProjectId` | `find_allocations_by_project_id(project_id) -> Vec<ProjectDailyAllocationRow>` |
+| `CreateAllocation`      | `create_allocation(input: CreateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
+| `UpdateAllocation`      | `update_allocation(uuid, input: UpdateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
 
-**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`
+**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`, `FindAndCreateAllocation`, `FindAndUpdateAllocation`
 
 ### Use Cases (`domain/ports/project_use_cases.rs`)
 
@@ -201,9 +205,12 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `DeleteProject`        | `execute(uuid) -> ProjectRow`                                               |
 | `CreateStage`          | `execute(project_id, input: CreateStageInput) -> ProjectStageRow`           |
 | `UpdateStage`          | `execute(project_id, stage_id, input: UpdateStageInput) -> ProjectStageRow` |
+| `CreateAllocation`     | `execute(project_id, input: CreateAllocationInput) -> ProjectDailyAllocationRow` |
+| `ListAllocations`      | `execute(project_id) -> Vec<ProjectDailyAllocationRow>`                     |
+| `UpdateAllocation`     | `execute(project_id, allocation_id, input: UpdateAllocationInput) -> ProjectDailyAllocationRow` |
 
-**Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`
+**Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`, `CreateAllocationInput`, `UpdateAllocationInput`
 
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits (project + stage). Depends on `PgProjectRepository`.
+`ProjectService` — implements all use case traits (project + stage + allocation). Depends on `PgProjectRepository`.

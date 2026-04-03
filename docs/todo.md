@@ -14,14 +14,14 @@
 - [x] Implement HTTP route controllers — locations CRUD (5 endpoints)
 - [x] Wire services into `startup.rs` and register all routes
 - [x] Implement HTTP route controllers — stages create + update (2 endpoints)
-- [ ] Implement HTTP route controllers — allocations create/list/update (3 endpoints) — blocked: no use cases
+- [x] Implement HTTP route controllers — allocations create/list/update (3 endpoints)
 - [ ] Implement HTTP route controllers — reports cost/progress/history (3 endpoints) — blocked: no use cases
 
 ## Medium Priority
 
 - [ ] Implement viacep crate — HTTP client adapter for ViaCEP API
 - [x] Implement Stage CRUD — domain ports, service, repository (only models existed)
-- [ ] Implement Allocation CRUD — domain ports, service, repository (only models exist)
+- [x] Implement Allocation CRUD — domain ports, service, repository (only models existed)
 - [ ] Implement Reports — cost, progress, history queries
 - [ ] Add unit tests per bounded context
 
@@ -36,4 +36,4 @@
 
 ## Context
 
-22 of 23 API endpoints are wired and compiling. Routes are registered under `/api` scope in `startup.rs`. Remaining 7 endpoints (stages, allocations, reports) require domain use cases to be implemented first.
+25 of 29 API endpoints are wired and compiling. Routes are registered under `/api` scope in `startup.rs`. Remaining 3 endpoints (reports) require domain use cases to be implemented first.
