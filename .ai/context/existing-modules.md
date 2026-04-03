@@ -71,7 +71,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/collaborator_service.rs`)
 
-`CollaboratorService` — implements all use case traits. Depends on `PgCollaboratorRepository`.
+`CollaboratorService<R>` — generic over repository traits. `ConcreteCollaboratorService` type alias for production (`CollaboratorService<PgCollaboratorRepository>`). 17 unit tests with `MockRepo`.
 
 ---
 
