@@ -4,9 +4,9 @@ use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectDailyAllocationRow, CreateProjectRow, CreateProjectStageRow,
-    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, UpdateProjectDailyAllocationRow,
-    UpdateProjectRow, UpdateProjectStageRow,
+    AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
+    CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
+    UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
 };
 use crate::domain::ports::project_repository::*;
 use types::errors::infra_error::InfraError;
@@ -367,3 +367,59 @@ impl UpdateAllocation for PgProjectRepository {
 
 impl FindAndCreateAllocation for PgProjectRepository {}
 impl FindAndUpdateAllocation for PgProjectRepository {}
+
+#[async_trait]
+impl FindStagesByProjectId for PgProjectRepository {
+    async fn find_stages_by_project_id(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectStageRow>, ProjectError> {
+        sqlx::query_as!(
+            ProjectStageRow,
+            r#"
+            SELECT *
+            FROM clients.tb_project_stage
+            WHERE fk_project = $1
+            ORDER BY nr_order ASC
+            "#,
+            &project_id,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("listar etapas por projeto"))
+    }
+}
+
+#[async_trait]
+impl FindAllocationsByCollaboratorId for PgProjectRepository {
+    async fn find_allocations_by_collaborator_id(
+        &self,
+        collaborator_id: Uuid,
+    ) -> Result<Vec<AllocationWithProjectName>, ProjectError> {
+        sqlx::query_as!(
+            AllocationWithProjectName,
+            r#"
+            SELECT
+                a.pk_project_daily_allocation,
+                a.fk_project,
+                a.fk_collaborator,
+                a.dt_work_date,
+                a.nr_hours_worked,
+                a.nr_hourly_rate_snapshot,
+                a.tx_notes,
+                a.bl_present,
+                a.ts_allocated_collaborator_created_at,
+                a.ts_allocated_collaborator_updated_at,
+                p.tx_name as project_name
+            FROM clients.tb_project_daily_allocation a
+            JOIN clients.tb_project p ON a.fk_project = p.pk_project
+            WHERE a.fk_collaborator = $1
+            ORDER BY a.dt_work_date DESC
+            "#,
+            &collaborator_id,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("listar alocações por colaborador"))
+    }
+}

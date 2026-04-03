@@ -15,6 +15,9 @@ pub enum ProjectError {
     #[error("alocação não encontrada: {uuid}")]
     AllocationNotFound { uuid: Uuid },
 
+    #[error("colaborador não encontrado: {uuid}")]
+    CollaboratorNotFound { uuid: Uuid },
+
     #[error("campo inválido: {field} — {reason}")]
     InvalidField { field: &'static str, reason: String },
 

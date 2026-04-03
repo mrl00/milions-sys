@@ -3,9 +3,9 @@ use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectDailyAllocationRow, CreateProjectRow, CreateProjectStageRow,
-    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, UpdateProjectDailyAllocationRow,
-    UpdateProjectRow, UpdateProjectStageRow,
+    AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
+    CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
+    UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
 };
 
 #[async_trait]
@@ -92,6 +92,22 @@ pub trait UpdateAllocation: Send + Sync {
         uuid: Uuid,
         input: UpdateProjectDailyAllocationRow,
     ) -> Result<ProjectDailyAllocationRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait FindStagesByProjectId: Send + Sync {
+    async fn find_stages_by_project_id(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectStageRow>, ProjectError>;
+}
+
+#[async_trait]
+pub trait FindAllocationsByCollaboratorId: Send + Sync {
+    async fn find_allocations_by_collaborator_id(
+        &self,
+        collaborator_id: Uuid,
+    ) -> Result<Vec<AllocationWithProjectName>, ProjectError>;
 }
 
 pub trait FindAndCreateProject: FindProjectByClientId + CreateProject {}

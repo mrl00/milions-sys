@@ -263,3 +263,18 @@ pub struct UpdateProjectDailyAllocationRow {
     pub tx_notes: Option<String>,
     pub bl_present: Option<bool>,
 }
+
+#[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
+pub struct AllocationWithProjectName {
+    pub pk_project_daily_allocation: Uuid,
+    pub fk_project: Uuid,
+    pub fk_collaborator: Uuid,
+    pub dt_work_date: NaiveDate,
+    pub nr_hours_worked: Option<BigDecimal>,
+    pub nr_hourly_rate_snapshot: Option<BigDecimal>,
+    pub tx_notes: Option<String>,
+    pub bl_present: bool,
+    pub ts_allocated_collaborator_created_at: NaiveDateTime,
+    pub ts_allocated_collaborator_updated_at: NaiveDateTime,
+    pub project_name: String,
+}

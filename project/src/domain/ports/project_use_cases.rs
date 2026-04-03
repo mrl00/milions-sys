@@ -165,3 +165,54 @@ pub trait UpdateAllocation: Send + Sync {
         input: UpdateAllocationInput,
     ) -> Result<ProjectDailyAllocationRow, ProjectError>;
 }
+
+pub struct CostReportData {
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub estimated_cost: Option<BigDecimal>,
+    pub actual_cost: BigDecimal,
+    pub variance: BigDecimal,
+    pub variance_pct: Option<BigDecimal>,
+}
+
+pub struct ProgressReportData {
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub stages: Vec<ProjectStageRow>,
+    pub total_stages: i32,
+    pub completed_stages: i32,
+    pub progress_pct: BigDecimal,
+}
+
+pub struct AllocationHistoryEntry {
+    pub allocation_id: Uuid,
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub work_date: NaiveDate,
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub present: bool,
+}
+
+pub struct HistoryReportData {
+    pub collaborator_id: Uuid,
+    pub collaborator_name: String,
+    pub allocations: Vec<AllocationHistoryEntry>,
+    pub total_days: i32,
+    pub total_hours: BigDecimal,
+}
+
+#[async_trait]
+pub trait GetCostReport: Send + Sync {
+    async fn execute(&self, project_id: Uuid) -> Result<CostReportData, ProjectError>;
+}
+
+#[async_trait]
+pub trait GetProgressReport: Send + Sync {
+    async fn execute(&self, project_id: Uuid) -> Result<ProgressReportData, ProjectError>;
+}
+
+#[async_trait]
+pub trait GetHistoryReport: Send + Sync {
+    async fn execute(&self, collaborator_id: Uuid) -> Result<HistoryReportData, ProjectError>;
+}
