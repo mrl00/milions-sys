@@ -59,12 +59,14 @@ Every bounded context follows the same hexagonal layout:
 
 - **Port traits** are granular — one trait per method (Interface Segregation)
 - **Super-traits** group common combinations (`FindAndCreate`, `FindAndUpdate`, `FindAndDelete`)
+- **Composite repository traits** (e.g. `ClientRepository`, `ProjectRepository`) bundle all port traits + Send + Sync, replacing bloated repeated bounds across impl blocks
 - **Use case traits** define a single `async fn execute(...)` method
 - **Input structs** live alongside use case traits in `domain/ports/`
 - **Services** implement use case traits, depend on port traits (not concrete adapters)
 - **Adapters** implement repository port traits using `sqlx` static queries
-- **Errors** are context-owned — no shared error crate
+- **Errors** are context-owned — no shared error crate. All messages in English.
 - **InfraError** is duplicated per context (not shared from `types`)
+- **`pub fn build(pool: PgPool)`** in each context's `lib.rs` encapsulates service wiring
 
 ## Cross-Context Dependencies
 

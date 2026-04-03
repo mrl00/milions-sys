@@ -17,6 +17,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `CreateClientWithTx` | `create_with_tx(tx, input) -> ClientRow`            |
 
 **Super-traits:** `FindAndCreate`, `FindAndUpdate`, `FindAndDelete`
+**Composite trait:** `ClientRepository` (bundles all 6 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/client_use_cases.rs`)
 
@@ -35,7 +36,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Service (`application/client_service.rs`)
 
-`ClientService<R>` — generic over repository traits. `ConcreteClientService` type alias for production (`ClientService<PgClientRepository>`). 17 unit tests with `MockRepo`.
+`ClientService<R>` — generic over repository traits. `ConcreteClientService` is a separate struct holding `PgClientRepository` and `PgPool`, enabling transactional full registration (contact, phones, location, join tables). 16 unit tests with `MockRepo`.
 
 ---
 
@@ -53,6 +54,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `DeleteCollaborator`    | `delete(uuid) -> CollaboratorRow`                         |
 
 **Super-traits:** `FindAndCreateCollaborator`, `FindAndUpdateCollaborator`, `FindAndDeleteCollaborator`
+**Composite trait:** `CollaboratorRepository` (bundles all 6 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/collaborator_use_cases.rs`)
 
@@ -88,20 +90,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `UpdateContactEmail` | `update_email(uuid, email) -> ContactRow` |
 
 **Super-traits:** `FindAndCreateContact`, `FindAndUpdateContact`
-
-### Phone Repository Ports (`domain/ports/phone_repository.rs`)
-
-| Trait | Method |
-|-------|--------|
-| `FindPhoneById` | `find_by_id(uuid) -> Option<PhoneRow>` |
-| `FindPhoneByContactId` | `find_by_contact_id(contact_id) -> Vec<PhoneRow>` |
-| `CreatePhone` | `create(contact_id, phone) -> PhoneRow` |
-| `CreateManyPhones` | `create_many(contact_id, phones) -> Vec<PhoneRow>` |
-| `UpdatePhone` | `update(uuid, phone) -> PhoneRow` |
-| `DeletePhone` | `delete(uuid) -> PhoneRow` |
-| `FindNonexistentPhones` | `find_nonexistent_phones(phones) -> Vec<String>` |
-
-**Super-traits:** `FindAndCreatePhone`, `FindAndUpdatePhone`, `FindAndDeletePhone`
+**Composite traits:** `ContactRepository` (5 traits + Send + Sync), `PhoneRepository` (7 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/contact_use_cases.rs`)
 
@@ -147,6 +136,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `DeleteLocation` | `delete(uuid) -> LocationRow` |
 
 **Super-traits:** `FindOrCreateLocation`, `FindAndUpdateLocation`, `FindAndDeleteLocation`
+**Composite trait:** `LocationRepository` (bundles all 6 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/location_use_cases.rs`)
 
@@ -190,6 +180,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `FindAllocationsByCollaboratorId` | `find_allocations_by_collaborator_id(collaborator_id) -> Vec<AllocationWithProjectName>` |
 
 **Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`, `FindAndCreateAllocation`, `FindAndUpdateAllocation`
+**Composite trait:** `ProjectRepository` (bundles all 15 traits + Send + Sync)
 
 ### Use Cases (`domain/ports/project_use_cases.rs`)
 
