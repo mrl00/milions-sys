@@ -9,6 +9,8 @@ types = { path = "../types" }
 sqlx = { workspace = true }
 uuid = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
+actix-web = { workspace = true }
 thiserror = { workspace = true }
 snafu = { workspace = true }
 async-trait = "0.1.89"

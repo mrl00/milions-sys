@@ -1,20 +1,30 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
+use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use crate::adapters::driven::postgres::PgProjectRepository;
 use crate::domain::errors::ProjectError;
 use crate::domain::models::db::project_rows::{
-    CreateProjectRow, ProjectRow, ProjectStatus, UpdateProjectRow,
+    CreateProjectDailyAllocationRow, CreateProjectRow, CreateProjectStageRow,
+    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
+    UpdateProjectRow,
 };
 use crate::domain::ports::project_repository::{
-    CreateProject as _, DeleteProject as _, FindAllProjects as _, FindProjectByClientId as _,
-    FindProjectById as _, UpdateProject as _,
+    CreateAllocation as _, CreateProject as _, CreateStage as _, DeleteProject as _,
+    FindAllProjects as _, FindAllocationById as _, FindAllocationsByCollaboratorId as _,
+    FindAllocationsByProjectId as _, FindProjectByClientId as _, FindProjectById as _,
+    FindStageById as _, FindStagesByProjectId as _, UpdateAllocation as _, UpdateProject as _,
+    UpdateStage as _,
 };
 use crate::domain::ports::project_use_cases::{
-    CancelProject, CompleteProject, CreateProject as CreateProjectTrait, CreateProjectInput,
-    DeleteProject as DeleteProjectTrait, FindProject, ListProjects, ListProjectsByClient,
-    PauseProject, StartProject, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
+    CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
+    CreateAllocationInput, CreateProject as CreateProjectTrait, CreateProjectInput,
+    CreateStage as CreateStageTrait, CreateStageInput, DeleteProject as DeleteProjectTrait,
+    FindProject, GetCostReport, GetHistoryReport, GetProgressReport, ListAllocations, ListProjects,
+    ListProjectsByClient, PauseProject, StartProject, UpdateAllocation as UpdateAllocationTrait,
+    UpdateAllocationInput, UpdateProject as UpdateProjectTrait, UpdateProjectInput,
+    UpdateStage as UpdateStageTrait, UpdateStageInput,
 };
 
 pub struct ProjectService {
@@ -263,5 +273,274 @@ impl DeleteProjectTrait for ProjectService {
             .ok_or(ProjectError::NotFound { uuid })?;
 
         self.repo.delete(uuid).await
+    }
+}
+
+#[async_trait]
+impl CreateStageTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let row = CreateProjectStageRow {
+            fk_project: project_id,
+            tx_name: input.name,
+            tx_description: input.description,
+            nr_order: input.order,
+            tx_status: ProjectStageStatus::Pending,
+            dt_start_date: input.start_date,
+            dt_end_date: input.end_date,
+        };
+
+        self.repo.create_stage(row).await
+    }
+}
+
+#[async_trait]
+impl UpdateStageTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        stage_id: Uuid,
+        input: UpdateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let current = self
+            .repo
+            .find_stage_by_id(stage_id)
+            .await?
+            .ok_or(ProjectError::StageNotFound { uuid: stage_id })?;
+
+        if current.fk_project != project_id {
+            return Err(ProjectError::StageNotFound { uuid: stage_id });
+        }
+
+        self.repo
+            .update_stage(
+                stage_id,
+                crate::domain::models::db::project_rows::UpdateProjectStageRow {
+                    tx_name: input.name,
+                    tx_description: input.description,
+                    nr_order: input.order,
+                    tx_status: input.status.map(|s| match s.as_str() {
+                        "pending" => ProjectStageStatus::Pending,
+                        "in_progress" => ProjectStageStatus::InProgress,
+                        "completed" => ProjectStageStatus::Completed,
+                        "skipped" => ProjectStageStatus::Skipped,
+                        _ => ProjectStageStatus::Pending,
+                    }),
+                    dt_start_date: input.start_date,
+                    dt_end_date: input.end_date,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl CreateAllocationTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let row = CreateProjectDailyAllocationRow {
+            fk_project: project_id,
+            fk_collaborator: input.collaborator_id,
+            dt_work_date: input.work_date,
+            nr_hours_worked: input.hours_worked,
+            nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+            tx_notes: input.notes,
+            bl_present: input.present,
+        };
+
+        self.repo.create_allocation(row).await
+    }
+}
+
+#[async_trait]
+impl ListAllocations for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        self.repo.find_allocations_by_project_id(project_id).await
+    }
+}
+
+#[async_trait]
+impl UpdateAllocationTrait for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        allocation_id: Uuid,
+        input: UpdateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+        self.repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let current = self
+            .repo
+            .find_allocation_by_id(allocation_id)
+            .await?
+            .ok_or(ProjectError::AllocationNotFound {
+                uuid: allocation_id,
+            })?;
+
+        if current.fk_project != project_id {
+            return Err(ProjectError::AllocationNotFound {
+                uuid: allocation_id,
+            });
+        }
+
+        self.repo
+            .update_allocation(
+                allocation_id,
+                crate::domain::models::db::project_rows::UpdateProjectDailyAllocationRow {
+                    nr_hours_worked: input.hours_worked,
+                    nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+                    tx_notes: input.notes,
+                    bl_present: input.present,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl GetCostReport for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<crate::domain::ports::project_use_cases::CostReportData, ProjectError> {
+        let project = self
+            .repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let estimated_cost = project
+            .nr_estimated_cost
+            .clone()
+            .unwrap_or_else(|| BigDecimal::from(0));
+        let actual_cost = project
+            .nr_actual_cost
+            .clone()
+            .unwrap_or_else(|| BigDecimal::from(0));
+        let variance = &actual_cost - &estimated_cost;
+        let variance_pct = if estimated_cost != 0 {
+            Some((&variance / &estimated_cost) * BigDecimal::from(100))
+        } else {
+            None
+        };
+
+        Ok(crate::domain::ports::project_use_cases::CostReportData {
+            project_id: project.pk_project,
+            project_name: project.tx_name,
+            estimated_cost: project.nr_estimated_cost,
+            actual_cost,
+            variance,
+            variance_pct,
+        })
+    }
+}
+
+#[async_trait]
+impl GetProgressReport for ProjectService {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<crate::domain::ports::project_use_cases::ProgressReportData, ProjectError> {
+        let project = self
+            .repo
+            .find_by_id(project_id)
+            .await?
+            .ok_or(ProjectError::NotFound { uuid: project_id })?;
+
+        let stages = self.repo.find_stages_by_project_id(project_id).await?;
+        let total_stages = stages.len() as i32;
+        let completed_stages = stages.iter().filter(|s| s.tx_status == "completed").count() as i32;
+        let progress_pct = if total_stages > 0 {
+            (BigDecimal::from(completed_stages) / BigDecimal::from(total_stages))
+                * BigDecimal::from(100)
+        } else {
+            BigDecimal::from(0)
+        };
+
+        Ok(
+            crate::domain::ports::project_use_cases::ProgressReportData {
+                project_id: project.pk_project,
+                project_name: project.tx_name,
+                stages,
+                total_stages,
+                completed_stages,
+                progress_pct,
+            },
+        )
+    }
+}
+
+#[async_trait]
+impl GetHistoryReport for ProjectService {
+    async fn execute(
+        &self,
+        collaborator_id: Uuid,
+    ) -> Result<crate::domain::ports::project_use_cases::HistoryReportData, ProjectError> {
+        let allocations = self
+            .repo
+            .find_allocations_by_collaborator_id(collaborator_id)
+            .await?;
+
+        let total_days = allocations.len() as i32;
+        let total_hours: BigDecimal = allocations
+            .iter()
+            .filter_map(|a| a.nr_hours_worked.as_ref())
+            .fold(BigDecimal::from(0), |acc, h| acc + h);
+
+        let history_entries: Vec<crate::domain::ports::project_use_cases::AllocationHistoryEntry> =
+            allocations
+                .into_iter()
+                .map(
+                    |a| crate::domain::ports::project_use_cases::AllocationHistoryEntry {
+                        allocation_id: a.pk_project_daily_allocation,
+                        project_id: a.fk_project,
+                        project_name: a.project_name,
+                        work_date: a.dt_work_date,
+                        hours_worked: a.nr_hours_worked,
+                        hourly_rate_snapshot: a.nr_hourly_rate_snapshot,
+                        present: a.bl_present,
+                    },
+                )
+                .collect();
+
+        Ok(crate::domain::ports::project_use_cases::HistoryReportData {
+            collaborator_id,
+            collaborator_name: String::new(),
+            allocations: history_entries,
+            total_days,
+            total_hours,
+        })
     }
 }

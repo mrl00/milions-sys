@@ -1,37 +1,61 @@
 # contact
 
-A Rust project using hexagonal architecture (ports and adapters).
+Bounded context for managing **contacts** and **phones** in the milions-sys construction project management system.
 
-## Project Structure
+## Domain
 
-```
-src/
-├── adapters/
-│   ├── driven/      # Outgoing adapters (repositories, external services)
-│   └── driving/     # Incoming adapters (controllers, handlers)
-├── application/     # Application services / use cases
-└── domain/
-    ├── model.rs     # Domain models
-    └── ports.rs     # Port interfaces (traits)
-```
+Contacts represent communication channels (email, address reference) for clients and collaborators. Each contact can have multiple phone numbers. This is a shared context used by both `client` and `collaborator` contexts.
 
 ## Architecture
 
-### Domain Layer
+Follows hexagonal architecture (ports and adapters):
 
-Contains core business logic with no external dependencies. Defines domain models and port interfaces (traits) that abstract external concerns.
+```
+contact/
+├── src/
+│   ├── domain/
+│   │   ├── errors/
+│   │   │   └── contact_error.rs   # ContactError enum
+│   │   ├── models/db/             # ContactRow, PhoneRow
+│   │   └── ports/
+│   │       ├── contact_repository.rs    # FindById, FindAll, Create, Update, Delete
+│   │       ├── contact_use_cases.rs     # CreateContact, FindContact, ListContacts, UpdateContact, DeleteContact
+│   │       └── phone_repository.rs      # FindById, FindByContactId, Create, Update, Delete
+│   ├── application/
+│   │   └── contact_service.rs       # ContactService — implements all use case traits
+│   └── adapters/
+│       ├── driven/
+│       │   └── postgres/
+│       │       ├── pg_contact_repository.rs   # PostgreSQL implementation for contacts
+│       │       └── pg_phone_repository.rs     # PostgreSQL implementation for phones
+│       └── driving/
+│           ├── dto.rs               # Request/response DTOs
+│           └── routes.rs            # HTTP route handlers
+└── Cargo.toml
+```
 
-### Application Layer
+## Dependencies
 
-Orchestrates use cases by coordinating domain objects and ports. Contains application services that implement business workflows.
+- `types` — shared value objects (`Email`, `Phone`)
 
-### Adapters Layer
+## API Endpoints
 
-Implements ports to connect the application to external systems.
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/contacts` | Create a new contact |
+| GET | `/api/contacts` | List all contacts |
+| GET | `/api/contacts/{uuid}` | Find contact by ID |
+| PUT | `/api/contacts/{uuid}` | Update a contact |
+| DELETE | `/api/contacts/{uuid}` | Delete a contact |
+| POST | `/api/contacts/{uuid}/phones` | Add a phone to a contact |
+| GET | `/api/contacts/{uuid}/phones` | List phones for a contact |
+| PUT | `/api/phones/{uuid}` | Update a phone |
+| DELETE | `/api/phones/{uuid}` | Delete a phone |
 
-- **Driving adapters** (inbound): Receive input and invoke application services (e.g., HTTP handlers, CLI commands)
-- **Driven adapters** (outbound): Implement output interfaces (e.g., database repositories, external API clients)
+## Error Types
 
-## License
-
-This project is licensed under the MIT License.
+| Variant | HTTP Status | Description |
+|---------|-------------|-------------|
+| `NotFound` | 404 | Contact or phone not found |
+| `InvalidField` | 422 | Validation error on a field |
+| `Infra` | 500 | Infrastructure/database error |

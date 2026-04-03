@@ -1,37 +1,61 @@
 # client
 
-A Rust project using hexagonal architecture (ports and adapters).
+Bounded context for managing **clients** (customers/contractors) in the milions-sys construction project management system.
 
-## Project Structure
+## Domain
 
-```
-src/
-├── adapters/
-│   ├── driven/      # Outgoing adapters (repositories, external services)
-│   └── driving/     # Incoming adapters (controllers, handlers)
-├── application/     # Application services / use cases
-└── domain/
-    ├── model.rs     # Domain models
-    └── ports.rs     # Port interfaces (traits)
-```
+Clients represent the customers who commission construction projects. Each client has a name, a document (CPF or CNPJ), a status, and can be associated with addresses, contacts, and projects.
 
 ## Architecture
 
-### Domain Layer
+Follows hexagonal architecture (ports and adapters):
 
-Contains core business logic with no external dependencies. Defines domain models and port interfaces (traits) that abstract external concerns.
+```
+client/
+├── src/
+│   ├── domain/
+│   │   ├── errors/mod.rs          # ClientError enum
+│   │   ├── models/db/             # ClientRow, ClientAddressRow, ClientContactRow, ClientProjectsRow
+│   │   └── ports/
+│   │       ├── client_repository.rs   # FindById, FindByDoc, FindAll, Create, Update, Delete
+│   │       └── client_use_cases.rs    # RegisterClient, FindClient, ListClients, UpdateClient, DeleteClient, ChangeClientStatus
+│   ├── application/
+│   │   └── client_service.rs      # ClientService — implements all use case traits
+│   └── adapters/
+│       ├── driven/
+│       │   └── postgres/
+│       │       └── pg_client_repository.rs  # PostgreSQL implementation
+│       └── driving/
+│           ├── dto.rs             # Request/response DTOs
+│           └── routes.rs          # HTTP route handlers
+└── Cargo.toml
+```
 
-### Application Layer
+## Dependencies
 
-Orchestrates use cases by coordinating domain objects and ports. Contains application services that implement business workflows.
+- `location` — for address management
+- `viacep` — for CEP lookup (standby)
+- `types` — shared value objects (`Cep`, `Cpf`, `Cnpj`, `Email`, `Phone`)
 
-### Adapters Layer
+## API Endpoints
 
-Implements ports to connect the application to external systems.
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/clients` | Register a new client |
+| GET | `/api/clients` | List all clients |
+| GET | `/api/clients/{uuid}` | Find client by ID |
+| PUT | `/api/clients/{uuid}` | Update a client |
+| DELETE | `/api/clients/{uuid}` | Delete a client |
+| PUT | `/api/clients/{uuid}/status` | Change client status |
 
-- **Driving adapters** (inbound): Receive input and invoke application services (e.g., HTTP handlers, CLI commands)
-- **Driven adapters** (outbound): Implement output interfaces (e.g., database repositories, external API clients)
+## Error Types
 
-## License
-
-This project is licensed under the MIT License.
+| Variant | HTTP Status | Description |
+|---------|-------------|-------------|
+| `NotFound` | 404 | Client not found |
+| `AlreadyInStatus` | 409 | Client already has the requested status |
+| `InvalidField` | 422 | Validation error on a field |
+| `InvalidCep` | 422 | Invalid CEP format |
+| `InvalidDoc` | 422 | Invalid CPF or CNPJ |
+| `DocAlreadyRegistered` | 409 | Document already in use |
+| `Infra` | 500 | Infrastructure/database error |

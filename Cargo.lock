@@ -446,8 +446,11 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "async-trait",
  "location",
+ "serde",
+ "serde_json",
  "snafu",
  "sqlx",
  "thiserror",
@@ -460,9 +463,11 @@ dependencies = [
 name = "collaborator"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "async-trait",
  "chrono",
  "serde",
+ "serde_json",
  "snafu",
  "sqlx",
  "thiserror",
@@ -529,8 +534,12 @@ dependencies = [
 name = "contact"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "async-trait",
+ "chrono",
  "regex",
+ "serde",
+ "serde_json",
  "snafu",
  "sqlx",
  "thiserror",
@@ -1442,9 +1451,11 @@ checksum = "4d873d7c67ce09b42110d801813efbc9364414e356be9935700d368351657487"
 name = "location"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "async-trait",
  "chrono",
  "serde",
+ "serde_json",
  "snafu",
  "sqlx",
  "thiserror",
@@ -1488,12 +1499,23 @@ name = "milions-sys"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "bigdecimal",
+ "chrono",
+ "client",
+ "collaborator",
+ "contact",
+ "location",
+ "project",
  "regex",
  "secrecy",
+ "serde",
+ "serde_json",
  "settings",
  "sqlx",
  "thiserror",
  "tokio",
+ "types",
+ "uuid",
 ]
 
 [[package]]
@@ -1880,10 +1902,12 @@ dependencies = [
 name = "project"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "async-trait",
  "bigdecimal",
  "chrono",
  "serde",
+ "serde_json",
  "snafu",
  "sqlx",
  "thiserror",

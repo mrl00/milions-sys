@@ -4,7 +4,9 @@ use sqlx::types::chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::domain::errors::ProjectError;
-use crate::domain::models::db::project_rows::ProjectRow;
+use crate::domain::models::db::project_rows::{
+    ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
+};
 
 pub struct CreateProjectInput {
     pub name: String,
@@ -29,6 +31,39 @@ pub struct UpdateProjectInput {
     pub actual_cost: Option<BigDecimal>,
     pub notes: Option<String>,
     pub active: Option<bool>,
+}
+
+pub struct CreateStageInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub order: i32,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+}
+
+pub struct UpdateStageInput {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub order: Option<i32>,
+    pub status: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+}
+
+pub struct CreateAllocationInput {
+    pub collaborator_id: Uuid,
+    pub work_date: NaiveDate,
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub notes: Option<String>,
+    pub present: bool,
+}
+
+pub struct UpdateAllocationInput {
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub notes: Option<String>,
+    pub present: Option<bool>,
 }
 
 #[async_trait]
@@ -83,4 +118,101 @@ pub trait CancelProject: Send + Sync {
 #[async_trait]
 pub trait DeleteProject: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait CreateStage: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait UpdateStage: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        stage_id: Uuid,
+        input: UpdateStageInput,
+    ) -> Result<ProjectStageRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait CreateAllocation: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        input: CreateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError>;
+}
+
+#[async_trait]
+pub trait ListAllocations: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+    ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError>;
+}
+
+#[async_trait]
+pub trait UpdateAllocation: Send + Sync {
+    async fn execute(
+        &self,
+        project_id: Uuid,
+        allocation_id: Uuid,
+        input: UpdateAllocationInput,
+    ) -> Result<ProjectDailyAllocationRow, ProjectError>;
+}
+
+pub struct CostReportData {
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub estimated_cost: Option<BigDecimal>,
+    pub actual_cost: BigDecimal,
+    pub variance: BigDecimal,
+    pub variance_pct: Option<BigDecimal>,
+}
+
+pub struct ProgressReportData {
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub stages: Vec<ProjectStageRow>,
+    pub total_stages: i32,
+    pub completed_stages: i32,
+    pub progress_pct: BigDecimal,
+}
+
+pub struct AllocationHistoryEntry {
+    pub allocation_id: Uuid,
+    pub project_id: Uuid,
+    pub project_name: String,
+    pub work_date: NaiveDate,
+    pub hours_worked: Option<BigDecimal>,
+    pub hourly_rate_snapshot: Option<BigDecimal>,
+    pub present: bool,
+}
+
+pub struct HistoryReportData {
+    pub collaborator_id: Uuid,
+    pub collaborator_name: String,
+    pub allocations: Vec<AllocationHistoryEntry>,
+    pub total_days: i32,
+    pub total_hours: BigDecimal,
+}
+
+#[async_trait]
+pub trait GetCostReport: Send + Sync {
+    async fn execute(&self, project_id: Uuid) -> Result<CostReportData, ProjectError>;
+}
+
+#[async_trait]
+pub trait GetProgressReport: Send + Sync {
+    async fn execute(&self, project_id: Uuid) -> Result<ProgressReportData, ProjectError>;
+}
+
+#[async_trait]
+pub trait GetHistoryReport: Send + Sync {
+    async fn execute(&self, collaborator_id: Uuid) -> Result<HistoryReportData, ProjectError>;
 }

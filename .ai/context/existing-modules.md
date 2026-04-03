@@ -43,14 +43,14 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Repository Ports (`domain/ports/collaborator_repository.rs`)
 
-| Trait | Method |
-|-------|--------|
-| `FindCollaboratorById` | `find_by_id(uuid) -> Option<CollaboratorRow>` |
-| `FindCollaboratorByCpf` | `find_by_cpf(cpf) -> Option<CollaboratorRow>` |
-| `FindAllCollaborators` | `find_all() -> Vec<CollaboratorRow>` |
-| `CreateCollaborator` | `create(input: CreateCollaboratorRow) -> CollaboratorRow` |
-| `UpdateCollaborator` | `update(uuid, input) -> CollaboratorRow` |
-| `DeleteCollaborator` | `delete(uuid) -> CollaboratorRow` |
+| Trait                   | Method                                                    |
+| ----------------------- | --------------------------------------------------------- |
+| `FindCollaboratorById`  | `find_by_id(uuid) -> Option<CollaboratorRow>`             |
+| `FindCollaboratorByCpf` | `find_by_cpf(cpf) -> Option<CollaboratorRow>`             |
+| `FindAllCollaborators`  | `find_all() -> Vec<CollaboratorRow>`                      |
+| `CreateCollaborator`    | `create(input: CreateCollaboratorRow) -> CollaboratorRow` |
+| `UpdateCollaborator`    | `update(uuid, input) -> CollaboratorRow`                  |
+| `DeleteCollaborator`    | `delete(uuid) -> CollaboratorRow`                         |
 
 **Super-traits:** `FindAndCreateCollaborator`, `FindAndUpdateCollaborator`, `FindAndDeleteCollaborator`
 
@@ -106,6 +106,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 ### Use Cases (`domain/ports/contact_use_cases.rs`)
 
 **Contact:**
+
 | Trait | Method |
 |-------|--------|
 | `RegisterContact` | `execute(input: RegisterContactInput) -> ContactRow` |
@@ -114,6 +115,7 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 | `UpdateContactEmail` | `execute(uuid, email) -> ContactRow` |
 
 **Phone:**
+
 | Trait | Method |
 |-------|--------|
 | `FindPhone` | `execute(uuid) -> PhoneRow` |
@@ -169,34 +171,53 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ### Repository Ports (`domain/ports/project_repository.rs`)
 
-| Trait | Method |
-|-------|--------|
-| `FindProjectById` | `find_by_id(uuid) -> Option<ProjectRow>` |
-| `FindProjectByClientId` | `find_by_client_id(client_id) -> Vec<ProjectRow>` |
-| `FindAllProjects` | `find_all() -> Vec<ProjectRow>` |
-| `CreateProject` | `create(input: CreateProjectRow) -> ProjectRow` |
-| `UpdateProject` | `update(uuid, input) -> ProjectRow` |
-| `DeleteProject` | `delete(uuid) -> ProjectRow` |
+| Trait                   | Method                                                                |
+| ----------------------- | --------------------------------------------------------------------- |
+| `FindProjectById`       | `find_by_id(uuid) -> Option<ProjectRow>`                              |
+| `FindProjectByClientId` | `find_by_client_id(client_id) -> Vec<ProjectRow>`                     |
+| `FindAllProjects`       | `find_all() -> Vec<ProjectRow>`                                       |
+| `CreateProject`         | `create(input: CreateProjectRow) -> ProjectRow`                       |
+| `UpdateProject`         | `update(uuid, input) -> ProjectRow`                                   |
+| `DeleteProject`         | `delete(uuid) -> ProjectRow`                                          |
+| `FindStageById`         | `find_stage_by_id(uuid) -> Option<ProjectStageRow>`                   |
+| `CreateStage`           | `create_stage(input: CreateProjectStageRow) -> ProjectStageRow`       |
+| `UpdateStage`           | `update_stage(uuid, input: UpdateProjectStageRow) -> ProjectStageRow` |
+| `FindAllocationById`    | `find_allocation_by_id(uuid) -> Option<ProjectDailyAllocationRow>`    |
+| `FindAllocationsByProjectId` | `find_allocations_by_project_id(project_id) -> Vec<ProjectDailyAllocationRow>` |
+| `CreateAllocation`      | `create_allocation(input: CreateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
+| `UpdateAllocation`      | `update_allocation(uuid, input: UpdateProjectDailyAllocationRow) -> ProjectDailyAllocationRow` |
+| `FindStagesByProjectId` | `find_stages_by_project_id(project_id) -> Vec<ProjectStageRow>` |
+| `FindAllocationsByCollaboratorId` | `find_allocations_by_collaborator_id(collaborator_id) -> Vec<AllocationWithProjectName>` |
 
-**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`
+**Super-traits:** `FindAndCreateProject`, `FindAndUpdateProject`, `FindAndDeleteProject`, `FindAndCreateStage`, `FindAndUpdateStage`, `FindAndCreateAllocation`, `FindAndUpdateAllocation`
 
 ### Use Cases (`domain/ports/project_use_cases.rs`)
 
-| Trait | Method |
-|-------|--------|
-| `FindProject` | `execute(uuid) -> ProjectRow` |
-| `ListProjects` | `execute() -> Vec<ProjectRow>` |
-| `ListProjectsByClient` | `execute(client_id) -> Vec<ProjectRow>` |
-| `CreateProject` | `execute(input: CreateProjectInput) -> ProjectRow` |
-| `UpdateProject` | `execute(uuid, input: UpdateProjectInput) -> ProjectRow` |
-| `StartProject` | `execute(uuid) -> ProjectRow` |
-| `PauseProject` | `execute(uuid) -> ProjectRow` |
-| `CompleteProject` | `execute(uuid) -> ProjectRow` |
-| `CancelProject` | `execute(uuid) -> ProjectRow` |
-| `DeleteProject` | `execute(uuid) -> ProjectRow` |
+| Trait                  | Method                                                                      |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `FindProject`          | `execute(uuid) -> ProjectRow`                                               |
+| `ListProjects`         | `execute() -> Vec<ProjectRow>`                                              |
+| `ListProjectsByClient` | `execute(client_id) -> Vec<ProjectRow>`                                     |
+| `CreateProject`        | `execute(input: CreateProjectInput) -> ProjectRow`                          |
+| `UpdateProject`        | `execute(uuid, input: UpdateProjectInput) -> ProjectRow`                    |
+| `StartProject`         | `execute(uuid) -> ProjectRow`                                               |
+| `PauseProject`         | `execute(uuid) -> ProjectRow`                                               |
+| `CompleteProject`      | `execute(uuid) -> ProjectRow`                                               |
+| `CancelProject`        | `execute(uuid) -> ProjectRow`                                               |
+| `DeleteProject`        | `execute(uuid) -> ProjectRow`                                               |
+| `CreateStage`          | `execute(project_id, input: CreateStageInput) -> ProjectStageRow`           |
+| `UpdateStage`          | `execute(project_id, stage_id, input: UpdateStageInput) -> ProjectStageRow` |
+| `CreateAllocation`     | `execute(project_id, input: CreateAllocationInput) -> ProjectDailyAllocationRow` |
+| `ListAllocations`      | `execute(project_id) -> Vec<ProjectDailyAllocationRow>`                     |
+| `UpdateAllocation`     | `execute(project_id, allocation_id, input: UpdateAllocationInput) -> ProjectDailyAllocationRow` |
+| `GetCostReport`        | `execute(project_id) -> CostReportData`                                     |
+| `GetProgressReport`    | `execute(project_id) -> ProgressReportData`                                 |
+| `GetHistoryReport`     | `execute(collaborator_id) -> HistoryReportData`                             |
 
-**Input structs:** `CreateProjectInput`, `UpdateProjectInput`
+**Input structs:** `CreateProjectInput`, `UpdateProjectInput`, `CreateStageInput`, `UpdateStageInput`, `CreateAllocationInput`, `UpdateAllocationInput`
+
+**Output structs:** `CostReportData`, `ProgressReportData`, `HistoryReportData`, `AllocationHistoryEntry`
 
 ### Service (`application/project_service.rs`)
 
-`ProjectService` — implements all use case traits. Depends on `PgProjectRepository`.
+`ProjectService` — implements all use case traits (project + stage + allocation + reports). Depends on `PgProjectRepository`.
