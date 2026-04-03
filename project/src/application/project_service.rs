@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use sqlx::PgPool;
 use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
@@ -11,11 +10,10 @@ use crate::domain::models::db::project_rows::{
     UpdateProjectRow,
 };
 use crate::domain::ports::project_repository::{
-    CreateAllocation as _, CreateProject as _, CreateStage as _, DeleteProject as _,
-    FindAllProjects as _, FindAllocationById as _, FindAllocationsByCollaboratorId as _,
-    FindAllocationsByProjectId as _, FindProjectByClientId as _, FindProjectById as _,
-    FindStageById as _, FindStagesByProjectId as _, UpdateAllocation as _, UpdateProject as _,
-    UpdateStage as _,
+    CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
+    FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
+    FindProjectByClientId, FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation,
+    UpdateProject, UpdateStage,
 };
 use crate::domain::ports::project_use_cases::{
     CancelProject, CompleteProject, CreateAllocation as CreateAllocationTrait,
@@ -27,20 +25,56 @@ use crate::domain::ports::project_use_cases::{
     UpdateStage as UpdateStageTrait, UpdateStageInput,
 };
 
-pub struct ProjectService {
-    repo: PgProjectRepository,
+pub struct ProjectService<R> {
+    repo: R,
 }
 
-impl ProjectService {
-    pub fn new(pool: PgPool) -> Self {
-        Self {
-            repo: PgProjectRepository::new(pool),
-        }
+impl<R> ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId,
+{
+    pub fn new(repo: R) -> Self {
+        Self { repo }
     }
 }
 
+pub type ConcreteProjectService = ProjectService<PgProjectRepository>;
+
 #[async_trait]
-impl FindProject for ProjectService {
+impl<R> FindProject for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -50,21 +84,78 @@ impl FindProject for ProjectService {
 }
 
 #[async_trait]
-impl ListProjects for ProjectService {
+impl<R> ListProjects for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_all().await
     }
 }
 
 #[async_trait]
-impl ListProjectsByClient for ProjectService {
+impl<R> ListProjectsByClient for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
         self.repo.find_by_client_id(client_id).await
     }
 }
 
 #[async_trait]
-impl CreateProjectTrait for ProjectService {
+impl<R> CreateProjectTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
             tx_name: input.name,
@@ -84,7 +175,26 @@ impl CreateProjectTrait for ProjectService {
 }
 
 #[async_trait]
-impl UpdateProjectTrait for ProjectService {
+impl<R> UpdateProjectTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         uuid: Uuid,
@@ -117,7 +227,26 @@ impl UpdateProjectTrait for ProjectService {
 }
 
 #[async_trait]
-impl StartProject for ProjectService {
+impl<R> StartProject for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -154,7 +283,26 @@ impl StartProject for ProjectService {
 }
 
 #[async_trait]
-impl PauseProject for ProjectService {
+impl<R> PauseProject for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -191,7 +339,26 @@ impl PauseProject for ProjectService {
 }
 
 #[async_trait]
-impl CompleteProject for ProjectService {
+impl<R> CompleteProject for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -228,7 +395,26 @@ impl CompleteProject for ProjectService {
 }
 
 #[async_trait]
-impl CancelProject for ProjectService {
+impl<R> CancelProject for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         let current = self
             .repo
@@ -265,7 +451,26 @@ impl CancelProject for ProjectService {
 }
 
 #[async_trait]
-impl DeleteProjectTrait for ProjectService {
+impl<R> DeleteProjectTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
         self.repo
             .find_by_id(uuid)
@@ -277,7 +482,26 @@ impl DeleteProjectTrait for ProjectService {
 }
 
 #[async_trait]
-impl CreateStageTrait for ProjectService {
+impl<R> CreateStageTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -303,7 +527,26 @@ impl CreateStageTrait for ProjectService {
 }
 
 #[async_trait]
-impl UpdateStageTrait for ProjectService {
+impl<R> UpdateStageTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -348,7 +591,26 @@ impl UpdateStageTrait for ProjectService {
 }
 
 #[async_trait]
-impl CreateAllocationTrait for ProjectService {
+impl<R> CreateAllocationTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -374,7 +636,26 @@ impl CreateAllocationTrait for ProjectService {
 }
 
 #[async_trait]
-impl ListAllocations for ProjectService {
+impl<R> ListAllocations for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -389,7 +670,26 @@ impl ListAllocations for ProjectService {
 }
 
 #[async_trait]
-impl UpdateAllocationTrait for ProjectService {
+impl<R> UpdateAllocationTrait for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -430,7 +730,26 @@ impl UpdateAllocationTrait for ProjectService {
 }
 
 #[async_trait]
-impl GetCostReport for ProjectService {
+impl<R> GetCostReport for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -468,7 +787,26 @@ impl GetCostReport for ProjectService {
 }
 
 #[async_trait]
-impl GetProgressReport for ProjectService {
+impl<R> GetProgressReport for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         project_id: Uuid,
@@ -503,7 +841,26 @@ impl GetProgressReport for ProjectService {
 }
 
 #[async_trait]
-impl GetHistoryReport for ProjectService {
+impl<R> GetHistoryReport for ProjectService<R>
+where
+    R: FindProjectById
+        + FindProjectByClientId
+        + FindAllProjects
+        + CreateProject
+        + UpdateProject
+        + DeleteProject
+        + FindStageById
+        + CreateStage
+        + UpdateStage
+        + FindAllocationById
+        + FindAllocationsByProjectId
+        + CreateAllocation
+        + UpdateAllocation
+        + FindStagesByProjectId
+        + FindAllocationsByCollaboratorId
+        + Send
+        + Sync,
+{
     async fn execute(
         &self,
         collaborator_id: Uuid,
@@ -542,5 +899,359 @@ impl GetHistoryReport for ProjectService {
             total_days,
             total_hours,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::errors::ProjectError;
+    use crate::domain::models::db::project_rows::{
+        AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
+        CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
+        UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
+    };
+    use crate::domain::ports::project_repository::{
+        CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
+        FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
+        FindProjectByClientId, FindProjectById, FindStageById, FindStagesByProjectId,
+        UpdateAllocation, UpdateProject, UpdateStage,
+    };
+    use crate::domain::ports::project_use_cases::{
+        CancelProject, CompleteProject, CreateProject as CreateProjectTrait,
+        DeleteProject as DeleteProjectTrait, FindProject, ListProjects, PauseProject, StartProject,
+        UpdateProject as UpdateProjectTrait,
+    };
+
+    #[derive(Default)]
+    struct MockRepo {
+        find_by_id_result: Option<ProjectRow>,
+        find_all_result: Vec<ProjectRow>,
+    }
+
+    impl MockRepo {
+        fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    use sqlx::types::chrono::NaiveDateTime;
+
+    fn now() -> NaiveDateTime {
+        NaiveDateTime::default()
+    }
+
+    fn make_project_row() -> ProjectRow {
+        ProjectRow {
+            pk_project: Uuid::now_v7(),
+            idx_project: 1,
+            tx_name: "Test Project".to_string(),
+            tx_description: None,
+            tx_status: "planning".to_string(),
+            dt_start_date: None,
+            dt_estimated_end_date: None,
+            dt_actual_end_date: None,
+            nr_total_area_m2: None,
+            nr_estimated_cost: None,
+            nr_actual_cost: None,
+            tx_notes: None,
+            bl_active: true,
+            ts_project_created_at: now(),
+            ts_project_updated_at: now(),
+            fk_client: Uuid::now_v7(),
+            fk_address: Uuid::now_v7(),
+        }
+    }
+
+    #[async_trait]
+    impl FindProjectById for MockRepo {
+        async fn find_by_id(&self, _uuid: Uuid) -> Result<Option<ProjectRow>, ProjectError> {
+            Ok(self.find_by_id_result.clone())
+        }
+    }
+    #[async_trait]
+    impl FindProjectByClientId for MockRepo {
+        async fn find_by_client_id(&self, _id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
+            Ok(vec![])
+        }
+    }
+    #[async_trait]
+    impl FindAllProjects for MockRepo {
+        async fn find_all(&self) -> Result<Vec<ProjectRow>, ProjectError> {
+            Ok(self.find_all_result.clone())
+        }
+    }
+    #[async_trait]
+    impl CreateProject for MockRepo {
+        async fn create(&self, _input: CreateProjectRow) -> Result<ProjectRow, ProjectError> {
+            Ok(make_project_row())
+        }
+    }
+    #[async_trait]
+    impl UpdateProject for MockRepo {
+        async fn update(
+            &self,
+            uuid: Uuid,
+            _input: UpdateProjectRow,
+        ) -> Result<ProjectRow, ProjectError> {
+            Ok(ProjectRow {
+                pk_project: uuid,
+                ..make_project_row()
+            })
+        }
+    }
+    #[async_trait]
+    impl DeleteProject for MockRepo {
+        async fn delete(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
+            Ok(ProjectRow {
+                pk_project: uuid,
+                ..make_project_row()
+            })
+        }
+    }
+    #[async_trait]
+    impl FindStageById for MockRepo {
+        async fn find_stage_by_id(
+            &self,
+            _uuid: Uuid,
+        ) -> Result<Option<ProjectStageRow>, ProjectError> {
+            Ok(None)
+        }
+    }
+    #[async_trait]
+    impl CreateStage for MockRepo {
+        async fn create_stage(
+            &self,
+            _input: CreateProjectStageRow,
+        ) -> Result<ProjectStageRow, ProjectError> {
+            unreachable!()
+        }
+    }
+    #[async_trait]
+    impl UpdateStage for MockRepo {
+        async fn update_stage(
+            &self,
+            _uuid: Uuid,
+            _input: UpdateProjectStageRow,
+        ) -> Result<ProjectStageRow, ProjectError> {
+            unreachable!()
+        }
+    }
+    #[async_trait]
+    impl FindAllocationById for MockRepo {
+        async fn find_allocation_by_id(
+            &self,
+            _uuid: Uuid,
+        ) -> Result<Option<ProjectDailyAllocationRow>, ProjectError> {
+            Ok(None)
+        }
+    }
+    #[async_trait]
+    impl FindAllocationsByProjectId for MockRepo {
+        async fn find_allocations_by_project_id(
+            &self,
+            _id: Uuid,
+        ) -> Result<Vec<ProjectDailyAllocationRow>, ProjectError> {
+            Ok(vec![])
+        }
+    }
+    #[async_trait]
+    impl CreateAllocation for MockRepo {
+        async fn create_allocation(
+            &self,
+            _input: CreateProjectDailyAllocationRow,
+        ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+            unreachable!()
+        }
+    }
+    #[async_trait]
+    impl UpdateAllocation for MockRepo {
+        async fn update_allocation(
+            &self,
+            _uuid: Uuid,
+            _input: UpdateProjectDailyAllocationRow,
+        ) -> Result<ProjectDailyAllocationRow, ProjectError> {
+            unreachable!()
+        }
+    }
+    #[async_trait]
+    impl FindStagesByProjectId for MockRepo {
+        async fn find_stages_by_project_id(
+            &self,
+            _id: Uuid,
+        ) -> Result<Vec<ProjectStageRow>, ProjectError> {
+            Ok(vec![])
+        }
+    }
+    #[async_trait]
+    impl FindAllocationsByCollaboratorId for MockRepo {
+        async fn find_allocations_by_collaborator_id(
+            &self,
+            _id: Uuid,
+        ) -> Result<Vec<AllocationWithProjectName>, ProjectError> {
+            Ok(vec![])
+        }
+    }
+
+    #[tokio::test]
+    async fn find_project_returns_row_when_exists() {
+        let row = make_project_row();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = FindProject::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+        assert_eq!(result.tx_name, "Test Project");
+    }
+
+    #[tokio::test]
+    async fn find_project_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ProjectService::new(repo);
+        let result = FindProject::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn list_projects_returns_all() {
+        let p1 = make_project_row();
+        let p2 = make_project_row();
+        let mut repo = MockRepo::new();
+        repo.find_all_result = vec![p1, p2];
+        let service = ProjectService::new(repo);
+        let result = ListProjects::execute(&service).await.unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn start_project_succeeds_when_planning() {
+        let row = make_project_row();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = StartProject::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+    }
+
+    #[tokio::test]
+    async fn start_project_fails_when_already_in_progress() {
+        let mut row = make_project_row();
+        row.tx_status = "in_progress".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = StartProject::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
+    }
+
+    #[tokio::test]
+    async fn pause_project_succeeds_when_in_progress() {
+        let mut row = make_project_row();
+        row.tx_status = "in_progress".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = PauseProject::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+    }
+
+    #[tokio::test]
+    async fn pause_project_fails_when_already_paused() {
+        let mut row = make_project_row();
+        row.tx_status = "paused".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = PauseProject::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
+    }
+
+    #[tokio::test]
+    async fn complete_project_succeeds() {
+        let row = make_project_row();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = CompleteProject::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+    }
+
+    #[tokio::test]
+    async fn cancel_project_succeeds() {
+        let row = make_project_row();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = CancelProject::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+    }
+
+    #[tokio::test]
+    async fn delete_project_succeeds_when_exists() {
+        let row = make_project_row();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = DeleteProjectTrait::execute(&service, uuid).await.unwrap();
+        assert_eq!(result.pk_project, uuid);
+    }
+
+    #[tokio::test]
+    async fn delete_project_fails_when_not_found() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ProjectService::new(repo);
+        let result = DeleteProjectTrait::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::NotFound { .. })));
+    }
+
+    #[tokio::test]
+    async fn update_project_returns_not_found_when_missing() {
+        let uuid = Uuid::now_v7();
+        let repo = MockRepo::new();
+        let service = ProjectService::new(repo);
+        let input = UpdateProjectInput {
+            name: Some("Updated".to_string()),
+            description: None,
+            start_date: None,
+            estimated_end_date: None,
+            actual_end_date: None,
+            total_area_m2: None,
+            estimated_cost: None,
+            actual_cost: None,
+            notes: None,
+            active: None,
+        };
+        let result = UpdateProjectTrait::execute(&service, uuid, input).await;
+        assert!(matches!(result, Err(ProjectError::NotFound { .. })));
+    }
+
+    #[test]
+    fn error_not_found_message_contains_uuid() {
+        let uuid = Uuid::now_v7();
+        let err = ProjectError::NotFound { uuid };
+        let msg = err.to_string();
+        assert!(msg.contains(&uuid.to_string()));
+        assert!(msg.contains("não encontrado"));
+    }
+
+    #[test]
+    fn error_already_in_status_message_contains_status() {
+        let uuid = Uuid::now_v7();
+        let err = ProjectError::AlreadyInStatus {
+            uuid,
+            status: "in_progress".to_string(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("in_progress"));
     }
 }

@@ -23,7 +23,7 @@
 - [x] Implement Stage CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Allocation CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Reports — cost, progress, history queries
-- [x] Add unit tests per bounded context (location: 16 tests, contact: 21 tests, collaborator: 17 tests)
+- [x] Add unit tests per bounded context (location: 16, contact: 21, collaborator: 17, client: 17, project: 14)
 - [ ] Add structured tracing/logging middleware
 - [ ] Implement Keycloak JWT auth (currently standby per `05-security.md`)
 - [ ] Implement pagination (`page`/`per_page`) for list endpoints
