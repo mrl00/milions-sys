@@ -34,8 +34,12 @@ async fn register_client(
         email: body.contact.email.clone(),
         phones: body.contact.phones.clone(),
         cep: body.address.cep.clone(),
+        street: body.address.street.clone(),
         number: body.address.number.clone(),
         complement: body.address.complement.clone().unwrap_or_default(),
+        neighborhood: body.address.neighborhood.clone(),
+        city: body.address.city.clone(),
+        state: body.address.state.clone(),
     };
 
     match RegisterClient::execute(&**service, input).await {

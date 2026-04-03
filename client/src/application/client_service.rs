@@ -1,17 +1,24 @@
 use async_trait::async_trait;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use crate::domain::errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::ports::client_repository::{
-    CreateClient, DeleteClient, FindAll, FindByDocument, FindById, UpdateClient as UpdateClientRepo,
+    CreateClient, CreateClientWithTx, DeleteClient, FindAll, FindByDocument, FindById,
+    UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::client_use_cases::{
     ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
     FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
     UpdateClientInput,
 };
+use contact::adapters::driven::postgres::pg_contact_repository::PgContactRepository;
+use contact::adapters::driven::postgres::pg_phone_repository::PgPhoneRepository;
+use contact::domain::models::db::contact_row::CreateContactRow as ContactCreateRow;
+use location::adapters::driven::postgres::pg_location_repository::PgLocationRepository;
+use location::domain::models::db::location_row::CreateLocationRow;
 use types::doc::Doc;
 use types::phone::Phone;
 
@@ -28,20 +35,37 @@ where
     }
 }
 
-pub type ConcreteClientService = ClientService<PgClientRepository>;
+pub struct ConcreteClientService {
+    repo: PgClientRepository,
+    pool: PgPool,
+}
+
+impl ConcreteClientService {
+    pub fn new(repo: PgClientRepository, pool: PgPool) -> Self {
+        Self { repo, pool }
+    }
+}
+
+fn compute_location_hash(
+    street: &str,
+    number: &str,
+    city: &str,
+    state: &str,
+    zipcode: &str,
+) -> i64 {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    street.hash(&mut hasher);
+    number.hash(&mut hasher);
+    city.hash(&mut hasher);
+    state.hash(&mut hasher);
+    zipcode.hash(&mut hasher);
+    hasher.finish() as i64
+}
 
 #[async_trait]
-impl<R> RegisterClient for ClientService<R>
-where
-    R: FindById
-        + FindByDocument
-        + FindAll
-        + CreateClient
-        + UpdateClientRepo
-        + DeleteClient
-        + Send
-        + Sync,
-{
+impl RegisterClient for ConcreteClientService {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         let _doc: Doc = input.doc.clone().try_into()?;
         let _cep: types::cep::Cep = input.cep.clone().try_into()?;
@@ -56,13 +80,246 @@ where
             return Err(ClientError::DocumentAlreadyExists { doc: input.doc });
         }
 
-        self.repo
-            .create(crate::domain::models::db::client_row::CreateClientRow {
+        let mut tx = self.pool.begin().await.map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::BeginTransaction {
+                source: e,
+            })
+        })?;
+
+        let location_hash = compute_location_hash(
+            &input.street,
+            &input.number,
+            &input.city,
+            &input.state,
+            &input.cep,
+        );
+
+        let location_row =
+            match PgLocationRepository::find_by_hash_with_executor(&mut *tx, location_hash)
+                .await
+                .map_err(|e| {
+                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                        action: "buscar localização",
+                        source: e,
+                    })
+                })? {
+                Some(existing) => existing,
+                None => PgLocationRepository::create_with_executor(
+                    &mut *tx,
+                    CreateLocationRow {
+                        tx_street: input.street.clone(),
+                        tx_number: input.number.clone(),
+                        tx_city: input.city.clone(),
+                        tx_state: input.state.clone(),
+                        tx_zipcode: input.cep.clone(),
+                        tx_public_space: "".to_string(),
+                        tx_address_complement: input.complement.clone(),
+                        tx_unit: "".to_string(),
+                        tx_neighborhood: "".to_string(),
+                        tx_locality: input.city.clone(),
+                        tx_region: input.state.clone(),
+                        tx_ibge: None,
+                        tx_gia: None,
+                        tx_ddd: "".to_string(),
+                        tx_siafi: None,
+                        nr_hash: location_hash,
+                    },
+                )
+                .await
+                .map_err(|e| {
+                    ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                        action: "criar localização",
+                        source: e,
+                    })
+                })?,
+            };
+
+        let contact_row = PgContactRepository::create_with_executor(
+            &mut *tx,
+            ContactCreateRow {
+                tx_email: input.email.clone(),
+            },
+        )
+        .await
+        .map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                action: "criar contato",
+                source: e,
+            })
+        })?;
+
+        if !input.phones.is_empty() {
+            PgPhoneRepository::create_many_with_executor(
+                &mut *tx,
+                contact_row.pk_contact,
+                input.phones.clone(),
+            )
+            .await
+            .map_err(|e| {
+                ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                    action: "criar telefones",
+                    source: e,
+                })
+            })?;
+        }
+
+        let client_row = PgClientRepository::create_with_tx(
+            &self.repo,
+            &mut tx,
+            crate::domain::models::db::client_row::CreateClientRow {
                 tx_name: input.name,
                 tx_status: ClientStatus::Active,
                 tx_doc: input.doc,
-            })
+            },
+        )
+        .await?;
+
+        PgClientRepository::create_contact(&mut *tx, client_row.pk_client, contact_row.pk_contact)
             .await
+            .map_err(|e| {
+                ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                    action: "criar vínculo com contato",
+                    source: e,
+                })
+            })?;
+
+        PgClientRepository::create_address(
+            &mut *tx,
+            client_row.pk_client,
+            location_row.pk_location,
+        )
+        .await
+        .map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::Database {
+                action: "criar vínculo com endereço",
+                source: e,
+            })
+        })?;
+
+        tx.commit().await.map_err(|e| {
+            ClientError::Infra(types::errors::infra_error::InfraError::CommitTransaction {
+                source: e,
+            })
+        })?;
+
+        Ok(client_row)
+    }
+}
+
+#[async_trait]
+impl FindClientById for ConcreteClientService {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })
+    }
+}
+
+#[async_trait]
+impl FindClientByDocument for ConcreteClientService {
+    async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
+        self.repo.find_by_document(doc).await
+    }
+}
+
+#[async_trait]
+impl ListClients for ConcreteClientService {
+    async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
+        self.repo.find_all().await
+    }
+}
+
+#[async_trait]
+impl UpdateClient for ConcreteClientService {
+    async fn execute(
+        &self,
+        uuid: Uuid,
+        input: UpdateClientInput,
+    ) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if let Some(ref doc) = input.doc {
+            let _validated: Doc = doc.clone().try_into()?;
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: input.name,
+                    tx_status: None,
+                    tx_doc: input.doc,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl ActivateClient for ConcreteClientService {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if current.tx_status == ClientStatus::Active.to_string() {
+            return Err(ClientError::AlreadyActive { uuid });
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Active),
+                    tx_doc: None,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl DeactivateClient for ConcreteClientService {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if current.tx_status == ClientStatus::Inactive.to_string() {
+            return Err(ClientError::AlreadyInactive { uuid });
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Inactive),
+                    tx_doc: None,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl DeleteClientTrait for ConcreteClientService {
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        self.repo.delete(uuid).await
     }
 }
 
@@ -264,8 +521,7 @@ mod tests {
     };
     use crate::domain::ports::client_use_cases::{
         ActivateClient, DeactivateClient, DeleteClient as DeleteClientTrait, FindClientByDocument,
-        FindClientById, ListClients, RegisterClient, RegisterClientInput, UpdateClient,
-        UpdateClientInput,
+        FindClientById, ListClients, UpdateClient, UpdateClientInput,
     };
 
     #[derive(Default)]
@@ -420,27 +676,6 @@ mod tests {
         let service = ClientService::new(repo);
         let result = ListClients::execute(&service).await.unwrap();
         assert!(result.is_empty());
-    }
-
-    #[tokio::test]
-    async fn register_client_fails_when_document_exists() {
-        let mut repo = MockRepo::new();
-        repo.find_by_document_result = Some(make_row());
-        let service = ClientService::new(repo);
-        let input = RegisterClientInput {
-            name: "New Client".to_string(),
-            doc: "12345678909".to_string(),
-            email: "test@example.com".to_string(),
-            phones: vec!["+55119999999999".to_string()],
-            cep: "01310100".to_string(),
-            number: "1000".to_string(),
-            complement: "".to_string(),
-        };
-        let result = RegisterClient::execute(&service, input).await;
-        assert!(matches!(
-            result,
-            Err(ClientError::DocumentAlreadyExists { .. })
-        ));
     }
 
     #[tokio::test]

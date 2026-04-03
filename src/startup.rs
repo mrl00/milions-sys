@@ -11,6 +11,7 @@ pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
             client::adapters::driven::postgres::pg_client_repository::PgClientRepository::new(
                 pool.clone(),
             ),
+            pool.clone(),
         ),
     );
     let collaborator_service = web::Data::new(

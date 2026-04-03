@@ -437,7 +437,7 @@ mod tests {
             fk_contact: Uuid::now_v7(),
             ts_phone_created_at: chrono::NaiveDateTime::default(),
             ts_phone_updated_at: chrono::NaiveDateTime::default(),
-            tx_phone: "+55119999999999".to_string(),
+            tx_phone: "+5511999999999".to_string(),
         }
     }
 
@@ -712,10 +712,10 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhone::execute(&service, contact_id, "+55119999999999".to_string())
+        let result = AddPhone::execute(&service, contact_id, "+5511999999999".to_string())
             .await
             .unwrap();
-        assert_eq!(result.tx_phone, "+55119999999999");
+        assert_eq!(result.tx_phone, "+5511999999999");
     }
 
     #[tokio::test]
@@ -723,11 +723,11 @@ mod tests {
         let contact_id = Uuid::now_v7();
         let mut phone_repo = MockPhoneRepo::new();
         let mut existing = make_phone();
-        existing.tx_phone = "+55119999999999".to_string();
+        existing.tx_phone = "+5511999999999".to_string();
         phone_repo.find_by_contact_id_result = vec![existing];
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhone::execute(&service, contact_id, "+55119999999999".to_string()).await;
+        let result = AddPhone::execute(&service, contact_id, "+5511999999999".to_string()).await;
         assert!(matches!(
             result,
             Err(ContactError::PhoneAlreadyExists { .. })
@@ -749,13 +749,13 @@ mod tests {
         let contact_id = Uuid::now_v7();
         let mut phone_repo = MockPhoneRepo::new();
         phone_repo.find_nonexistent_result =
-            vec!["+55119999999999".to_string(), "+55118888888888".to_string()];
+            vec!["+5511999999999".to_string(), "+5511888888888".to_string()];
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
         let result = AddPhones::execute(
             &service,
             contact_id,
-            vec!["+55119999999999".to_string(), "+55118888888888".to_string()],
+            vec!["+5511999999999".to_string(), "+5511888888888".to_string()],
         )
         .await
         .unwrap();
@@ -770,10 +770,10 @@ mod tests {
         phone_repo.find_by_id_result = Some(phone);
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = UpdatePhoneTrait::execute(&service, uuid, "+55118888888888".to_string())
+        let result = UpdatePhoneTrait::execute(&service, uuid, "+5511888888888".to_string())
             .await
             .unwrap();
-        assert_eq!(result.tx_phone, "+55118888888888");
+        assert_eq!(result.tx_phone, "+5511888888888");
     }
 
     #[tokio::test]
@@ -782,7 +782,7 @@ mod tests {
         let repo = MockContactRepo::new();
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = UpdatePhoneTrait::execute(&service, uuid, "+55119999999999".to_string()).await;
+        let result = UpdatePhoneTrait::execute(&service, uuid, "+5511999999999".to_string()).await;
         assert!(matches!(result, Err(ContactError::PhoneNotFound { .. })));
     }
 
