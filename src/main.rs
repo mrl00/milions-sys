@@ -7,7 +7,6 @@ use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    println!("Starting Milions");
     let settings: Settings = settings::get_config().expect("Failed to get config");
 
     let pool: Pool<Postgres> = PgPoolOptions::new()
