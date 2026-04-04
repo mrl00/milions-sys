@@ -21,6 +21,30 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ---
 
+## viacep
+
+### Port (`domain/ports/viacep_port.rs`)
+
+| Trait | Method |
+|-------|--------|
+| `ViaCepPort` | `fetch_address(cep) -> ViaCepAddressModel` |
+
+**Error enum:** `ViaCepError::NotFound { cep }`, `ViaCepError::Service(String)`
+
+### Model (`domain/models/viacep_model.rs`)
+
+`ViaCepAddressModel` — fields: `cep`, `logradouro`, `complemento`, `unidade`, `bairro`, `localidade`, `uf`, `estado`, `regiao`, `ibge`, `gia`, `ddd`, `siafi`
+
+### Adapter (`adapters/driven/http_client.rs`)
+
+`ViaCepClient` — implements `ViaCepPort` using `reqwest`. Calls `https://viacep.com.br/ws/{cep}/json`. Handles three scenarios: valid address (deserializes), invalid CEP (`erro: true` → `NotFound`), HTTP failure (5xx → `NotFound`, network → `Service`).
+
+**Constructor:** `ViaCepClient::new()` (production URL), `ViaCepClient::with_base_url(url)` (for testing with mock servers).
+
+**Tests:** 3 contract tests with `wiremock` (valid CEP, invalid CEP, HTTP failure).
+
+---
+
 ## client
 
 ### Repository Ports (`domain/ports/client_repository.rs`)
