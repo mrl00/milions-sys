@@ -21,16 +21,16 @@ impl<R: LocationRepository> LocationService<R> {
 
     fn to_create_row(input: CreateLocationInput) -> CreateLocationRow {
         CreateLocationRow {
-            tx_street: input.street,
+            tx_street: types::text::remove_accents(&input.street),
             tx_number: input.number,
-            tx_city: input.city,
+            tx_city: types::text::remove_accents(&input.city),
             tx_state: input.state,
             tx_zipcode: input.zipcode,
-            tx_address_complement: input.complement,
-            tx_public_space: input.public_space,
+            tx_address_complement: types::text::remove_accents(&input.complement),
+            tx_public_space: types::text::remove_accents(&input.public_space),
             tx_unit: input.unit,
-            tx_neighborhood: input.neighborhood,
-            tx_locality: input.locality,
+            tx_neighborhood: types::text::remove_accents(&input.neighborhood),
+            tx_locality: types::text::remove_accents(&input.locality),
             tx_region: input.region,
             tx_ibge: input.ibge,
             tx_gia: input.gia,

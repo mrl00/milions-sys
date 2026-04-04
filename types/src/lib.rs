@@ -8,3 +8,4 @@ pub mod email;
 pub mod errors;
 pub mod numeric;
 pub mod phone;
+pub mod text;

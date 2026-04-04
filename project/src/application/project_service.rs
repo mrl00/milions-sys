@@ -52,8 +52,8 @@ impl<R: ProjectRepository> ListProjectsUseCase for ProjectService<R> {
 impl<R: ProjectRepository> CreateProjectUseCase for ProjectService<R> {
     async fn execute(&self, input: CreateProjectInput) -> Result<ProjectRow, ProjectError> {
         let row = CreateProjectRow {
-            tx_name: input.name,
-            tx_description: input.description,
+            tx_name: types::text::remove_accents(&input.name),
+            tx_description: input.description.map(|d| types::text::remove_accents(&d)),
             tx_status: ProjectStatus::Planning,
             dt_start_date: input.start_date,
             dt_estimated_end_date: input.estimated_end_date,
@@ -84,8 +84,8 @@ impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
             .update(
                 uuid,
                 UpdateProjectRow {
-                    tx_name: input.name,
-                    tx_description: input.description,
+                    tx_name: input.name.map(|n| types::text::remove_accents(&n)),
+                    tx_description: input.description.map(|d| types::text::remove_accents(&d)),
                     tx_status: None,
                     dt_start_date: input.start_date,
                     dt_estimated_end_date: input.estimated_end_date,
@@ -275,8 +275,8 @@ impl<R: ProjectRepository> CreateStageUseCase for ProjectService<R> {
 
         let row = CreateProjectStageRow {
             fk_project: project_id,
-            tx_name: input.name,
-            tx_description: input.description,
+            tx_name: types::text::remove_accents(&input.name),
+            tx_description: input.description.map(|d| types::text::remove_accents(&d)),
             nr_order: input.order,
             tx_status: ProjectStageStatus::Pending,
             dt_start_date: input.start_date,
@@ -314,8 +314,8 @@ impl<R: ProjectRepository> UpdateStageUseCase for ProjectService<R> {
             .update_stage(
                 stage_id,
                 crate::domain::models::db::project_rows::UpdateProjectStageRow {
-                    tx_name: input.name,
-                    tx_description: input.description,
+                    tx_name: input.name.map(|n| types::text::remove_accents(&n)),
+                    tx_description: input.description.map(|d| types::text::remove_accents(&d)),
                     nr_order: input.order,
                     tx_status: input.status.map(|s| match s.as_str() {
                         "pending" => ProjectStageStatus::Pending,

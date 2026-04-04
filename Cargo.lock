@@ -3476,6 +3476,7 @@ dependencies = [
  "snafu",
  "sqlx",
  "thiserror",
+ "unicode-normalization",
 ]
 
 [[package]]
