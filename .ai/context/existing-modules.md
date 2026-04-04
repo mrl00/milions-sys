@@ -45,6 +45,21 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ---
 
+## integration tests
+
+### client (`client/tests/client_integration.rs`)
+
+15 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- CRUD: `create_and_find_client`, `list_clients_returns_all`, `update_client_changes_name`, `activate_and_deactivate_client`, `delete_client_removes_row`, `find_by_document_returns_none_for_missing`, `find_by_document_returns_client`
+- Edge cases: `find_client_by_id_returns_error_when_not_found`, `update_nonexistent_client_returns_error`, `delete_nonexistent_client_returns_error`, `activate_already_active_client`, `deactivate_already_inactive_client`, `register_client_with_duplicate_document_returns_error`, `update_client_with_duplicate_document_succeeds_without_app_check`, `list_clients_returns_empty_when_no_clients_exist`
+
+### location (`location/tests/location_integration.rs`)
+
+6 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- `create_and_find_location`, `create_location_with_same_address_returns_existing`, `list_locations_returns_all`, `update_location_changes_fields`, `delete_location_removes_row`, `find_location_returns_not_found_for_missing`
+
+---
+
 ## client
 
 ### Repository Ports (`domain/ports/client_repository.rs`)

@@ -26,10 +26,10 @@
 - [x] Add unit tests per bounded context (settings: 7, client: 22, collaborator: 22, contact: 26, location: 18, project: 32, viacep: 3)
 - [x] Add route unit tests for all bounded contexts (53 tests total)
 - [ ] Add integration tests with `sqlx::test` + real PostgreSQL for full-stack scenarios
-  - Scaffold in `client/tests/client_integration.rs` (7 tests) + `location/tests/location_integration.rs` (6 tests)
+  - Client: 15 tests in `client/tests/client_integration.rs` (7 CRUD + 8 edge cases)
+  - Location: 6 tests in `location/tests/location_integration.rs`
   - Blocked by PostgreSQL encoding issue in Docker container (`ColumnDecode` on timestamp columns)
   - Requires database server with proper UTF8 locale configuration
-  - Pending edge case tests for client: find/update/delete not found, activate/deactivate already in status, duplicate document, empty list
 - [ ] Add structured tracing/logging middleware
 - [ ] Implement Keycloak JWT auth (currently standby per `05-security.md`)
 - [ ] Implement pagination (`page`/`per_page`) for list endpoints
@@ -48,9 +48,12 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-156 unit tests pass across all crates (settings: 7, client: 22, collaborator: 22, contact: 26, location: 18, project: 32, viacep: 3, route tests: 53).
+156 unit tests + 21 integration tests pass across all crates.
+  - Unit tests: settings (7), client (22), collaborator (22), contact (26), location (18), project (32), viacep (3), route tests (53)
+  - Integration tests: client (15), location (6)
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
 Config files live in `settings/app_config/`.
 ViaCEP HTTP client adapter implemented with `wiremock` contract tests.
+Accent removal applied to all text inputs (client, collaborator, location, project).
