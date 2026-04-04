@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::domain::errors::LocationError;
 use crate::domain::models::db::location_row::LocationRow;
 
+#[derive(Debug, Clone)]
 pub struct CreateLocationInput {
     pub street: String,
     pub number: String,
