@@ -27,23 +27,23 @@ async fn create_test_fixtures(pool: &PgPool) -> (uuid::Uuid, uuid::Uuid) {
     let client_id = uuid::Uuid::now_v7();
     let location_id = uuid::Uuid::now_v7();
 
-    sqlx::query!(
+    sqlx::query(
         "INSERT INTO clients.tb_client (pk_client, idx_client, tx_name, tx_status, tx_doc)
          VALUES ($1, 1, 'Test Client', 'active', '11144477735')",
-        client_id
     )
+    .bind(client_id)
     .execute(pool)
     .await
     .expect("create test client");
 
-    sqlx::query!(
+    sqlx::query(
         r#"INSERT INTO locations.tb_location (
             pk_location, idx_location, tx_street, tx_number, tx_city, tx_state, tx_zipcode,
             tx_public_space, tx_address_complement, tx_unit, tx_neighborhood, tx_locality,
             tx_region, tx_ibge, tx_gia, tx_ddd, tx_siafi
         ) VALUES ($1, 1, 'Test St', '1', 'Test City', 'SP', '00000000', 'Rua', '', '', 'Test', 'Test City', 'SP', null, null, '11', null)"#,
-        location_id
     )
+    .bind(location_id)
     .execute(pool)
     .await
     .expect("create test location");
@@ -55,11 +55,11 @@ async fn create_test_fixtures(pool: &PgPool) -> (uuid::Uuid, uuid::Uuid) {
 async fn create_test_collaborator(pool: &PgPool) -> uuid::Uuid {
     let collaborator_id = uuid::Uuid::now_v7();
 
-    sqlx::query!(
+    sqlx::query(
         "INSERT INTO collaborators.tb_collaborator (pk_collaborator, idx_collaborator, tx_name, tx_cpf, tx_level, tx_status)
          VALUES ($1, 1, 'Test Collaborator', '22255588896', 'P0', 'active')",
-        collaborator_id
     )
+    .bind(collaborator_id)
     .execute(pool)
     .await
     .expect("create test collaborator");
