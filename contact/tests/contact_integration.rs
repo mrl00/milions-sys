@@ -47,7 +47,7 @@ async fn create_and_find_contact(pool: PgPool) {
 async fn register_contact_with_duplicate_email_returns_error(pool: PgPool) {
     let service = make_service(pool);
 
-    let input = RegisterContactInput {
+    let _input = RegisterContactInput {
         email: "dup@example.com".to_string(),
     };
 
