@@ -135,3 +135,107 @@ fn error_to_response(err: LocationError) -> HttpResponse {
         })),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test, web};
+    use uuid::Uuid;
+
+    fn route_config(cfg: &mut web::ServiceConfig) {
+        configure(cfg);
+    }
+
+    #[actix_web::test]
+    async fn create_location_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post().uri("/api/locations").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn list_locations_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get().uri("/api/locations").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_location_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/locations/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_location_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/locations/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn delete_location_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::delete()
+            .uri("/api/locations/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_not_found() {
+        let err = LocationError::NotFound {
+            uuid: Uuid::now_v7(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_conflict() {
+        let err = LocationError::AlreadyExists { hash: 123 };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 409);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_validation_error() {
+        let err = LocationError::InvalidField {
+            field: "street",
+            reason: "required".to_string(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 422);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_internal_error() {
+        let err = LocationError::Infra {
+            source: types::errors::infra_error::InfraError::BeginTransaction {
+                source: sqlx::Error::PoolTimedOut,
+            },
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 500);
+    }
+}

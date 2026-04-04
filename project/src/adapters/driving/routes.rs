@@ -380,3 +380,216 @@ async fn get_history_report(
         Err(e) => error_to_response(e),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test, web};
+    use uuid::Uuid;
+
+    fn route_config(cfg: &mut web::ServiceConfig) {
+        configure(cfg);
+    }
+
+    #[actix_web::test]
+    async fn create_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post().uri("/api/projects").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn list_projects_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get().uri("/api/projects").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn delete_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::delete()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_project_status_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn create_stage_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/stages")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_stage_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/stages/01900000-0000-7000-0000-000000000002")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn create_allocation_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/allocations")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn list_allocations_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/allocations")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_allocation_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/projects/01900000-0000-7000-0000-000000000001/allocations/01900000-0000-7000-0000-000000000002")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_cost_report_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/reports/projects/01900000-0000-7000-0000-000000000001/cost")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_progress_report_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/reports/projects/01900000-0000-7000-0000-000000000001/progress")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_history_report_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/reports/collaborators/01900000-0000-7000-0000-000000000001/history")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_not_found() {
+        let err = ProjectError::NotFound {
+            uuid: Uuid::now_v7(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_already_in_status() {
+        let err = ProjectError::AlreadyInStatus {
+            uuid: Uuid::now_v7(),
+            status: "planning".to_string(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 409);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_validation_error() {
+        let err = ProjectError::InvalidField {
+            field: "name",
+            reason: "required".to_string(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 422);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_internal_error() {
+        let err = ProjectError::Infra(types::errors::infra_error::InfraError::BeginTransaction {
+            source: sqlx::Error::PoolTimedOut,
+        });
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 500);
+    }
+}
