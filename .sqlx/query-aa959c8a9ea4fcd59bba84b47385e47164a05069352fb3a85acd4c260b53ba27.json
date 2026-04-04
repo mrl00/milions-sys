@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM locations.tb_location\n            WHERE pk_location = $1\n            ",
+  "query": "\n            SELECT *\n            FROM locations.tb_location\n            WHERE tx_street = $1\n              AND tx_number = $2\n              AND tx_city = $3\n              AND tx_state = $4\n              AND tx_zipcode = $5\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -106,7 +106,11 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -132,5 +136,5 @@
       true
     ]
   },
-  "hash": "d17470fb2d0961d0ab8f40fb013a5bb9feba44b73534c09b2e661aaf21891e6e"
+  "hash": "aa959c8a9ea4fcd59bba84b47385e47164a05069352fb3a85acd4c260b53ba27"
 }

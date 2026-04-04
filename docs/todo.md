@@ -26,6 +26,9 @@
 - [x] Add unit tests per bounded context (settings: 7, client: 22, collaborator: 22, contact: 26, location: 18, project: 32, viacep: 3)
 - [x] Add route unit tests for all bounded contexts (53 tests total)
 - [ ] Add integration tests with `sqlx::test` + real PostgreSQL for full-stack scenarios
+  - Scaffold in `client/tests/client_integration.rs` (7 tests)
+  - Blocked by PostgreSQL encoding issue in Docker container (`ColumnDecode` on timestamp columns)
+  - Requires database server with proper UTF8 locale configuration
 - [ ] Add structured tracing/logging middleware
 - [ ] Implement Keycloak JWT auth (currently standby per `05-security.md`)
 - [ ] Implement pagination (`page`/`per_page`) for list endpoints

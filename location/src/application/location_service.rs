@@ -21,16 +21,16 @@ impl<R: LocationRepository> LocationService<R> {
 
     fn to_create_row(input: CreateLocationInput) -> CreateLocationRow {
         CreateLocationRow {
-            tx_street: input.street,
+            tx_street: types::text::remove_accents(&input.street),
             tx_number: input.number,
-            tx_city: input.city,
+            tx_city: types::text::remove_accents(&input.city),
             tx_state: input.state,
             tx_zipcode: input.zipcode,
-            tx_address_complement: input.complement,
-            tx_public_space: input.public_space,
+            tx_address_complement: types::text::remove_accents(&input.complement),
+            tx_public_space: types::text::remove_accents(&input.public_space),
             tx_unit: input.unit,
-            tx_neighborhood: input.neighborhood,
-            tx_locality: input.locality,
+            tx_neighborhood: types::text::remove_accents(&input.neighborhood),
+            tx_locality: types::text::remove_accents(&input.locality),
             tx_region: input.region,
             tx_ibge: input.ibge,
             tx_gia: input.gia,
@@ -170,7 +170,7 @@ mod tests {
             tx_city: "São Paulo".to_string(),
             tx_state: "SP".to_string(),
             tx_zipcode: "01310100".to_string(),
-            nr_hash: 123456789,
+            nr_hash: Some(123456789),
             ts_location_created_at: now(),
             ts_location_updated_at: now(),
         }
@@ -195,7 +195,7 @@ mod tests {
             tx_city: "".to_string(),
             tx_state: "".to_string(),
             tx_zipcode: "".to_string(),
-            nr_hash: 0,
+            nr_hash: Some(0),
             ts_location_created_at: now(),
             ts_location_updated_at: now(),
         }
@@ -242,7 +242,7 @@ mod tests {
                 tx_city: input.tx_city,
                 tx_state: input.tx_state,
                 tx_zipcode: input.tx_zipcode,
-                nr_hash: 0,
+                nr_hash: Some(0),
                 ts_location_created_at: now(),
                 ts_location_updated_at: now(),
             })
