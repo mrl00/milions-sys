@@ -29,7 +29,8 @@
   - Client: 15 tests in `client/tests/client_integration.rs` (7 CRUD + 8 edge cases)
   - Location: 6 tests in `location/tests/location_integration.rs`
   - Contact: 13 tests in `contact/tests/contact_integration.rs` (5 contact + 8 phone)
-  - Project: 22 tests in `project/tests/project_integration.rs` (7 CRUD + 5 status + 2 stages + 3 allocations + 3 reports + 2 edge cases)
+  - Project: 22 tests in `project/tests/project_integration.rs` (9 CRUD + 5 status + 2 stages + 3 allocations + 3 reports)
+  - Collaborator: 17 tests in `collaborator/tests/collaborator_integration.rs` (7 CRUD + 2 validation + 4 status + 4 edge cases)
   - Blocked by PostgreSQL encoding issue in Docker container (`ColumnDecode` on timestamp columns)
   - Requires database server with proper UTF8 locale configuration
 - [ ] Add structured tracing/logging middleware
@@ -50,9 +51,9 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-156 unit tests + 56 integration tests pass across all crates.
+156 unit tests + 73 integration tests pass across all crates.
   - Unit tests: settings (7), client (22), collaborator (22), contact (26), location (18), project (32), viacep (3), route tests (53)
-  - Integration tests: client (15), location (6), contact (13), project (22)
+  - Integration tests: client (15), location (6), contact (13), project (22), collaborator (17)
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
