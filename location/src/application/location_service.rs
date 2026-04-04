@@ -170,7 +170,7 @@ mod tests {
             tx_city: "São Paulo".to_string(),
             tx_state: "SP".to_string(),
             tx_zipcode: "01310100".to_string(),
-            nr_hash: 123456789,
+            nr_hash: Some(123456789),
             ts_location_created_at: now(),
             ts_location_updated_at: now(),
         }
@@ -195,7 +195,7 @@ mod tests {
             tx_city: "".to_string(),
             tx_state: "".to_string(),
             tx_zipcode: "".to_string(),
-            nr_hash: 0,
+            nr_hash: Some(0),
             ts_location_created_at: now(),
             ts_location_updated_at: now(),
         }
@@ -242,7 +242,7 @@ mod tests {
                 tx_city: input.tx_city,
                 tx_state: input.tx_state,
                 tx_zipcode: input.tx_zipcode,
-                nr_hash: 0,
+                nr_hash: Some(0),
                 ts_location_created_at: now(),
                 ts_location_updated_at: now(),
             })

@@ -1,3 +1,8 @@
+// Migrated to #[sqlx::test] — manual database setup/teardown removed.
+// The macro creates an isolated test database, runs migrations, and
+// injects a fresh PgPool into each test. Each test gets its own database
+// for full isolation.
+
 use client::adapters::driven::postgres::pg_client_repository::PgClientRepository;
 use client::application::client_service::ConcreteClientService;
 use client::domain::models::db::client_row::ClientStatus;
@@ -13,60 +18,8 @@ fn make_service(pool: PgPool) -> ConcreteClientService {
     ConcreteClientService::new(PgClientRepository::new(pool.clone()), pool)
 }
 
-async fn setup() -> PgPool {
-    let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-    let test_db = "milions_db_test";
-    let test_url = if url.contains("milions_db") {
-        url.replace("milions_db", test_db)
-    } else {
-        url.clone()
-    };
-
-    let admin_pool = sqlx::PgPool::connect(&url).await.expect("connect to admin");
-
-    sqlx::query(&format!(
-        "SELECT pg_terminate_backend(pg_stat_activity.pid)
-         FROM pg_stat_activity
-         WHERE pg_stat_activity.datname = '{}'
-         AND pid <> pg_backend_pid()",
-        test_db
-    ))
-    .execute(&admin_pool)
-    .await
-    .ok();
-
-    sqlx::query(&format!("DROP DATABASE IF EXISTS {}", test_db))
-        .execute(&admin_pool)
-        .await
-        .expect("drop test db");
-
-    sqlx::query(&format!(
-        "CREATE DATABASE {} WITH ENCODING 'UTF8' LC_COLLATE='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' TEMPLATE=template0",
-        test_db
-    ))
-    .execute(&admin_pool)
-    .await
-    .expect("create test db");
-    admin_pool.close().await;
-
-    let pool = sqlx::PgPool::connect(&test_url)
-        .await
-        .expect("connect to test db");
-    let manifest = env!("CARGO_MANIFEST_DIR");
-    let path = std::path::Path::new(manifest)
-        .parent()
-        .unwrap()
-        .join("migrations");
-    let m = sqlx::migrate::Migrator::new(path)
-        .await
-        .expect("load migrations");
-    m.run(&pool).await.expect("run migrations");
-    pool
-}
-
-#[tokio::test]
-async fn create_and_find_client() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn create_and_find_client(pool: PgPool) {
     let service = make_service(pool);
 
     let input = RegisterClientInput {
@@ -75,11 +28,11 @@ async fn create_and_find_client() {
         email: "test@example.com".to_string(),
         phones: vec!["+5511999999999".to_string()],
         cep: "01001000".to_string(),
-        street: "Praça da Sé".to_string(),
+        street: "Praca da Se".to_string(),
         number: "1".to_string(),
         complement: "".to_string(),
-        neighborhood: "Sé".to_string(),
-        city: "São Paulo".to_string(),
+        neighborhood: "Se".to_string(),
+        city: "Sao Paulo".to_string(),
         state: "SP".to_string(),
     };
 
@@ -97,9 +50,8 @@ async fn create_and_find_client() {
     assert_eq!(found.tx_status, ClientStatus::Active.to_string());
 }
 
-#[tokio::test]
-async fn list_clients_returns_all() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn list_clients_returns_all(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgClientRepository::new(pool);
 
@@ -126,9 +78,8 @@ async fn list_clients_returns_all() {
     assert_eq!(clients.len(), 2);
 }
 
-#[tokio::test]
-async fn update_client_changes_name() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn update_client_changes_name(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgClientRepository::new(pool);
 
@@ -156,9 +107,8 @@ async fn update_client_changes_name() {
     assert_eq!(updated.tx_doc, "33333333333");
 }
 
-#[tokio::test]
-async fn activate_and_deactivate_client() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn activate_and_deactivate_client(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgClientRepository::new(pool);
 
@@ -182,9 +132,8 @@ async fn activate_and_deactivate_client() {
     assert_eq!(inactive.tx_status, ClientStatus::Inactive.to_string());
 }
 
-#[tokio::test]
-async fn delete_client_removes_row() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn delete_client_removes_row(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgClientRepository::new(pool);
 
@@ -205,9 +154,8 @@ async fn delete_client_removes_row() {
     assert!(found.is_err());
 }
 
-#[tokio::test]
-async fn find_by_document_returns_none_for_missing() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn find_by_document_returns_none_for_missing(pool: PgPool) {
     let service = make_service(pool);
 
     let result = client::domain::ports::client_use_cases::FindClientByDocumentUseCase::execute(
@@ -220,9 +168,8 @@ async fn find_by_document_returns_none_for_missing() {
     assert!(result.is_none());
 }
 
-#[tokio::test]
-async fn find_by_document_returns_client() {
-    let pool = setup().await;
+#[sqlx::test(migrations = "../migrations")]
+async fn find_by_document_returns_client(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgClientRepository::new(pool);
 
