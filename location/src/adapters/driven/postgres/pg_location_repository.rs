@@ -16,10 +16,39 @@ impl PgLocationRepository {
         Self { pool }
     }
 
-    pub async fn find_or_create_with_executor<'a, E>(
+    pub async fn find_by_address<'a, E>(
+        executor: E,
+        c: &CreateLocationRow,
+    ) -> Result<Option<LocationRow>, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as!(
+            LocationRow,
+            r#"
+            SELECT *
+            FROM locations.tb_location
+            WHERE tx_street = $1
+              AND tx_number = $2
+              AND tx_city = $3
+              AND tx_state = $4
+              AND tx_zipcode = $5
+            LIMIT 1
+            "#,
+            &c.tx_street,
+            &c.tx_number,
+            &c.tx_city,
+            &c.tx_state,
+            &c.tx_zipcode,
+        )
+        .fetch_optional(executor)
+        .await
+    }
+
+    pub async fn create_with_executor<'a, E>(
         executor: E,
         c: CreateLocationRow,
-    ) -> Result<LocationRow, sqlx::Error>
+    ) -> Result<Option<LocationRow>, sqlx::Error>
     where
         E: sqlx::Executor<'a, Database = sqlx::Postgres>,
     {
@@ -45,7 +74,7 @@ impl PgLocationRepository {
                 tx_siafi
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            ON CONFLICT (nr_hash) DO UPDATE SET nr_hash = EXCLUDED.nr_hash
+            ON CONFLICT (nr_hash) DO NOTHING
             RETURNING *
             "#,
             Uuid::now_v7(),
@@ -65,7 +94,7 @@ impl PgLocationRepository {
             &c.tx_ddd,
             c.tx_siafi,
         )
-        .fetch_one(executor)
+        .fetch_optional(executor)
         .await
     }
 }
