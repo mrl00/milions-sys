@@ -74,6 +74,14 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 - Allocations: `create_allocation`, `list_allocations_for_project`, `update_allocation`
 - Reports: `get_cost_report_for_empty_project`, `get_progress_report_for_empty_project`, `get_history_report_for_collaborator`
 
+### collaborator (`collaborator/tests/collaborator_integration.rs`)
+
+17 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- CRUD: `create_and_find_collaborator`, `create_collaborator_removes_accents`, `update_collaborator_changes_name`, `delete_collaborator_removes_row`, `list_collaborators_returns_all`, `list_collaborators_returns_empty_when_none_exist`, `find_collaborator_returns_not_found_for_missing`
+- Validation: `register_collaborator_with_duplicate_cpf_returns_error`, `register_collaborator_with_invalid_cpf_returns_error`
+- Status: `activate_collaborator`, `deactivate_collaborator`, `activate_already_active_collaborator_returns_error`, `deactivate_already_inactive_collaborator_returns_error`
+- Edge: `update_nonexistent_collaborator_returns_error`, `delete_nonexistent_collaborator_returns_error`, `find_collaborator_by_document_returns_none_for_missing`, `find_collaborator_by_document_returns_collaborator`
+
 ---
 
 ## client
