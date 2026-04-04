@@ -81,7 +81,7 @@ async fn create_and_find_location(pool: PgPool) {
 #[sqlx::test(migrations = "../migrations")]
 async fn create_location_with_same_address_returns_existing(pool: PgPool) {
     let service = make_service(pool.clone());
-    let repo = PgLocationRepository::new(pool);
+    let _repo = PgLocationRepository::new(pool);
 
     let input = CreateLocationInput {
         street: "Rua Augusta".to_string(),
