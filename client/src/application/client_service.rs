@@ -58,8 +58,9 @@ impl RegisterClientUseCase for ConcreteClientService {
             .map(|p| p.clone().try_into())
             .collect::<Result<Vec<_>, _>>()?;
 
-        if self.repo.find_by_document(&input.doc).await?.is_some() {
-            return Err(ClientError::DocumentAlreadyExists { doc: input.doc });
+        let doc = input.doc.clone();
+        if self.repo.find_by_document(&doc).await?.is_some() {
+            return Err(ClientError::DocumentAlreadyExists { doc });
         }
 
         let mut tx = self.pool.begin().await.map_err(|e| {
@@ -69,16 +70,16 @@ impl RegisterClientUseCase for ConcreteClientService {
         })?;
 
         let location_input = CreateLocationRow {
-            tx_street: input.street.clone(),
+            tx_street: types::text::remove_accents(&input.street),
             tx_number: input.number.clone(),
-            tx_city: input.city.clone(),
+            tx_city: types::text::remove_accents(&input.city),
             tx_state: input.state.clone(),
             tx_zipcode: input.cep.clone(),
             tx_public_space: "".to_string(),
-            tx_address_complement: input.complement.clone(),
+            tx_address_complement: types::text::remove_accents(&input.complement),
             tx_unit: "".to_string(),
-            tx_neighborhood: input.neighborhood.clone(),
-            tx_locality: input.city.clone(),
+            tx_neighborhood: types::text::remove_accents(&input.neighborhood),
+            tx_locality: types::text::remove_accents(&input.city),
             tx_region: input.state.clone(),
             tx_ibge: None,
             tx_gia: None,
@@ -139,7 +140,7 @@ impl RegisterClientUseCase for ConcreteClientService {
             &self.repo,
             &mut tx,
             crate::domain::models::db::client_row::CreateClientRow {
-                tx_name: input.name,
+                tx_name: types::text::remove_accents(&input.name),
                 tx_status: ClientStatus::Active,
                 tx_doc: input.doc,
             },

@@ -9,3 +9,4 @@ snafu = { workspace = true }
 regex = { workspace = true }
 sqlx = { workspace = true }
 brazilian_utils = { version = "0.1.0" }
+unicode-normalization = "0.1"

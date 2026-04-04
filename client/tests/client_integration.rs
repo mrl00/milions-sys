@@ -39,6 +39,7 @@ async fn setup() -> PgPool {
         .execute(&admin_pool)
         .await
         .expect("drop test db");
+
     sqlx::query(&format!(
         "CREATE DATABASE {} WITH ENCODING 'UTF8' LC_COLLATE='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' TEMPLATE=template0",
         test_db
