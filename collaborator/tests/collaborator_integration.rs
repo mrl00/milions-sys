@@ -65,7 +65,7 @@ async fn create_collaborator_removes_accents(pool: PgPool) {
 async fn register_collaborator_with_duplicate_cpf_returns_error(pool: PgPool) {
     let service = make_service(pool);
 
-    let input = RegisterCollaboratorInput {
+    let _input = RegisterCollaboratorInput {
         name: "First".to_string(),
         cpf: "11144477735".to_string(),
     };
