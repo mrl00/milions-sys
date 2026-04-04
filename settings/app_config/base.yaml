@@ -1,0 +1,9 @@
+application:
+  name: milions-sys
+  port: 8000
+database:
+  host: "localhost"
+  port: 5433
+  database_name: "milions_db"
+  username: "postgres"
+  password: "qwerty"
