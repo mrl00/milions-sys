@@ -58,7 +58,7 @@ pub struct LocationResponse {
     pub city: String,
     pub state: String,
     pub zipcode: String,
-    pub hash: i64,
+    pub hash: Option<i64>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

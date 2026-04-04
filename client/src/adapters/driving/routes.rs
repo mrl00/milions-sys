@@ -147,3 +147,144 @@ fn error_to_response(err: ClientError) -> HttpResponse {
         })),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test, web};
+    use uuid::Uuid;
+
+    fn route_config(cfg: &mut web::ServiceConfig) {
+        configure(cfg);
+    }
+
+    #[actix_web::test]
+    async fn register_client_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post()
+            .uri("/api/clients")
+            .set_json(serde_json::json!({
+                "name": "test",
+                "document": "12345678909",
+                "contact": { "email": "a@b.com", "phones": [] },
+                "address": { "cep": "00000000", "number": "1", "street": "X", "city": "X", "state": "SP", "complement": null, "neighborhood": "X" }
+            }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn list_clients_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get().uri("/api/clients").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn get_client_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_client_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001")
+            .set_json(serde_json::json!({ "name": "x" }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn delete_client_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::delete()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn update_client_status_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::put()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001/status")
+            .set_json(serde_json::json!({ "status": "active" }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_not_found() {
+        let err = ClientError::NotFound {
+            uuid: Uuid::now_v7(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_conflict() {
+        let err = ClientError::DocumentAlreadyExists {
+            doc: "123".to_string(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 409);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_already_active() {
+        let err = ClientError::AlreadyActive {
+            uuid: Uuid::now_v7(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 400);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_already_inactive() {
+        let err = ClientError::AlreadyInactive {
+            uuid: Uuid::now_v7(),
+        };
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 400);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_validation_error() {
+        let err = ClientError::InvalidDoc(types::doc::DocError::InvalidDocument);
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 422);
+    }
+
+    #[actix_web::test]
+    async fn error_to_response_internal_error() {
+        let err = ClientError::ViaCep(viacep::domain::ports::viacep_port::ViaCepError::Service(
+            "err".to_string(),
+        ));
+        let resp = error_to_response(err);
+        assert_eq!(resp.status(), 500);
+    }
+}

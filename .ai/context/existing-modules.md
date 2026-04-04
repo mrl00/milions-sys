@@ -21,6 +21,69 @@ Catalog of all port traits, use case traits, services, and adapters per bounded 
 
 ---
 
+## viacep
+
+### Port (`domain/ports/viacep_port.rs`)
+
+| Trait | Method |
+|-------|--------|
+| `ViaCepPort` | `fetch_address(cep) -> ViaCepAddressModel` |
+
+**Error enum:** `ViaCepError::NotFound { cep }`, `ViaCepError::Service(String)`
+
+### Model (`domain/models/viacep_model.rs`)
+
+`ViaCepAddressModel` — fields: `cep`, `logradouro`, `complemento`, `unidade`, `bairro`, `localidade`, `uf`, `estado`, `regiao`, `ibge`, `gia`, `ddd`, `siafi`
+
+### Adapter (`adapters/driven/http_client.rs`)
+
+`ViaCepClient` — implements `ViaCepPort` using `reqwest`. Calls `https://viacep.com.br/ws/{cep}/json`. Handles three scenarios: valid address (deserializes), invalid CEP (`erro: true` → `NotFound`), HTTP failure (5xx → `NotFound`, network → `Service`).
+
+**Constructor:** `ViaCepClient::new()` (production URL), `ViaCepClient::with_base_url(url)` (for testing with mock servers).
+
+**Tests:** 3 contract tests with `wiremock` (valid CEP, invalid CEP, HTTP failure).
+
+---
+
+## integration tests
+
+### client (`client/tests/client_integration.rs`)
+
+15 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- CRUD: `create_and_find_client`, `list_clients_returns_all`, `update_client_changes_name`, `activate_and_deactivate_client`, `delete_client_removes_row`, `find_by_document_returns_none_for_missing`, `find_by_document_returns_client`
+- Edge cases: `find_client_by_id_returns_error_when_not_found`, `update_nonexistent_client_returns_error`, `delete_nonexistent_client_returns_error`, `activate_already_active_client`, `deactivate_already_inactive_client`, `register_client_with_duplicate_document_returns_error`, `update_client_with_duplicate_document_succeeds_without_app_check`, `list_clients_returns_empty_when_no_clients_exist`
+
+### location (`location/tests/location_integration.rs`)
+
+6 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- `create_and_find_location`, `create_location_with_same_address_returns_existing`, `list_locations_returns_all`, `update_location_changes_fields`, `delete_location_removes_row`, `find_location_returns_not_found_for_missing`
+
+### contact (`contact/tests/contact_integration.rs`)
+
+13 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- Contact: `create_and_find_contact`, `register_contact_with_duplicate_email_returns_error`, `update_contact_email`, `list_contacts_returns_all`, `list_contacts_returns_empty_when_none_exist`
+- Phone: `add_phone_to_contact`, `add_duplicate_phone_returns_error`, `list_phones_for_contact`, `list_phones_returns_empty_when_none_exist`, `update_phone`, `remove_phone`
+- Edge: `find_contact_returns_not_found_for_missing`, `find_phone_returns_not_found_for_missing`
+
+### project (`project/tests/project_integration.rs`)
+
+22 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- CRUD: `create_and_find_project`, `create_project_removes_accents`, `update_project_changes_name`, `delete_project_removes_row`, `list_projects_returns_all`, `list_projects_returns_empty_when_none_exist`, `find_project_returns_not_found_for_missing`, `update_nonexistent_project_returns_error`, `delete_nonexistent_project_returns_error`
+- Status: `start_project`, `pause_project`, `complete_project`, `cancel_project`, `start_already_started_project_returns_error`
+- Stages: `create_stage`, `update_stage`
+- Allocations: `create_allocation`, `list_allocations_for_project`, `update_allocation`
+- Reports: `get_cost_report_for_empty_project`, `get_progress_report_for_empty_project`, `get_history_report_for_collaborator`
+
+### collaborator (`collaborator/tests/collaborator_integration.rs`)
+
+17 tests using `#[sqlx::test(migrations = "../migrations")]`:
+- CRUD: `create_and_find_collaborator`, `create_collaborator_removes_accents`, `update_collaborator_changes_name`, `delete_collaborator_removes_row`, `list_collaborators_returns_all`, `list_collaborators_returns_empty_when_none_exist`, `find_collaborator_returns_not_found_for_missing`
+- Validation: `register_collaborator_with_duplicate_cpf_returns_error`, `register_collaborator_with_invalid_cpf_returns_error`
+- Status: `activate_collaborator`, `deactivate_collaborator`, `activate_already_active_collaborator_returns_error`, `deactivate_already_inactive_collaborator_returns_error`
+- Edge: `update_nonexistent_collaborator_returns_error`, `delete_nonexistent_collaborator_returns_error`, `find_collaborator_by_document_returns_none_for_missing`, `find_collaborator_by_document_returns_collaborator`
+
+---
+
 ## client
 
 ### Repository Ports (`domain/ports/client_repository.rs`)

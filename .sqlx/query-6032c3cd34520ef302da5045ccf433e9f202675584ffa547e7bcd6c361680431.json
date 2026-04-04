@@ -20,23 +20,23 @@
       },
       {
         "ordinal": 3,
-        "name": "tx_status",
+        "name": "tx_doc",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
+        "name": "tx_status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
         "name": "ts_client_created_at",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "ts_client_updated_at",
         "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 6,
-        "name": "tx_doc",
-        "type_info": "Varchar"
       }
     ],
     "parameters": {

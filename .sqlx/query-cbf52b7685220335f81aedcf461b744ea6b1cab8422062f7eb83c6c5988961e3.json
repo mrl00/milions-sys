@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO locations.tb_location (\n                pk_location,\n                tx_street,\n                tx_number,\n                tx_city,\n                tx_state,\n                tx_zipcode,\n                tx_public_space,\n                tx_address_complement,\n                tx_unit,\n                tx_neighborhood,\n                tx_locality,\n                tx_region,\n                tx_ibge,\n                tx_gia,\n                tx_ddd,\n                tx_siafi\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n            ON CONFLICT (nr_hash) DO UPDATE SET nr_hash = EXCLUDED.nr_hash\n            RETURNING *\n            ",
+  "query": "\n            INSERT INTO locations.tb_location (\n                pk_location,\n                tx_street,\n                tx_number,\n                tx_city,\n                tx_state,\n                tx_zipcode,\n                tx_public_space,\n                tx_address_complement,\n                tx_unit,\n                tx_neighborhood,\n                tx_locality,\n                tx_region,\n                tx_ibge,\n                tx_gia,\n                tx_ddd,\n                tx_siafi\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n            ON CONFLICT (nr_hash) DO NOTHING\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -144,8 +144,8 @@
       true,
       false,
       false,
-      false
+      true
     ]
   },
-  "hash": "4551890cb518b28f90992d0b5d52ed4a47885d8cfcad79a0261acb3371601ef5"
+  "hash": "cbf52b7685220335f81aedcf461b744ea6b1cab8422062f7eb83c6c5988961e3"
 }

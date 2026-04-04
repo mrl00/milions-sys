@@ -18,6 +18,13 @@ Hard rules that must not be violated.
 - No circular dependencies between crates
 - No bounded context depends on another bounded context's domain
 
+## Testing
+
+- Unit tests use mocks (`MockRepo`, `MockRegistration`) — no database required
+- Route tests verify HTTP status codes and routing configuration
+- External API adapters (ViaCEP) use `wiremock` contract tests — never hit real APIs
+- Integration tests with `sqlx::test` + real PostgreSQL planned for full-stack scenarios
+
 ## Naming
 
 - Repository port traits: short names (`FindById`, `CreateClient`, `FindByDocument`)
