@@ -19,11 +19,13 @@
 
 ## Medium Priority
 
-- [ ] Implement viacep crate — HTTP client adapter for ViaCEP API
+- [x] Implement viacep crate — HTTP client adapter for ViaCEP API
 - [x] Implement Stage CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Allocation CRUD — domain ports, service, repository (only models existed)
 - [x] Implement Reports — cost, progress, history queries
-- [x] Add unit tests per bounded context (location: 16, contact: 21, collaborator: 17, client: 16, project: 14)
+- [x] Add unit tests per bounded context (settings: 7, client: 22, collaborator: 22, contact: 26, location: 18, project: 32, viacep: 3)
+- [x] Add route unit tests for all bounded contexts (53 tests total)
+- [ ] Add integration tests with `sqlx::test` + real PostgreSQL for full-stack scenarios
 - [ ] Add structured tracing/logging middleware
 - [ ] Implement Keycloak JWT auth (currently standby per `05-security.md`)
 - [ ] Implement pagination (`page`/`per_page`) for list endpoints
@@ -42,8 +44,9 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-91 unit tests pass across all crates (settings: 7, client: 16, collaborator: 17, contact: 21, location: 14, project: 14).
+153 unit tests pass across all crates.
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
 Config files live in `settings/app_config/`.
+ViaCEP HTTP client adapter implemented with contract tests using `wiremock`.
