@@ -44,9 +44,9 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-153 unit tests pass across all crates.
+156 unit tests pass across all crates (settings: 7, client: 22, collaborator: 22, contact: 26, location: 18, project: 32, viacep: 3, route tests: 53).
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
 Config files live in `settings/app_config/`.
-ViaCEP HTTP client adapter implemented with contract tests using `wiremock`.
+ViaCEP HTTP client adapter implemented with `wiremock` contract tests.
