@@ -30,6 +30,7 @@
 
 ## Low Priority (code quality)
 
+- [ ] Refactor `ClientService` to use `Arc<dyn Trait>` instead of importing concrete repository types from other crates — restores hexagonal architecture dependency direction
 - [ ] Implement complete collaborator registration (contact, phones, address, join tables)
 - [ ] Fix `collaborator_name` in history report (project crate can't access collaborator data)
 - [ ] Implement Service Types & Project Services CRUD (tables exist, zero code)
@@ -41,7 +42,8 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-86 unit tests pass across all crates.
+91 unit tests pass across all crates (settings: 7, client: 16, collaborator: 17, contact: 21, location: 14, project: 14).
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
+Config files live in `settings/app_config/`.
