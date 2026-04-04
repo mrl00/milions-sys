@@ -2,6 +2,25 @@
 
 Catalog of all port traits, use case traits, services, and adapters per bounded context.
 
+## settings
+
+### Config (`src/lib.rs`)
+
+| Struct / Enum | Fields |
+|---------------|--------|
+| `Settings` | `database: DatabaseSettings`, `application: ApplicationSettings` |
+| `DatabaseSettings` | `port: u16`, `username`, `password: SecretBox<String>`, `host`, `database_name`, `require_ssl: bool` |
+| `ApplicationSettings` | `port: u16`, `host` |
+| `Environment` | `Development`, `Production` (derives `Debug`) |
+
+**Methods:** `DatabaseSettings::connection_string()`, `DatabaseSettings::connection_without_db_string()`, `Environment::as_str()`, `Environment::try_from<String>`, `get_config() -> Settings`
+
+**Config files:** `settings/app_config/{base,development,production}.yaml`
+
+**Tests:** 7 unit tests in `src/lib.rs` (connection strings, password redaction, environment parsing)
+
+---
+
 ## client
 
 ### Repository Ports (`domain/ports/client_repository.rs`)

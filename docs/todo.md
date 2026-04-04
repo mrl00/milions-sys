@@ -42,7 +42,8 @@
 
 All 29 API endpoints are wired and registering via `configure()` functions.
 Startup wiring uses `pub fn build(pool: PgPool)` per context.
-84 unit tests pass across all crates.
+91 unit tests pass across all crates (settings: 7, client: 16, collaborator: 17, contact: 21, location: 14, project: 14).
 All error messages are in English.
 Composite repository traits replace bloated trait bounds.
 All multi-field UPDATE queries use COALESCE for partial updates.
+Config files live in `settings/app_config/`.
