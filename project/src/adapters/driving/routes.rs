@@ -74,7 +74,6 @@ async fn create_project(
         total_area_m2: parse_bd(&body.total_area_m2),
         estimated_cost: parse_bd(&body.estimated_cost),
         notes: body.notes.clone(),
-        client_id: body.client_id,
         address_id: body.address_id,
     };
 

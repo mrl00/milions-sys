@@ -16,7 +16,6 @@ pub struct CreateProjectInput {
     pub total_area_m2: Option<BigDecimal>,
     pub estimated_cost: Option<BigDecimal>,
     pub notes: Option<String>,
-    pub client_id: Uuid,
     pub address_id: Uuid,
 }
 
