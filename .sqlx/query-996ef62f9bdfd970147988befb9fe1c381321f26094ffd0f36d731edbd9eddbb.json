@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM clients.tb_project\n            WHERE fk_client = $1\n            ",
+  "query": "\n            DELETE FROM project.tb_project\n            WHERE pk_project = $1\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -80,11 +80,6 @@
       },
       {
         "ordinal": 15,
-        "name": "fk_client",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 16,
         "name": "fk_address",
         "type_info": "Uuid"
       }
@@ -110,9 +105,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "6b1beaa6fb03cdbeab4409f9e839407d7ebc4e2069d73164bc2ded4f0c20a1ff"
+  "hash": "996ef62f9bdfd970147988befb9fe1c381321f26094ffd0f36d731edbd9eddbb"
 }

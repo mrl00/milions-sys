@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO clients.tb_project_daily_allocation (\n                pk_project_daily_allocation, fk_project, fk_collaborator,\n                dt_work_date, nr_hours_worked, nr_hourly_rate_snapshot,\n                tx_notes, bl_present\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n            RETURNING *\n            ",
+  "query": "\n            SELECT *\n            FROM project.tb_project_daily_allocation\n            WHERE pk_project_daily_allocation = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -61,14 +61,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Uuid",
-        "Uuid",
-        "Date",
-        "Numeric",
-        "Numeric",
-        "Text",
-        "Bool"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -85,5 +78,5 @@
       false
     ]
   },
-  "hash": "5f2551ba7f32c1347abc1c88dcd163bcfce92da63001beca53d095f3fb4f8de4"
+  "hash": "7dea202bfc91073a74a43225f02ac6d072da28baa7147664cf8703d414d090f9"
 }

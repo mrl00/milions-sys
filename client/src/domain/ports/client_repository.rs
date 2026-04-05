@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use crate::domain::errors::ClientError;
+use crate::domain::models::db::client_project_row::{ClientProjectRow, CreateClientProjectRow};
 use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
 
 #[async_trait]
@@ -41,6 +42,22 @@ pub trait CreateClientWithTx: Send + Sync {
         tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         input: CreateClientRow,
     ) -> Result<ClientRow, ClientError>;
+}
+
+#[async_trait]
+pub trait CreateClientProject: Send + Sync {
+    async fn create_client_project(
+        &self,
+        input: CreateClientProjectRow,
+    ) -> Result<ClientProjectRow, ClientError>;
+}
+
+#[async_trait]
+pub trait FindProjectsByClientId: Send + Sync {
+    async fn find_projects_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Vec<ClientProjectRow>, ClientError>;
 }
 
 pub trait ClientRepository:

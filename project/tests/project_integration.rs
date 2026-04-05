@@ -22,8 +22,8 @@ fn make_service(pool: PgPool) -> ConcreteProjectService {
     ConcreteProjectService::new(PgProjectRepository::new(pool.clone()))
 }
 
-/// Creates a test client and location, returning their IDs for use in project creation.
-async fn create_test_fixtures(pool: &PgPool) -> (uuid::Uuid, uuid::Uuid) {
+/// Creates a test client and location, returning the location ID for use in project creation.
+async fn create_test_fixtures(pool: &PgPool) -> uuid::Uuid {
     let client_id = uuid::Uuid::now_v7();
     let location_id = uuid::Uuid::now_v7();
 
@@ -48,7 +48,7 @@ async fn create_test_fixtures(pool: &PgPool) -> (uuid::Uuid, uuid::Uuid) {
     .await
     .expect("create test location");
 
-    (client_id, location_id)
+    location_id
 }
 
 /// Creates a test collaborator, returning its ID for use in allocation creation.
@@ -67,7 +67,7 @@ async fn create_test_collaborator(pool: &PgPool) -> uuid::Uuid {
     collaborator_id
 }
 
-fn make_project_row(name: &str, client_id: uuid::Uuid, address_id: uuid::Uuid) -> CreateProjectRow {
+fn make_project_row(name: &str, address_id: uuid::Uuid) -> CreateProjectRow {
     CreateProjectRow {
         tx_name: name.to_string(),
         tx_description: None,
@@ -77,7 +77,6 @@ fn make_project_row(name: &str, client_id: uuid::Uuid, address_id: uuid::Uuid) -
         nr_total_area_m2: None,
         nr_estimated_cost: None,
         tx_notes: None,
-        fk_client: client_id,
         fk_address: address_id,
     }
 }
@@ -87,7 +86,7 @@ fn make_project_row(name: &str, client_id: uuid::Uuid, address_id: uuid::Uuid) -
 #[sqlx::test(migrations = "../migrations")]
 async fn create_and_find_project(pool: PgPool) {
     let service = make_service(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let input = CreateProjectInput {
         name: "Test Project".to_string(),
@@ -97,7 +96,6 @@ async fn create_and_find_project(pool: PgPool) {
         total_area_m2: None,
         estimated_cost: None,
         notes: None,
-        client_id,
         address_id,
     };
 
@@ -118,7 +116,7 @@ async fn create_and_find_project(pool: PgPool) {
 #[sqlx::test(migrations = "../migrations")]
 async fn create_project_removes_accents(pool: PgPool) {
     let service = make_service(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let input = CreateProjectInput {
         name: "Projeto São João".to_string(),
@@ -128,7 +126,6 @@ async fn create_project_removes_accents(pool: PgPool) {
         total_area_m2: None,
         estimated_cost: None,
         notes: None,
-        client_id,
         address_id,
     };
 
@@ -147,10 +144,10 @@ async fn create_project_removes_accents(pool: PgPool) {
 async fn update_project_changes_name(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("Old Name", client_id, address_id))
+        .create(make_project_row("Old Name", address_id))
         .await
         .expect("create project");
 
@@ -180,10 +177,10 @@ async fn update_project_changes_name(pool: PgPool) {
 async fn delete_project_removes_row(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("To Delete", client_id, address_id))
+        .create(make_project_row("To Delete", address_id))
         .await
         .expect("create project");
 
@@ -199,13 +196,13 @@ async fn delete_project_removes_row(pool: PgPool) {
 async fn list_projects_returns_all(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
-    repo.create(make_project_row("Project A", client_id, address_id))
+    repo.create(make_project_row("Project A", address_id))
         .await
         .expect("create project A");
 
-    repo.create(make_project_row("Project B", client_id, address_id))
+    repo.create(make_project_row("Project B", address_id))
         .await
         .expect("create project B");
 
@@ -280,10 +277,10 @@ async fn delete_nonexistent_project_returns_error(pool: PgPool) {
 async fn start_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("Start Me", client_id, address_id))
+        .create(make_project_row("Start Me", address_id))
         .await
         .expect("create project");
 
@@ -298,10 +295,10 @@ async fn start_project(pool: PgPool) {
 async fn pause_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("Pause Me", client_id, address_id))
+        .create(make_project_row("Pause Me", address_id))
         .await
         .expect("create project");
 
@@ -320,10 +317,10 @@ async fn pause_project(pool: PgPool) {
 async fn complete_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("Complete Me", client_id, address_id))
+        .create(make_project_row("Complete Me", address_id))
         .await
         .expect("create project");
 
@@ -342,10 +339,10 @@ async fn complete_project(pool: PgPool) {
 async fn cancel_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
-        .create(make_project_row("Cancel Me", client_id, address_id))
+        .create(make_project_row("Cancel Me", address_id))
         .await
         .expect("create project");
 
@@ -362,7 +359,7 @@ async fn start_already_started_project_returns_error(pool: PgPool) {
 
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let created = repo
         .create(CreateProjectRow {
@@ -374,7 +371,6 @@ async fn start_already_started_project_returns_error(pool: PgPool) {
             nr_total_area_m2: None,
             nr_estimated_cost: None,
             tx_notes: None,
-            fk_client: client_id,
             fk_address: address_id,
         })
         .await
@@ -391,10 +387,10 @@ async fn start_already_started_project_returns_error(pool: PgPool) {
 async fn create_stage(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let project = repo
-        .create(make_project_row("With Stage", client_id, address_id))
+        .create(make_project_row("With Stage", address_id))
         .await
         .expect("create project");
 
@@ -419,10 +415,10 @@ async fn create_stage(pool: PgPool) {
 async fn update_stage(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let project = repo
-        .create(make_project_row("Update Stage", client_id, address_id))
+        .create(make_project_row("Update Stage", address_id))
         .await
         .expect("create project");
 
@@ -464,11 +460,11 @@ async fn update_stage(pool: PgPool) {
 async fn create_allocation(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
     let collaborator_id = create_test_collaborator(&pool).await;
 
     let project = repo
-        .create(make_project_row("With Allocation", client_id, address_id))
+        .create(make_project_row("With Allocation", address_id))
         .await
         .expect("create project");
 
@@ -493,11 +489,11 @@ async fn create_allocation(pool: PgPool) {
 async fn list_allocations_for_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
     let collaborator_id = create_test_collaborator(&pool).await;
 
     let project = repo
-        .create(make_project_row("List Allocations", client_id, address_id))
+        .create(make_project_row("List Allocations", address_id))
         .await
         .expect("create project");
 
@@ -538,11 +534,11 @@ async fn list_allocations_for_project(pool: PgPool) {
 async fn update_allocation(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
     let collaborator_id = create_test_collaborator(&pool).await;
 
     let project = repo
-        .create(make_project_row("Update Allocation", client_id, address_id))
+        .create(make_project_row("Update Allocation", address_id))
         .await
         .expect("create project");
 
@@ -590,10 +586,10 @@ async fn update_allocation(pool: PgPool) {
 async fn get_cost_report_for_empty_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let project = repo
-        .create(make_project_row("Cost Report", client_id, address_id))
+        .create(make_project_row("Cost Report", address_id))
         .await
         .expect("create project");
 
@@ -608,10 +604,10 @@ async fn get_cost_report_for_empty_project(pool: PgPool) {
 async fn get_progress_report_for_empty_project(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
 
     let project = repo
-        .create(make_project_row("Progress Report", client_id, address_id))
+        .create(make_project_row("Progress Report", address_id))
         .await
         .expect("create project");
 
@@ -627,11 +623,11 @@ async fn get_progress_report_for_empty_project(pool: PgPool) {
 async fn get_history_report_for_collaborator(pool: PgPool) {
     let service = make_service(pool.clone());
     let repo = PgProjectRepository::new(pool.clone());
-    let (client_id, address_id) = create_test_fixtures(&pool).await;
+    let address_id = create_test_fixtures(&pool).await;
     let collaborator_id = create_test_collaborator(&pool).await;
 
     let project = repo
-        .create(make_project_row("History Report", client_id, address_id))
+        .create(make_project_row("History Report", address_id))
         .await
         .expect("create project");
 

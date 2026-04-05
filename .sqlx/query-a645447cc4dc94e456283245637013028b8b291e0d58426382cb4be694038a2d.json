@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM clients.tb_project_stage\n            WHERE pk_project_stage = $1\n            ",
+  "query": "\n            SELECT *\n            FROM project.tb_project_stage\n            WHERE pk_project_stage = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -78,5 +78,5 @@
       false
     ]
   },
-  "hash": "90d84749bdaf237534c5dae3a9e4eda0341bfff714d884b03f83dae272476e77"
+  "hash": "a645447cc4dc94e456283245637013028b8b291e0d58426382cb4be694038a2d"
 }
