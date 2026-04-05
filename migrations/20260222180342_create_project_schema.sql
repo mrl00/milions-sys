@@ -1,114 +1,16 @@
 -- =============================================================================
--- SCHEMA: Gerenciamento de Projetos de Obras com foco em Pintura
--- Banco de dados: PostgreSQL
--- Convenções:
---   tb_   → tabelas
---   pk_   → primary key (UUID, gerado pela aplicação)
---   fk_   → foreign key
---   idx_  → índice único auto-incrementado (SERIAL)
---   tx_   → colunas texto/varchar
---   nr_   → colunas numéricas (integer, numeric, decimal)
---   dt_   → colunas date
---   ts_   → colunas timestamp
---   bl_   → colunas boolean
+-- SCHEMA PROJECT
+-- Agrupa todas as entidades relacionadas a projetos de obras:
+-- projetos (tb_project), etapas (tb_project_stage), tipos de serviço
+-- (tb_service_type), serviços contratados (tb_project_service) e
+-- alocação diária de colaboradores (tb_project_daily_allocation).
+--
+-- Depende dos schemas externos:
+--   clients      → tb_client (via tabela de ligação tb_client_project)
+--   locations    → tb_location (endereço físico da obra)
+--   collaborators → tb_collaborator (alocação diária)
 -- =============================================================================
-
--- =============================================================================
--- SCHEMA CLIENTS
--- Agrupa todas as entidades relacionadas a clientes, projetos e alocações.
--- Depende dos schemas: contacts (tb_contact), locations (tb_location)
---                      e collaborators (tb_collaborator).
--- =============================================================================
-CREATE SCHEMA IF NOT EXISTS clients;
-
-
--- =============================================================================
--- CLIENTE
--- Pessoa física ou jurídica contratante da obra.
--- Um cliente pode ter múltiplos contatos (tb_client_contact),
--- múltiplos endereços (tb_client_address) e múltiplos projetos (tb_project).
--- =============================================================================
-CREATE TABLE clients.tb_client
-(
-    pk_client            UUID                    NOT NULL,
-    idx_client           SERIAL                  NOT NULL,
-    tx_name              VARCHAR(64)             NOT NULL,
-    tx_doc               VARCHAR(23)            NOT NULL,
-    tx_status            VARCHAR(32)             NOT NULL,
-    ts_client_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    ts_client_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-
-    CONSTRAINT pk_client PRIMARY KEY (pk_client),
-    CONSTRAINT uq_idx_client UNIQUE (idx_client),
-    CONSTRAINT uq_tx_doc UNIQUE (tx_doc)
-);
-
-
--- =============================================================================
--- CONTATO DO CLIENTE
--- Tabela de associação (N:N) entre clientes e contatos.
--- Os contatos são gerenciados no schema externo contacts.tb_contact.
--- As constraints UNIQUE em fk_client e fk_contact modelam relação 1:1
--- (cada cliente tem um contato principal e cada contato pertence a um cliente).
--- Remova os UNIQUE se a regra de negócio permitir múltiplos contatos por cliente.
--- =============================================================================
-CREATE TABLE clients.tb_client_contact
-(
-    pk_client_contact            UUID                    NOT NULL,
-    idx_client_contact           SERIAL                  NOT NULL,
-    fk_client                    UUID                    NOT NULL,
-    fk_contact                   UUID                    NOT NULL,
-    ts_client_contact_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    ts_client_contact_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-
-    CONSTRAINT pk_client_contact PRIMARY KEY (pk_client_contact),
-    CONSTRAINT uq_idx_client_contact UNIQUE (idx_client_contact),
-    CONSTRAINT uq_fk_client_contact_client UNIQUE (fk_client),
-    CONSTRAINT uq_fk_client_contact_contact UNIQUE (fk_contact),
-    CONSTRAINT fk_client_contact_client FOREIGN KEY (fk_client)
-        REFERENCES clients.tb_client (pk_client)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_client_contact_contact FOREIGN KEY (fk_contact)
-        REFERENCES contacts.tb_contact (pk_contact)
-        ON DELETE RESTRICT
-);
-
--- Índices de performance para buscas por cliente e por contato
-CREATE INDEX idx_tb_client_contact_fk_client
-    ON clients.tb_client_contact (fk_client);
-CREATE INDEX idx_tb_client_contact_fk_contact
-    ON clients.tb_client_contact (fk_contact);
-
-
--- =============================================================================
--- ENDEREÇO DO CLIENTE
--- Tabela de associação entre clientes e localizações físicas.
--- Os endereços são gerenciados no schema externo locations.tb_location,
--- permitindo reuso de endereços entre entidades do sistema.
--- Um cliente pode ter múltiplos endereços (ex: sede, filial, obra).
--- =============================================================================
-CREATE TABLE clients.tb_client_address
-(
-    pk_client_address            UUID                    NOT NULL,
-    idx_client_address           SERIAL                  NOT NULL,
-    fk_client                    UUID                    NOT NULL,
-    fk_address                   UUID                    NOT NULL,
-    ts_client_address_created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    ts_client_address_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-
-    CONSTRAINT pk_client_address PRIMARY KEY (pk_client_address),
-    CONSTRAINT uq_idx_client_address UNIQUE (idx_client_address),
-    CONSTRAINT fk_client_address_client FOREIGN KEY (fk_client)
-        REFERENCES clients.tb_client (pk_client)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_client_address_location FOREIGN KEY (fk_address)
-        REFERENCES locations.tb_location (pk_location)
-        ON DELETE RESTRICT
-);
-
--- Índices de performance para buscas por cliente e por endereço
-CREATE INDEX idx_tb_client_address_fk_client ON clients.tb_client_address (fk_client);
-CREATE INDEX idx_tb_client_address_fk_address ON clients.tb_client_address (fk_address);
+CREATE SCHEMA IF NOT EXISTS project;
 
 
 -- =============================================================================
@@ -118,8 +20,9 @@ CREATE INDEX idx_tb_client_address_fk_address ON clients.tb_client_address (fk_a
 -- etapas (tb_project_stage), serviços contratados (tb_project_service)
 -- e alocação diária de colaboradores (tb_project_daily_allocation).
 -- nr_actual_cost deve ser atualizado pela aplicação conforme despesas são lançadas.
+-- O vínculo com cliente é feito via clients.tb_client_project (1:N).
 -- =============================================================================
-CREATE TABLE clients.tb_project
+CREATE TABLE project.tb_project
 (
     pk_project            UUID         NOT NULL,
     idx_project           SERIAL       NOT NULL,
@@ -136,30 +39,25 @@ CREATE TABLE clients.tb_project
     bl_active             BOOLEAN      NOT NULL DEFAULT TRUE,
     ts_project_created_at TIMESTAMP    NOT NULL DEFAULT NOW(),
     ts_project_updated_at TIMESTAMP    NOT NULL DEFAULT NOW(),
-    fk_client             UUID         NOT NULL,
     fk_address            UUID         NOT NULL,
 
     CONSTRAINT pk_project PRIMARY KEY (pk_project),
     CONSTRAINT uq_idx_project UNIQUE (idx_project),
     CONSTRAINT ck_project_status CHECK (tx_status IN ('planning', 'in_progress', 'paused', 'completed', 'cancelled')),
-    CONSTRAINT fk_project_client FOREIGN KEY (fk_client)
-        REFERENCES clients.tb_client (pk_client)
-        ON DELETE CASCADE,
     CONSTRAINT fk_project_address FOREIGN KEY (fk_address)
         REFERENCES locations.tb_location (pk_location)
         ON DELETE RESTRICT
 );
 
--- Índices de performance para buscas por cliente e por endereço da obra
-CREATE INDEX idx_tb_project_fk_client ON clients.tb_project (fk_client);
-CREATE INDEX idx_tb_project_fk_address ON clients.tb_project (fk_address);
+-- Índice de performance para busca por endereço da obra
+CREATE INDEX idx_tb_project_fk_address ON project.tb_project (fk_address);
 
 
 -- =============================================================================
 -- ETAPA DO PROJETO
 -- Fases de execução: Preparação, Selagem, Massa Corrida, Pintura Base, Acabamento
 -- =============================================================================
-CREATE TABLE clients.tb_project_stage
+CREATE TABLE project.tb_project_stage
 (
     pk_project_stage            UUID         NOT NULL,
     idx_project_stage           SERIAL       NOT NULL,
@@ -177,7 +75,7 @@ CREATE TABLE clients.tb_project_stage
     CONSTRAINT uq_idx_project_stage UNIQUE (idx_project_stage),
     CONSTRAINT ck_project_stage_status CHECK (tx_status IN ('pending', 'in_progress', 'completed', 'skipped')),
     CONSTRAINT fk_project_stage_project FOREIGN KEY (fk_project)
-        REFERENCES clients.tb_project (pk_project)
+        REFERENCES project.tb_project (pk_project)
         ON DELETE CASCADE
 );
 
@@ -186,7 +84,7 @@ CREATE TABLE clients.tb_project_stage
 -- TIPO DE SERVIÇO
 -- Catálogo de serviços oferecidos (Pintura Interna, Textura, Massa Corrida etc.)
 -- =============================================================================
-CREATE TABLE clients.tb_service_type
+CREATE TABLE project.tb_service_type
 (
     pk_service_type            UUID         NOT NULL,
     idx_service_type           SERIAL       NOT NULL,
@@ -208,7 +106,7 @@ CREATE TABLE clients.tb_service_type
 -- SERVIÇO DO PROJETO
 -- Serviços contratados dentro de um projeto (com quantitativo e preço)
 -- =============================================================================
-CREATE TABLE clients.tb_project_service
+CREATE TABLE project.tb_project_service
 (
     pk_project_service            UUID           NOT NULL,
     idx_project_service           SERIAL         NOT NULL,
@@ -227,13 +125,13 @@ CREATE TABLE clients.tb_project_service
     CONSTRAINT uq_idx_project_service UNIQUE (idx_project_service),
     CONSTRAINT ck_project_service_status CHECK (tx_status IN ('pending', 'in_progress', 'completed')),
     CONSTRAINT fk_project_service_project FOREIGN KEY (fk_project)
-        REFERENCES clients.tb_project (pk_project)
+        REFERENCES project.tb_project (pk_project)
         ON DELETE CASCADE,
     CONSTRAINT fk_project_service_stage FOREIGN KEY (fk_project_stage)
-        REFERENCES clients.tb_project_stage (pk_project_stage)
+        REFERENCES project.tb_project_stage (pk_project_stage)
         ON DELETE SET NULL,
     CONSTRAINT fk_project_service_service_type FOREIGN KEY (fk_service_type)
-        REFERENCES clients.tb_service_type (pk_service_type)
+        REFERENCES project.tb_service_type (pk_service_type)
         ON DELETE RESTRICT
 );
 
@@ -247,7 +145,7 @@ CREATE TABLE clients.tb_project_service
 -- nr_hourly_rate_snapshot congela o valor/hora vigente no momento do registro,
 -- preservando o histórico financeiro mesmo após reajustes futuros.
 -- =============================================================================
-CREATE TABLE clients.tb_project_daily_allocation
+CREATE TABLE project.tb_project_daily_allocation
 (
     pk_project_daily_allocation          UUID      NOT NULL,
     idx_project_daily_allocation         SERIAL    NOT NULL,
@@ -266,7 +164,7 @@ CREATE TABLE clients.tb_project_daily_allocation
     -- evita duplicidade de colaborador no mesmo projeto no mesmo dia
     CONSTRAINT uq_allocation_collaborator_day UNIQUE (fk_project, fk_collaborator, dt_work_date),
     CONSTRAINT fk_allocation_project FOREIGN KEY (fk_project)
-        REFERENCES clients.tb_project (pk_project)
+        REFERENCES project.tb_project (pk_project)
         ON DELETE CASCADE,
     CONSTRAINT fk_allocation_collaborator FOREIGN KEY (fk_collaborator)
         REFERENCES collaborators.tb_collaborator (pk_collaborator)
@@ -275,6 +173,6 @@ CREATE TABLE clients.tb_project_daily_allocation
 
 -- Índices de performance para consultas de histórico por projeto e por colaborador
 CREATE INDEX idx_tb_project_daily_allocation_fk_project
-    ON clients.tb_project_daily_allocation (fk_project);
+    ON project.tb_project_daily_allocation (fk_project);
 CREATE INDEX idx_tb_project_daily_allocation_fk_collaborator
-    ON clients.tb_project_daily_allocation (fk_collaborator);
+    ON project.tb_project_daily_allocation (fk_collaborator);

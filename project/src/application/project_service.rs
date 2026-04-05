@@ -60,7 +60,6 @@ impl<R: ProjectRepository> CreateProjectUseCase for ProjectService<R> {
             nr_total_area_m2: input.total_area_m2,
             nr_estimated_cost: input.estimated_cost,
             tx_notes: input.notes,
-            fk_client: input.client_id,
             fk_address: input.address_id,
         };
 
@@ -542,8 +541,8 @@ mod tests {
     use crate::domain::ports::project_repository::{
         CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
         FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
-        FindProjectByClientId, FindProjectById, FindStageById, FindStagesByProjectId,
-        UpdateAllocation, UpdateProject, UpdateStage,
+        FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation, UpdateProject,
+        UpdateStage,
     };
     use crate::domain::ports::project_use_cases::{
         CancelProjectUseCase, CompleteProjectUseCase, DeleteProjectUseCase, FindProjectUseCase,
@@ -585,7 +584,6 @@ mod tests {
             bl_active: true,
             ts_project_created_at: now(),
             ts_project_updated_at: now(),
-            fk_client: Uuid::now_v7(),
             fk_address: Uuid::now_v7(),
         }
     }
@@ -597,11 +595,6 @@ mod tests {
         }
     }
     #[async_trait]
-    impl FindProjectByClientId for MockRepo {
-        async fn find_by_client_id(&self, _id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
-            Ok(vec![])
-        }
-    }
     #[async_trait]
     impl FindAllProjects for MockRepo {
         async fn find_all(&self) -> Result<Vec<ProjectRow>, ProjectError> {

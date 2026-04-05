@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE clients.tb_project\n            SET tx_name = COALESCE($1, tx_name),\n                tx_description = COALESCE($2, tx_description),\n                tx_status = COALESCE($3, tx_status),\n                dt_start_date = COALESCE($4, dt_start_date),\n                dt_estimated_end_date = COALESCE($5, dt_estimated_end_date),\n                dt_actual_end_date = COALESCE($6, dt_actual_end_date),\n                nr_total_area_m2 = COALESCE($7, nr_total_area_m2),\n                nr_estimated_cost = COALESCE($8, nr_estimated_cost),\n                nr_actual_cost = COALESCE($9, nr_actual_cost),\n                tx_notes = COALESCE($10, tx_notes),\n                bl_active = COALESCE($11, bl_active)\n            WHERE pk_project = $12\n            RETURNING *\n            ",
+  "query": "\n            INSERT INTO project.tb_project (\n                pk_project, tx_name, tx_description, tx_status,\n                dt_start_date, dt_estimated_end_date,\n                nr_total_area_m2, nr_estimated_cost, tx_notes,\n                fk_address\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -80,28 +80,21 @@
       },
       {
         "ordinal": 15,
-        "name": "fk_client",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 16,
         "name": "fk_address",
         "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Varchar",
         "Text",
         "Varchar",
         "Date",
         "Date",
-        "Date",
-        "Numeric",
         "Numeric",
         "Numeric",
         "Text",
-        "Bool",
         "Uuid"
       ]
     },
@@ -121,9 +114,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "d695f636c209fd5d322f3b27417e8c4e278752cca9a046e2936a144c35a6b69e"
+  "hash": "5d2f9f3f31f29903839b64e559e313162e4b5c5e38164c70df18de789fe9e750"
 }

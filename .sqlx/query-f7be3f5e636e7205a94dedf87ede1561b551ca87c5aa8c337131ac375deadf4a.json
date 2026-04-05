@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO clients.tb_project_stage (\n                pk_project_stage, fk_project, tx_name, tx_description,\n                nr_order, tx_status, dt_start_date, dt_end_date\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n            RETURNING *\n            ",
+  "query": "\n            UPDATE project.tb_project_stage\n            SET tx_name = COALESCE($1, tx_name),\n                tx_description = COALESCE($2, tx_description),\n                nr_order = COALESCE($3, nr_order),\n                tx_status = COALESCE($4, tx_status),\n                dt_start_date = COALESCE($5, dt_start_date),\n                dt_end_date = COALESCE($6, dt_end_date)\n            WHERE pk_project_stage = $7\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -61,14 +61,13 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Uuid",
         "Varchar",
         "Text",
         "Int4",
         "Varchar",
         "Date",
-        "Date"
+        "Date",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -85,5 +84,5 @@
       false
     ]
   },
-  "hash": "3944a131c5bc54fc6348ef4e5787f5694d49c6c8147ea654b86f29ac1a6c4188"
+  "hash": "f7be3f5e636e7205a94dedf87ede1561b551ca87c5aa8c337131ac375deadf4a"
 }

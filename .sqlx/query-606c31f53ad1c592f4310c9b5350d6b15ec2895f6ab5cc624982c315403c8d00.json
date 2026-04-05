@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE clients.tb_project_daily_allocation\n            SET nr_hours_worked = COALESCE($1, nr_hours_worked),\n                nr_hourly_rate_snapshot = COALESCE($2, nr_hourly_rate_snapshot),\n                tx_notes = COALESCE($3, tx_notes),\n                bl_present = COALESCE($4, bl_present)\n            WHERE pk_project_daily_allocation = $5\n            RETURNING *\n            ",
+  "query": "\n            UPDATE project.tb_project_daily_allocation\n            SET nr_hours_worked = COALESCE($1, nr_hours_worked),\n                nr_hourly_rate_snapshot = COALESCE($2, nr_hourly_rate_snapshot),\n                tx_notes = COALESCE($3, tx_notes),\n                bl_present = COALESCE($4, bl_present)\n            WHERE pk_project_daily_allocation = $5\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -82,5 +82,5 @@
       false
     ]
   },
-  "hash": "f48d477c6882df11cb51f256637cf8908e693f5677cf6d9df016fb8ba3ac1bcc"
+  "hash": "606c31f53ad1c592f4310c9b5350d6b15ec2895f6ab5cc624982c315403c8d00"
 }

@@ -8,7 +8,6 @@ use uuid::Uuid;
 pub struct CreateProjectRequest {
     pub name: String,
     pub description: Option<String>,
-    pub client_id: Uuid,
     pub address_id: Uuid,
     pub start_date: Option<NaiveDate>,
     pub estimated_end_date: Option<NaiveDate>,
@@ -45,7 +44,6 @@ pub struct ProjectResponse {
     pub actual_cost: Option<String>,
     pub notes: Option<String>,
     pub active: bool,
-    pub client_id: Uuid,
     pub address_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -66,7 +64,6 @@ impl From<crate::domain::models::db::project_rows::ProjectRow> for ProjectRespon
             actual_cost: row.nr_actual_cost.map(|v| v.to_string()),
             notes: row.tx_notes,
             active: row.bl_active,
-            client_id: row.fk_client,
             address_id: row.fk_address,
             created_at: row.ts_project_created_at,
             updated_at: row.ts_project_updated_at,

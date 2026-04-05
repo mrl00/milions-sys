@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM clients.tb_project\n            ",
+  "query": "\n            SELECT *\n            FROM project.tb_project\n            WHERE pk_project = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -80,17 +80,14 @@
       },
       {
         "ordinal": 15,
-        "name": "fk_client",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 16,
         "name": "fk_address",
         "type_info": "Uuid"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -108,9 +105,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "8438fbd0c5f7819ade10ffd580abb0d81ddb16c2a4e071b1a5fec872a0cba599"
+  "hash": "b4650b8cfd2a543706acc3f7a5918da0928cce018e2021b8803a33bf52d4d98a"
 }

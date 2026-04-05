@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                a.pk_project_daily_allocation,\n                a.fk_project,\n                a.fk_collaborator,\n                a.dt_work_date,\n                a.nr_hours_worked,\n                a.nr_hourly_rate_snapshot,\n                a.tx_notes,\n                a.bl_present,\n                a.ts_allocated_collaborator_created_at,\n                a.ts_allocated_collaborator_updated_at,\n                p.tx_name as project_name\n            FROM clients.tb_project_daily_allocation a\n            JOIN clients.tb_project p ON a.fk_project = p.pk_project\n            WHERE a.fk_collaborator = $1\n            ORDER BY a.dt_work_date DESC\n            ",
+  "query": "\n            INSERT INTO project.tb_project_daily_allocation (\n                pk_project_daily_allocation, fk_project, fk_collaborator,\n                dt_work_date, nr_hours_worked, nr_hourly_rate_snapshot,\n                tx_notes, bl_present\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -10,58 +10,65 @@
       },
       {
         "ordinal": 1,
+        "name": "idx_project_daily_allocation",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
         "name": "fk_project",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "fk_collaborator",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "dt_work_date",
         "type_info": "Date"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "nr_hours_worked",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "nr_hourly_rate_snapshot",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "tx_notes",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "bl_present",
         "type_info": "Bool"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "ts_allocated_collaborator_created_at",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "ts_allocated_collaborator_updated_at",
         "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 10,
-        "name": "project_name",
-        "type_info": "Varchar"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Numeric",
+        "Numeric",
+        "Text",
+        "Bool"
       ]
     },
     "nullable": [
@@ -69,14 +76,14 @@
       false,
       false,
       false,
-      true,
-      true,
-      true,
       false,
+      true,
+      true,
+      true,
       false,
       false,
       false
     ]
   },
-  "hash": "f33345fe3df73045957e7f9a20255fd9912ca2ac1801628a631ef466e2b94747"
+  "hash": "8223e6ef27d516805b2726bea1e7d549e2c2daa442471f16e8ff6d895eeea9d1"
 }
