@@ -19,7 +19,6 @@ pub struct ProjectRow {
     pub bl_active: bool,
     pub ts_project_created_at: NaiveDateTime,
     pub ts_project_updated_at: NaiveDateTime,
-    pub fk_client: Uuid,
     pub fk_address: Uuid,
 }
 
@@ -33,7 +32,6 @@ pub struct CreateProjectRow {
     pub nr_total_area_m2: Option<BigDecimal>,
     pub nr_estimated_cost: Option<BigDecimal>,
     pub tx_notes: Option<String>,
-    pub fk_client: Uuid,
     pub fk_address: Uuid,
 }
 

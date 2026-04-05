@@ -32,7 +32,7 @@ impl FindProjectById for PgProjectRepository {
             ProjectRow,
             r#"
             SELECT *
-            FROM clients.tb_project
+            FROM project.tb_project
             WHERE pk_project = $1
             "#,
             &uuid,
@@ -44,31 +44,13 @@ impl FindProjectById for PgProjectRepository {
 }
 
 #[async_trait]
-impl FindProjectByClientId for PgProjectRepository {
-    async fn find_by_client_id(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError> {
-        sqlx::query_as!(
-            ProjectRow,
-            r#"
-            SELECT *
-            FROM clients.tb_project
-            WHERE fk_client = $1
-            "#,
-            &client_id,
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| db_err("find projects by client", e))
-    }
-}
-
-#[async_trait]
 impl FindAllProjects for PgProjectRepository {
     async fn find_all(&self) -> Result<Vec<ProjectRow>, ProjectError> {
         sqlx::query_as!(
             ProjectRow,
             r#"
             SELECT *
-            FROM clients.tb_project
+            FROM project.tb_project
             "#
         )
         .fetch_all(&self.pool)
@@ -83,13 +65,13 @@ impl CreateProject for PgProjectRepository {
         sqlx::query_as!(
             ProjectRow,
             r#"
-            INSERT INTO clients.tb_project (
+            INSERT INTO project.tb_project (
                 pk_project, tx_name, tx_description, tx_status,
                 dt_start_date, dt_estimated_end_date,
                 nr_total_area_m2, nr_estimated_cost, tx_notes,
-                fk_client, fk_address
+                fk_address
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             "#,
             Uuid::now_v7(),
@@ -101,7 +83,6 @@ impl CreateProject for PgProjectRepository {
             input.nr_total_area_m2,
             input.nr_estimated_cost,
             input.tx_notes,
-            &input.fk_client,
             &input.fk_address,
         )
         .fetch_one(&self.pool)
@@ -116,7 +97,7 @@ impl UpdateProject for PgProjectRepository {
         sqlx::query_as!(
             ProjectRow,
             r#"
-            UPDATE clients.tb_project
+            UPDATE project.tb_project
             SET tx_name = COALESCE($1, tx_name),
                 tx_description = COALESCE($2, tx_description),
                 tx_status = COALESCE($3, tx_status),
@@ -156,7 +137,7 @@ impl DeleteProject for PgProjectRepository {
         sqlx::query_as!(
             ProjectRow,
             r#"
-            DELETE FROM clients.tb_project
+            DELETE FROM project.tb_project
             WHERE pk_project = $1
             RETURNING *
             "#,
@@ -175,7 +156,7 @@ impl FindStageById for PgProjectRepository {
             ProjectStageRow,
             r#"
             SELECT *
-            FROM clients.tb_project_stage
+            FROM project.tb_project_stage
             WHERE pk_project_stage = $1
             "#,
             &uuid,
@@ -195,7 +176,7 @@ impl CreateStage for PgProjectRepository {
         sqlx::query_as!(
             ProjectStageRow,
             r#"
-            INSERT INTO clients.tb_project_stage (
+            INSERT INTO project.tb_project_stage (
                 pk_project_stage, fk_project, tx_name, tx_description,
                 nr_order, tx_status, dt_start_date, dt_end_date
             )
@@ -227,7 +208,7 @@ impl UpdateStage for PgProjectRepository {
         sqlx::query_as!(
             ProjectStageRow,
             r#"
-            UPDATE clients.tb_project_stage
+            UPDATE project.tb_project_stage
             SET tx_name = COALESCE($1, tx_name),
                 tx_description = COALESCE($2, tx_description),
                 nr_order = COALESCE($3, nr_order),
@@ -261,7 +242,7 @@ impl FindAllocationById for PgProjectRepository {
             ProjectDailyAllocationRow,
             r#"
             SELECT *
-            FROM clients.tb_project_daily_allocation
+            FROM project.tb_project_daily_allocation
             WHERE pk_project_daily_allocation = $1
             "#,
             &uuid,
@@ -282,7 +263,7 @@ impl FindAllocationsByProjectId for PgProjectRepository {
             ProjectDailyAllocationRow,
             r#"
             SELECT *
-            FROM clients.tb_project_daily_allocation
+            FROM project.tb_project_daily_allocation
             WHERE fk_project = $1
             ORDER BY dt_work_date DESC
             "#,
@@ -303,7 +284,7 @@ impl CreateAllocation for PgProjectRepository {
         sqlx::query_as!(
             ProjectDailyAllocationRow,
             r#"
-            INSERT INTO clients.tb_project_daily_allocation (
+            INSERT INTO project.tb_project_daily_allocation (
                 pk_project_daily_allocation, fk_project, fk_collaborator,
                 dt_work_date, nr_hours_worked, nr_hourly_rate_snapshot,
                 tx_notes, bl_present
@@ -336,7 +317,7 @@ impl UpdateAllocation for PgProjectRepository {
         sqlx::query_as!(
             ProjectDailyAllocationRow,
             r#"
-            UPDATE clients.tb_project_daily_allocation
+            UPDATE project.tb_project_daily_allocation
             SET nr_hours_worked = COALESCE($1, nr_hours_worked),
                 nr_hourly_rate_snapshot = COALESCE($2, nr_hourly_rate_snapshot),
                 tx_notes = COALESCE($3, tx_notes),
@@ -366,7 +347,7 @@ impl FindStagesByProjectId for PgProjectRepository {
             ProjectStageRow,
             r#"
             SELECT *
-            FROM clients.tb_project_stage
+            FROM project.tb_project_stage
             WHERE fk_project = $1
             ORDER BY nr_order ASC
             "#,
@@ -399,8 +380,8 @@ impl FindAllocationsByCollaboratorId for PgProjectRepository {
                 a.ts_allocated_collaborator_created_at,
                 a.ts_allocated_collaborator_updated_at,
                 p.tx_name as project_name
-            FROM clients.tb_project_daily_allocation a
-            JOIN clients.tb_project p ON a.fk_project = p.pk_project
+            FROM project.tb_project_daily_allocation a
+            JOIN project.tb_project p ON a.fk_project = p.pk_project
             WHERE a.fk_collaborator = $1
             ORDER BY a.dt_work_date DESC
             "#,

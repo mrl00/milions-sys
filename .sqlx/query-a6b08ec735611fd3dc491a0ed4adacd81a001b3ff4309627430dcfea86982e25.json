@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT *\n            FROM clients.tb_project_daily_allocation\n            WHERE pk_project_daily_allocation = $1\n            ",
+  "query": "\n            SELECT *\n            FROM project.tb_project_daily_allocation\n            WHERE fk_project = $1\n            ORDER BY dt_work_date DESC\n            ",
   "describe": {
     "columns": [
       {
@@ -78,5 +78,5 @@
       false
     ]
   },
-  "hash": "464d16d15a2691dfc956bea1bdeca3e4e6154fdcd39236c85033dc2e39efddc0"
+  "hash": "a6b08ec735611fd3dc491a0ed4adacd81a001b3ff4309627430dcfea86982e25"
 }

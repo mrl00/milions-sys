@@ -14,11 +14,6 @@ pub trait FindProjectById: Send + Sync {
 }
 
 #[async_trait]
-pub trait FindProjectByClientId: Send + Sync {
-    async fn find_by_client_id(&self, client_id: Uuid) -> Result<Vec<ProjectRow>, ProjectError>;
-}
-
-#[async_trait]
 pub trait FindAllProjects: Send + Sync {
     async fn find_all(&self) -> Result<Vec<ProjectRow>, ProjectError>;
 }
@@ -112,7 +107,6 @@ pub trait FindAllocationsByCollaboratorId: Send + Sync {
 
 pub trait ProjectRepository:
     FindProjectById
-    + FindProjectByClientId
     + FindAllProjects
     + CreateProject
     + UpdateProject
@@ -132,7 +126,6 @@ pub trait ProjectRepository:
 }
 impl<T> ProjectRepository for T where
     T: FindProjectById
-        + FindProjectByClientId
         + FindAllProjects
         + CreateProject
         + UpdateProject
