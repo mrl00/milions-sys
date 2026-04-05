@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE contacts.tb_contact\n            SET tx_email = $1\n            WHERE pk_contact = $2\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_contact",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "ts_contact_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_contact_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "99d27b0daf9e7637c1a62c82d03bf68299d13c5f0a4179045330db444cdebf10"
+}

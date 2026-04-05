@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                a.pk_project_daily_allocation,\n                a.fk_project,\n                a.fk_collaborator,\n                a.dt_work_date,\n                a.nr_hours_worked,\n                a.nr_hourly_rate_snapshot,\n                a.tx_notes,\n                a.bl_present,\n                a.ts_allocated_collaborator_created_at,\n                a.ts_allocated_collaborator_updated_at,\n                p.tx_name as project_name\n            FROM project.tb_project_daily_allocation a\n            JOIN project.tb_project p ON a.fk_project = p.pk_project\n            WHERE a.fk_collaborator = $1\n            ORDER BY a.dt_work_date DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_project_daily_allocation",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "fk_project",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_collaborator",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "dt_work_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "nr_hours_worked",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "nr_hourly_rate_snapshot",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "tx_notes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "bl_present",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "ts_allocated_collaborator_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "ts_allocated_collaborator_updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "project_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2ff7c2afd362da3bea9372704205d3bf9998179330b9420ddd7816d9162c8136"
+}

@@ -1,0 +1,134 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM locations.tb_location\n            ORDER BY idx_location\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_location",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_location",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_street",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "tx_number",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "tx_address_complement",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "tx_neighborhood",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "tx_public_space",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "tx_locality",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "tx_city",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "tx_state",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "tx_region",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 12,
+        "name": "tx_zipcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "tx_ddd",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 14,
+        "name": "tx_ibge",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
+        "name": "tx_gia",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 16,
+        "name": "tx_siafi",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 17,
+        "name": "ts_location_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 18,
+        "name": "ts_location_updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 19,
+        "name": "nr_hash",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d68f9912118593632200f36e0dab738a8ce0a87862fea1f26488f2080faa777c"
+}

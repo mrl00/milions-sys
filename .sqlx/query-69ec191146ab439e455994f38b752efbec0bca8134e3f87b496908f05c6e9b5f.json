@@ -1,0 +1,151 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE locations.tb_location\n            SET \n            tx_public_space = COALESCE($1, tx_public_space), \n            tx_address_complement = COALESCE($2, tx_address_complement), \n            tx_unit = COALESCE($3, tx_unit), \n            tx_neighborhood = COALESCE($4, tx_neighborhood), \n            tx_locality = COALESCE($5, tx_locality), \n            tx_region = COALESCE($6, tx_region), \n            tx_ibge = COALESCE($7, tx_ibge), \n            tx_gia = COALESCE($8, tx_gia), \n            tx_ddd = COALESCE($9, tx_ddd), \n            tx_siafi = COALESCE($10, tx_siafi), \n            tx_street = COALESCE($11, tx_street), \n            tx_number = COALESCE($12, tx_number), \n            tx_city = COALESCE($13, tx_city), \n            tx_state = COALESCE($14, tx_state), \n            tx_zipcode = COALESCE($15, tx_zipcode)\n            WHERE pk_location = $16\n            RETURNING *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_location",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_location",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "tx_unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_street",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "tx_number",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "tx_address_complement",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "tx_neighborhood",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "tx_public_space",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "tx_locality",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "tx_city",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "tx_state",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "tx_region",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 12,
+        "name": "tx_zipcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "tx_ddd",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 14,
+        "name": "tx_ibge",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
+        "name": "tx_gia",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 16,
+        "name": "tx_siafi",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 17,
+        "name": "ts_location_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 18,
+        "name": "ts_location_updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 19,
+        "name": "nr_hash",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "69ec191146ab439e455994f38b752efbec0bca8134e3f87b496908f05c6e9b5f"
+}

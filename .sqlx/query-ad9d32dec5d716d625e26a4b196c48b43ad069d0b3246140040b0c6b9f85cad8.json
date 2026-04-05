@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE contacts.tb_phone\n            SET tx_phone = $1\n            WHERE pk_phone = $2\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_phone",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_phone",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_contact",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "tx_phone",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_phone_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_phone_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ad9d32dec5d716d625e26a4b196c48b43ad069d0b3246140040b0c6b9f85cad8"
+}
