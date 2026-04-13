@@ -364,15 +364,17 @@ async fn get_history_report(
             allocations: report
                 .allocations
                 .into_iter()
-                .map(|a| crate::adapters::driving::project_dto::AllocationHistory {
-                    allocation_id: a.allocation_id,
-                    project_id: a.project_id,
-                    project_name: a.project_name,
-                    work_date: a.work_date,
-                    hours_worked: a.hours_worked.map(|v| v.to_string()),
-                    hourly_rate_snapshot: a.hourly_rate_snapshot.map(|v| v.to_string()),
-                    present: a.present,
-                })
+                .map(
+                    |a| crate::adapters::driving::project_dto::AllocationHistory {
+                        allocation_id: a.allocation_id,
+                        project_id: a.project_id,
+                        project_name: a.project_name,
+                        work_date: a.work_date,
+                        hours_worked: a.hours_worked.map(|v| v.to_string()),
+                        hourly_rate_snapshot: a.hourly_rate_snapshot.map(|v| v.to_string()),
+                        present: a.present,
+                    },
+                )
                 .collect(),
             total_days: report.total_days,
             total_hours: report.total_hours.to_string(),
@@ -586,9 +588,11 @@ mod tests {
 
     #[actix_web::test]
     async fn error_to_response_internal_error() {
-        let err = ProjectError::Infra(crate::domain::errors::infra_error::InfraError::BeginTransaction {
-            source: sqlx::Error::PoolTimedOut,
-        });
+        let err = ProjectError::Infra(
+            crate::domain::errors::infra_error::InfraError::BeginTransaction {
+                source: sqlx::Error::PoolTimedOut,
+            },
+        );
         let resp = error_to_response(err);
         assert_eq!(resp.status(), 500);
     }

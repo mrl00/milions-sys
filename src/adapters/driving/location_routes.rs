@@ -1,7 +1,9 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::location_dto::{CreateLocationRequest, LocationResponse, UpdateLocationRequest};
+use crate::adapters::driving::location_dto::{
+    CreateLocationRequest, LocationResponse, UpdateLocationRequest,
+};
 use crate::application::location_service::ConcreteLocationService;
 use crate::domain::errors::location_error::LocationError;
 use crate::domain::ports::location_use_cases;

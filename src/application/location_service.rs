@@ -26,10 +26,16 @@ impl<R: LocationRepository> LocationService<R> {
             tx_city: crate::domain::value_objects::text::remove_accents(&input.city),
             tx_state: input.state,
             tx_zipcode: input.zipcode,
-            tx_address_complement: crate::domain::value_objects::text::remove_accents(&input.complement),
-            tx_public_space: crate::domain::value_objects::text::remove_accents(&input.public_space),
+            tx_address_complement: crate::domain::value_objects::text::remove_accents(
+                &input.complement,
+            ),
+            tx_public_space: crate::domain::value_objects::text::remove_accents(
+                &input.public_space,
+            ),
             tx_unit: input.unit,
-            tx_neighborhood: crate::domain::value_objects::text::remove_accents(&input.neighborhood),
+            tx_neighborhood: crate::domain::value_objects::text::remove_accents(
+                &input.neighborhood,
+            ),
             tx_locality: crate::domain::value_objects::text::remove_accents(&input.locality),
             tx_region: input.region,
             tx_ibge: input.ibge,

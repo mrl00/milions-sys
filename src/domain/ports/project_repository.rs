@@ -1,11 +1,11 @@
-use async_trait::async_trait;
-use uuid::Uuid;
 use crate::domain::errors::project_error::ProjectError;
 use crate::domain::models::db::project_rows::{
     AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
     CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
     UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
 };
+use async_trait::async_trait;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait FindProjectById: Send + Sync {

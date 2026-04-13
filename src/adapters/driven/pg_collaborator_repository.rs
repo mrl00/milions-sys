@@ -3,13 +3,13 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::errors::collaborator_error::CollaboratorError;
+use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::collaborator_contact_row::CollaboratorContactRow;
 use crate::domain::models::db::collaborator_location_row::CollaboratorAddressRow;
 use crate::domain::models::db::collaborator_row::{
     CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
 };
 use crate::domain::ports::collaborator_repository::*;
-use crate::domain::errors::infra_error::InfraError;
 
 pub struct PgCollaboratorRepository {
     pool: PgPool,

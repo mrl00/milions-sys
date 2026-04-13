@@ -1,6 +1,6 @@
+use crate::domain::errors::infra_error::InfraError;
 use crate::domain::value_objects::phone::PhoneError;
 use uuid::Uuid;
-use crate::domain::errors::infra_error::InfraError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ContactError {

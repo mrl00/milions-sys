@@ -2,14 +2,14 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::errors::infra_error::InfraError;
+use crate::domain::errors::project_error::ProjectError;
 use crate::domain::models::db::project_rows::{
     AllocationWithProjectName, CreateProjectDailyAllocationRow, CreateProjectRow,
     CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
     UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
 };
 use crate::domain::ports::project_repository::*;
-use crate::domain::errors::infra_error::InfraError;
-use crate::domain::errors::project_error::ProjectError;
 
 pub struct PgProjectRepository {
     pool: PgPool,

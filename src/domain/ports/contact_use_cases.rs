@@ -1,8 +1,8 @@
-use async_trait::async_trait;
-use uuid::Uuid;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::models::db::contact_row::ContactRow;
 use crate::domain::models::db::phone_row::PhoneRow;
+use async_trait::async_trait;
+use uuid::Uuid;
 // --- Contact ---
 
 pub struct RegisterContactInput {

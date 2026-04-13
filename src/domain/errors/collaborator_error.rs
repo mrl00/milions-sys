@@ -1,5 +1,5 @@
-use crate::domain::value_objects::cpf::CpfError;
 use crate::domain::errors::infra_error::InfraError;
+use crate::domain::value_objects::cpf::CpfError;
 use crate::domain::value_objects::phone::PhoneError;
 use uuid::Uuid;
 

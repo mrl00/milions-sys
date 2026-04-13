@@ -1,7 +1,7 @@
-use async_trait::async_trait;
-use uuid::Uuid;
 use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::models::db::collaborator_row::CollaboratorRow;
+use async_trait::async_trait;
+use uuid::Uuid;
 
 pub struct RegisterCollaboratorInput {
     pub name: String,

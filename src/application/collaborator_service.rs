@@ -106,7 +106,9 @@ impl<R: CollaboratorRepository> UpdateCollaboratorUseCase for CollaboratorServic
             .update(
                 uuid,
                 UpdateCollaboratorRow {
-                    tx_name: input.name.map(|n| crate::domain::value_objects::text::remove_accents(&n)),
+                    tx_name: input
+                        .name
+                        .map(|n| crate::domain::value_objects::text::remove_accents(&n)),
                     tx_level: input.level,
                     tx_status: None,
                     tx_cpf: input.cpf,

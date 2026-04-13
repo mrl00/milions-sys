@@ -3,7 +3,13 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::adapters::driven::pg_client_repository::PgClientRepository;
+use crate::adapters::driven::pg_contact_repository::PgContactRepository;
+use crate::adapters::driven::pg_location_repository::PgLocationRepository;
+use crate::adapters::driven::pg_phone_repository::PgPhoneRepository;
+use crate::domain::errors::client_errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
+use crate::domain::models::db::contact_row::CreateContactRow as ContactCreateRow;
+use crate::domain::models::db::location_row::CreateLocationRow;
 use crate::domain::ports::client_repository::{
     ClientRepository, CreateClient, CreateClientWithTx, DeleteClient, FindAll, FindByDocument,
     FindById, UpdateClient as UpdateClientRepo,
@@ -13,14 +19,8 @@ use crate::domain::ports::client_use_cases::{
     FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
     RegisterClientUseCase, UpdateClientInput, UpdateClientUseCase,
 };
-use crate::adapters::driven::pg_contact_repository::PgContactRepository;
-use crate::adapters::driven::pg_phone_repository::PgPhoneRepository;
-use crate::domain::models::db::contact_row::CreateContactRow as ContactCreateRow;
-use crate::adapters::driven::pg_location_repository::PgLocationRepository;
-use crate::domain::models::db::location_row::CreateLocationRow;
 use crate::domain::value_objects::doc::Doc;
 use crate::domain::value_objects::phone::Phone;
-use crate::domain::errors::client_errors::ClientError;
 
 pub struct ClientService<R> {
     repo: R,
@@ -64,9 +64,9 @@ impl RegisterClientUseCase for ConcreteClientService {
         }
 
         let mut tx = self.pool.begin().await.map_err(|e| {
-            ClientError::Infra(crate::domain::errors::infra_error::InfraError::BeginTransaction {
-                source: e,
-            })
+            ClientError::Infra(
+                crate::domain::errors::infra_error::InfraError::BeginTransaction { source: e },
+            )
         })?;
 
         let location_input = CreateLocationRow {
@@ -76,9 +76,13 @@ impl RegisterClientUseCase for ConcreteClientService {
             tx_state: input.state.clone(),
             tx_zipcode: input.cep.clone(),
             tx_public_space: "".to_string(),
-            tx_address_complement: crate::domain::value_objects::text::remove_accents(&input.complement),
+            tx_address_complement: crate::domain::value_objects::text::remove_accents(
+                &input.complement,
+            ),
             tx_unit: "".to_string(),
-            tx_neighborhood: crate::domain::value_objects::text::remove_accents(&input.neighborhood),
+            tx_neighborhood: crate::domain::value_objects::text::remove_accents(
+                &input.neighborhood,
+            ),
             tx_locality: crate::domain::value_objects::text::remove_accents(&input.city),
             tx_region: input.state.clone(),
             tx_ibge: None,
@@ -170,9 +174,9 @@ impl RegisterClientUseCase for ConcreteClientService {
         })?;
 
         tx.commit().await.map_err(|e| {
-            ClientError::Infra(crate::domain::errors::infra_error::InfraError::CommitTransaction {
-                source: e,
-            })
+            ClientError::Infra(
+                crate::domain::errors::infra_error::InfraError::CommitTransaction { source: e },
+            )
         })?;
 
         Ok(client_row)

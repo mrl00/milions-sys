@@ -1,7 +1,9 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::client_dto::{ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest};
+use crate::adapters::driving::client_dto::{
+    ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
+};
 use crate::application::client_service::ConcreteClientService;
 use crate::domain::errors::client_errors::ClientError;
 use crate::domain::ports::client_use_cases::{
@@ -274,7 +276,8 @@ mod tests {
 
     #[actix_web::test]
     async fn error_to_response_validation_error() {
-        let err = ClientError::InvalidDoc(crate::domain::value_objects::doc::DocError::InvalidDocument);
+        let err =
+            ClientError::InvalidDoc(crate::domain::value_objects::doc::DocError::InvalidDocument);
         let resp = error_to_response(err);
         assert_eq!(resp.status(), 422);
     }

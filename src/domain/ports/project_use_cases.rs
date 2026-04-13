@@ -1,11 +1,11 @@
-use async_trait::async_trait;
-use sqlx::types::BigDecimal;
-use sqlx::types::chrono::NaiveDate;
-use uuid::Uuid;
 use crate::domain::errors::project_error::ProjectError;
 use crate::domain::models::db::project_rows::{
     ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
 };
+use async_trait::async_trait;
+use sqlx::types::BigDecimal;
+use sqlx::types::chrono::NaiveDate;
+use uuid::Uuid;
 
 pub struct CreateProjectInput {
     pub name: String,

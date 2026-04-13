@@ -291,9 +291,11 @@ mod tests {
 
     #[actix_web::test]
     async fn error_to_response_validation_error() {
-        let err = ContactError::InvalidPhone(crate::domain::value_objects::phone::PhoneError::InvalidPhoneNumber {
-            value: "bad".to_string(),
-        });
+        let err = ContactError::InvalidPhone(
+            crate::domain::value_objects::phone::PhoneError::InvalidPhoneNumber {
+                value: "bad".to_string(),
+            },
+        );
         let resp = error_to_response(err);
         assert_eq!(resp.status(), 422);
     }

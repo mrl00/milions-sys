@@ -1,10 +1,10 @@
+use crate::domain::errors::infra_error::InfraError;
 use crate::domain::value_objects::cep::CepError;
 use crate::domain::value_objects::doc::DocError;
 use crate::domain::value_objects::email::EmailError;
 use crate::domain::value_objects::phone::PhoneError;
 use uuid::Uuid;
 use viacep::domain::ports::viacep_port::ViaCepError;
-use crate::domain::errors::infra_error::InfraError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientError {

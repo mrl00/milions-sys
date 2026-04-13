@@ -1,7 +1,7 @@
-use async_trait::async_trait;
-use uuid::Uuid;
 use crate::domain::errors::location_error::LocationError;
 use crate::domain::models::db::location_row::LocationRow;
+use async_trait::async_trait;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct CreateLocationInput {

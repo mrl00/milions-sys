@@ -1,7 +1,7 @@
+use crate::domain::models::db;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{NaiveDate, NaiveDateTime};
 use uuid::Uuid;
-use crate::domain::models::db;
 // --- Project ---
 
 #[derive(Debug, Deserialize)]
@@ -162,9 +162,7 @@ pub struct AllocationResponse {
     pub updated_at: NaiveDateTime,
 }
 
-impl From<db::project_rows::ProjectDailyAllocationRow>
-    for AllocationResponse
-{
+impl From<db::project_rows::ProjectDailyAllocationRow> for AllocationResponse {
     fn from(row: db::project_rows::ProjectDailyAllocationRow) -> Self {
         Self {
             id: row.pk_project_daily_allocation,
