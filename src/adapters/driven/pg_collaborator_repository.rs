@@ -9,7 +9,7 @@ use crate::domain::models::db::collaborator_location_row::CollaboratorAddressRow
 use crate::domain::models::db::collaborator_row::{
     CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
 };
-use crate::domain::ports::collaborator_repository::*;
+use crate::domain::ports::repositories::collaborator_repository::*;
 
 pub struct PgCollaboratorRepository {
     pool: PgPool,

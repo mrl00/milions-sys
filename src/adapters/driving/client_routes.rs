@@ -6,7 +6,8 @@ use crate::adapters::driving::client_dto::{
 };
 use crate::application::client_service::ConcreteClientService;
 use crate::domain::errors::client_errors::ClientError;
-use crate::domain::ports::client_use_cases::{
+use crate::domain::ports;
+use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase, FindClientByIdUseCase,
     ListClientsUseCase, RegisterClientUseCase, UpdateClientUseCase,
 };
@@ -30,7 +31,7 @@ async fn register_client(
     service: web::Data<ConcreteClientService>,
     body: web::Json<RegisterClientRequest>,
 ) -> HttpResponse {
-    let input = crate::domain::ports::client_use_cases::RegisterClientInput {
+    let input = ports::use_cases::client_use_cases::RegisterClientInput {
         name: body.name.clone(),
         doc: body.document.clone(),
         email: body.contact.email.clone(),
@@ -77,7 +78,7 @@ async fn update_client(
     body: web::Json<UpdateClientRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    let input = crate::domain::ports::client_use_cases::UpdateClientInput {
+    let input = ports::use_cases::client_use_cases::UpdateClientInput {
         name: body.name.clone(),
         doc: body.document.clone(),
     };

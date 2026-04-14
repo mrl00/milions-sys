@@ -11,7 +11,7 @@ use crate::adapters::driving::project_dto::{
 use crate::application::project_service::ConcreteProjectService;
 use crate::domain::errors::project_error::ProjectError;
 use crate::domain::ports;
-use crate::domain::ports::project_use_cases::{
+use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
     CreateStageUseCase, DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase,
     GetHistoryReportUseCase, GetProgressReportUseCase, ListAllocationsUseCase, ListProjectsUseCase,
@@ -67,7 +67,7 @@ async fn create_project(
     service: web::Data<ConcreteProjectService>,
     body: web::Json<CreateProjectRequest>,
 ) -> HttpResponse {
-    let input = ports::project_use_cases::CreateProjectInput {
+    let input = ports::use_cases::project_use_cases::CreateProjectInput {
         name: body.name.clone(),
         description: body.description.clone(),
         start_date: body.start_date,
@@ -111,7 +111,7 @@ async fn update_project(
     body: web::Json<UpdateProjectRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    let input = ports::project_use_cases::UpdateProjectInput {
+    let input = ports::use_cases::project_use_cases::UpdateProjectInput {
         name: body.name.clone(),
         description: body.description.clone(),
         start_date: body.start_date,
@@ -212,7 +212,7 @@ async fn create_stage(
     body: web::Json<CreateStageRequest>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
-    let input = ports::project_use_cases::CreateStageInput {
+    let input = ports::use_cases::project_use_cases::CreateStageInput {
         name: body.name.clone(),
         description: body.description.clone(),
         order: body.order,
@@ -232,7 +232,7 @@ async fn update_stage(
     body: web::Json<UpdateStageRequest>,
 ) -> HttpResponse {
     let (project_id, stage_id) = path.into_inner();
-    let input = ports::project_use_cases::UpdateStageInput {
+    let input = ports::use_cases::project_use_cases::UpdateStageInput {
         name: body.name.clone(),
         description: body.description.clone(),
         order: body.order,
@@ -253,7 +253,7 @@ async fn create_allocation(
     body: web::Json<CreateAllocationRequest>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
-    let input = ports::project_use_cases::CreateAllocationInput {
+    let input = ports::use_cases::project_use_cases::CreateAllocationInput {
         collaborator_id: body.collaborator_id,
         work_date: body.work_date,
         hours_worked: parse_bd(&body.hours_worked),
@@ -289,7 +289,7 @@ async fn update_allocation(
     body: web::Json<UpdateAllocationRequest>,
 ) -> HttpResponse {
     let (project_id, allocation_id) = path.into_inner();
-    let input = ports::project_use_cases::UpdateAllocationInput {
+    let input = ports::use_cases::project_use_cases::UpdateAllocationInput {
         hours_worked: parse_bd(&body.hours_worked),
         hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
         notes: body.notes.clone(),

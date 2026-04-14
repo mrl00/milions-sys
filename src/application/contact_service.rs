@@ -6,13 +6,13 @@ use crate::adapters::driven::pg_phone_repository::PgPhoneRepository;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
 use crate::domain::models::db::phone_row::PhoneRow;
-use crate::domain::ports::contact_repository::ContactRepository;
-use crate::domain::ports::contact_use_cases::{
+use crate::domain::ports::repositories::contact_repository::ContactRepository;
+use crate::domain::ports::repositories::phone_repository::PhoneRepository;
+use crate::domain::ports::use_cases::contact_use_cases::{
     AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase, ListContactsUseCase,
     ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase, RemovePhoneUseCase,
     UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
-use crate::domain::ports::phone_repository::PhoneRepository;
 use crate::domain::value_objects::phone::Phone;
 
 pub type ConcreteContactService = ContactService<PgContactRepository, PgPhoneRepository>;
@@ -186,17 +186,17 @@ mod tests {
     use crate::domain::errors::contact_error::ContactError;
     use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
     use crate::domain::models::db::phone_row::PhoneRow;
-    use crate::domain::ports::contact_repository::{
+    use crate::domain::ports::repositories::contact_repository::{
         CreateContact, FindAllContacts, FindContactByEmail, FindContactById, UpdateContactEmail,
     };
-    use crate::domain::ports::contact_use_cases::{
+    use crate::domain::ports::repositories::phone_repository::{
+        CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
+        FindPhoneById, UpdatePhone,
+    };
+    use crate::domain::ports::use_cases::contact_use_cases::{
         AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase,
         ListContactsUseCase, ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase,
         RemovePhoneUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
-    };
-    use crate::domain::ports::phone_repository::{
-        CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
-        FindPhoneById, UpdatePhone,
     };
 
     #[derive(Default)]

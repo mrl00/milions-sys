@@ -1,17 +1,11 @@
 use crate::routes::health_check::health_check;
 use actix_web::dev::Server;
-use actix_web::{App, HttpServer, web};
+use actix_web::{App, HttpServer};
 use sqlx::PgPool;
 use std::io::Error;
 use std::net::TcpListener;
 
-pub fn run(tcp_listener: TcpListener, pool: PgPool) -> Result<Server, Error> {
-    // let client_service = web::Data::new(client::build(pool.clone()));
-    // let collaborator_service = web::Data::new(collaborator::build(pool.clone()));
-    // let contact_service = web::Data::new(contact::build(pool.clone()));
-    // let location_service = web::Data::new(location::build(pool.clone()));
-    // let project_service = web::Data::new(project::build(pool.clone()));
-
+pub fn run(tcp_listener: TcpListener, _pool: PgPool) -> Result<Server, Error> {
     let server = HttpServer::new(move || {
         App::new().service(health_check)
         // .app_data(client_service.clone())

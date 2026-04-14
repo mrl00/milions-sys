@@ -7,7 +7,7 @@ use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::client_address_row::ClientAddressRow;
 use crate::domain::models::db::client_contact_row::ClientContactRow;
 use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
-use crate::domain::ports::client_repository::*;
+use crate::domain::ports::repositories::client_repository::*;
 
 pub struct PgClientRepository {
     pool: PgPool,

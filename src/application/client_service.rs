@@ -10,11 +10,11 @@ use crate::domain::errors::client_errors::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::models::db::contact_row::CreateContactRow as ContactCreateRow;
 use crate::domain::models::db::location_row::CreateLocationRow;
-use crate::domain::ports::client_repository::{
+use crate::domain::ports::repositories::client_repository::{
     ClientRepository, CreateClient, CreateClientWithTx, DeleteClient, FindAll, FindByDocument,
     FindById, UpdateClient as UpdateClientRepo,
 };
-use crate::domain::ports::client_use_cases::{
+use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
     FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
     RegisterClientUseCase, UpdateClientInput, UpdateClientUseCase,
@@ -421,11 +421,11 @@ impl<R: ClientRepository> DeleteClientUseCase for ClientService<R> {
 mod tests {
     use super::*;
     use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
-    use crate::domain::ports::client_repository::{
+    use crate::domain::ports::repositories::client_repository::{
         CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
         UpdateClient as UpdateClientRepo,
     };
-    use crate::domain::ports::client_use_cases::{
+    use crate::domain::ports::use_cases::client_use_cases::{
         ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
         FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, UpdateClientInput,
         UpdateClientUseCase,

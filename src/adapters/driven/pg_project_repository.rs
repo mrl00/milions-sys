@@ -9,7 +9,7 @@ use crate::domain::models::db::project_rows::{
     CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
     UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
 };
-use crate::domain::ports::project_repository::*;
+use crate::domain::ports::repositories::project_repository::*;
 
 pub struct PgProjectRepository {
     pool: PgPool,

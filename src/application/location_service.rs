@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::adapters::driven::pg_location_repository::PgLocationRepository;
 use crate::domain::errors::location_error::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
-use crate::domain::ports::location_repository::LocationRepository;
-use crate::domain::ports::location_use_cases::{
+use crate::domain::ports::repositories::location_repository::LocationRepository;
+use crate::domain::ports::use_cases::location_use_cases::{
     CreateLocationInput, CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase,
     ListLocationsUseCase, UpdateLocationInput, UpdateLocationUseCase,
 };
@@ -123,10 +123,10 @@ impl<R: LocationRepository> DeleteLocationUseCase for LocationService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::ports::location_repository::{
+    use crate::domain::ports::repositories::location_repository::{
         CreateLocation, DeleteLocation, FindAllLocations, FindLocationById, UpdateLocation,
     };
-    use crate::domain::ports::location_use_cases::{
+    use crate::domain::ports::use_cases::location_use_cases::{
         CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
         UpdateLocationUseCase,
     };

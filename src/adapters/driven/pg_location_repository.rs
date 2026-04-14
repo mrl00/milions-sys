@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::domain::errors::infra_error::InfraError;
 use crate::domain::errors::location_error::LocationError;
 use crate::domain::models::db::location_row::{CreateLocationRow, LocationRow, UpdateLocationRow};
-use crate::domain::ports::location_repository::*;
+use crate::domain::ports::repositories::location_repository::*;
 
 pub struct PgLocationRepository {
     pool: PgPool,

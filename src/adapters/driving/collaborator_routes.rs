@@ -6,7 +6,7 @@ use crate::adapters::driving::collaborator_dto::{
 };
 use crate::application::collaborator_service::ConcreteCollaboratorService;
 use crate::domain::errors::collaborator_error::CollaboratorError;
-use crate::domain::ports::collaborator_use_cases::{
+use crate::domain::ports::use_cases::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
     FindCollaboratorUseCase, ListCollaboratorsUseCase, RegisterCollaboratorUseCase,
     UpdateCollaboratorUseCase,
@@ -34,10 +34,11 @@ async fn register_collaborator(
     service: web::Data<ConcreteCollaboratorService>,
     body: web::Json<RegisterCollaboratorRequest>,
 ) -> HttpResponse {
-    let input = crate::domain::ports::collaborator_use_cases::RegisterCollaboratorInput {
-        name: body.name.clone(),
-        cpf: body.cpf.clone(),
-    };
+    let input =
+        crate::domain::ports::use_cases::collaborator_use_cases::RegisterCollaboratorInput {
+            name: body.name.clone(),
+            cpf: body.cpf.clone(),
+        };
 
     match RegisterCollaboratorUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(CollaboratorResponse::from(row)),
@@ -73,7 +74,7 @@ async fn update_collaborator(
     body: web::Json<UpdateCollaboratorRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    let input = crate::domain::ports::collaborator_use_cases::UpdateCollaboratorInput {
+    let input = crate::domain::ports::use_cases::collaborator_use_cases::UpdateCollaboratorInput {
         name: body.name.clone(),
         cpf: body.cpf.clone(),
         level: body.level.clone(),

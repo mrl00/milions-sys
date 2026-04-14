@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::phone_row::PhoneRow;
-use crate::domain::ports::phone_repository::*;
+use crate::domain::ports::repositories::phone_repository::*;
 
 pub struct PgPhoneRepository {
     pool: PgPool,

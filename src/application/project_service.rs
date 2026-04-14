@@ -10,8 +10,8 @@ use crate::domain::models::db::project_rows::{
     ProjectDailyAllocationRow, ProjectRow, ProjectStageRow, ProjectStageStatus, ProjectStatus,
     UpdateProjectRow,
 };
-use crate::domain::ports::project_repository::ProjectRepository;
-use crate::domain::ports::project_use_cases::{
+use crate::domain::ports::repositories::project_repository::ProjectRepository;
+use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
     CreateProjectInput, CreateProjectUseCase, CreateStageInput, CreateStageUseCase,
     DeleteProjectUseCase, FindProjectUseCase, GetCostReportUseCase, GetHistoryReportUseCase,
@@ -431,7 +431,8 @@ impl<R: ProjectRepository> GetCostReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
-    ) -> Result<crate::domain::ports::project_use_cases::CostReportData, ProjectError> {
+    ) -> Result<crate::domain::ports::use_cases::project_use_cases::CostReportData, ProjectError>
+    {
         let project = self
             .repo
             .find_by_id(project_id)
@@ -453,14 +454,16 @@ impl<R: ProjectRepository> GetCostReportUseCase for ProjectService<R> {
             None
         };
 
-        Ok(crate::domain::ports::project_use_cases::CostReportData {
-            project_id: project.pk_project,
-            project_name: project.tx_name,
-            estimated_cost: project.nr_estimated_cost,
-            actual_cost,
-            variance,
-            variance_pct,
-        })
+        Ok(
+            crate::domain::ports::use_cases::project_use_cases::CostReportData {
+                project_id: project.pk_project,
+                project_name: project.tx_name,
+                estimated_cost: project.nr_estimated_cost,
+                actual_cost,
+                variance,
+                variance_pct,
+            },
+        )
     }
 }
 
@@ -469,7 +472,8 @@ impl<R: ProjectRepository> GetProgressReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         project_id: Uuid,
-    ) -> Result<crate::domain::ports::project_use_cases::ProgressReportData, ProjectError> {
+    ) -> Result<crate::domain::ports::use_cases::project_use_cases::ProgressReportData, ProjectError>
+    {
         let project = self
             .repo
             .find_by_id(project_id)
@@ -487,7 +491,7 @@ impl<R: ProjectRepository> GetProgressReportUseCase for ProjectService<R> {
         };
 
         Ok(
-            crate::domain::ports::project_use_cases::ProgressReportData {
+            crate::domain::ports::use_cases::project_use_cases::ProgressReportData {
                 project_id: project.pk_project,
                 project_name: project.tx_name,
                 stages,
@@ -504,7 +508,8 @@ impl<R: ProjectRepository> GetHistoryReportUseCase for ProjectService<R> {
     async fn execute(
         &self,
         collaborator_id: Uuid,
-    ) -> Result<crate::domain::ports::project_use_cases::HistoryReportData, ProjectError> {
+    ) -> Result<crate::domain::ports::use_cases::project_use_cases::HistoryReportData, ProjectError>
+    {
         let allocations = self
             .repo
             .find_allocations_by_collaborator_id(collaborator_id)
@@ -516,29 +521,32 @@ impl<R: ProjectRepository> GetHistoryReportUseCase for ProjectService<R> {
             .filter_map(|a| a.nr_hours_worked.as_ref())
             .fold(BigDecimal::from(0), |acc, h| acc + h);
 
-        let history_entries: Vec<crate::domain::ports::project_use_cases::AllocationHistoryEntry> =
-            allocations
-                .into_iter()
-                .map(
-                    |a| crate::domain::ports::project_use_cases::AllocationHistoryEntry {
-                        allocation_id: a.pk_project_daily_allocation,
-                        project_id: a.fk_project,
-                        project_name: a.project_name,
-                        work_date: a.dt_work_date,
-                        hours_worked: a.nr_hours_worked,
-                        hourly_rate_snapshot: a.nr_hourly_rate_snapshot,
-                        present: a.bl_present,
-                    },
-                )
-                .collect();
+        let history_entries: Vec<
+            crate::domain::ports::use_cases::project_use_cases::AllocationHistoryEntry,
+        > = allocations
+            .into_iter()
+            .map(
+                |a| crate::domain::ports::use_cases::project_use_cases::AllocationHistoryEntry {
+                    allocation_id: a.pk_project_daily_allocation,
+                    project_id: a.fk_project,
+                    project_name: a.project_name,
+                    work_date: a.dt_work_date,
+                    hours_worked: a.nr_hours_worked,
+                    hourly_rate_snapshot: a.nr_hourly_rate_snapshot,
+                    present: a.bl_present,
+                },
+            )
+            .collect();
 
-        Ok(crate::domain::ports::project_use_cases::HistoryReportData {
-            collaborator_id,
-            collaborator_name: String::new(),
-            allocations: history_entries,
-            total_days,
-            total_hours,
-        })
+        Ok(
+            crate::domain::ports::use_cases::project_use_cases::HistoryReportData {
+                collaborator_id,
+                collaborator_name: String::new(),
+                allocations: history_entries,
+                total_days,
+                total_hours,
+            },
+        )
     }
 }
 
@@ -550,13 +558,13 @@ mod tests {
         CreateProjectStageRow, ProjectDailyAllocationRow, ProjectRow, ProjectStageRow,
         UpdateProjectDailyAllocationRow, UpdateProjectRow, UpdateProjectStageRow,
     };
-    use crate::domain::ports::project_repository::{
+    use crate::domain::ports::repositories::project_repository::{
         CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
         FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
         FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation, UpdateProject,
         UpdateStage,
     };
-    use crate::domain::ports::project_use_cases::{
+    use crate::domain::ports::use_cases::project_use_cases::{
         CancelProjectUseCase, CompleteProjectUseCase, DeleteProjectUseCase, FindProjectUseCase,
         ListProjectsUseCase, PauseProjectUseCase, StartProjectUseCase, UpdateProjectUseCase,
     };

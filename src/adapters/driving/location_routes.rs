@@ -6,8 +6,8 @@ use crate::adapters::driving::location_dto::{
 };
 use crate::application::location_service::ConcreteLocationService;
 use crate::domain::errors::location_error::LocationError;
-use crate::domain::ports::location_use_cases;
-use crate::domain::ports::location_use_cases::{
+use crate::domain::ports::use_cases::location_use_cases;
+use crate::domain::ports::use_cases::location_use_cases::{
     CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
     UpdateLocationUseCase,
 };

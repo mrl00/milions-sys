@@ -7,8 +7,8 @@ use crate::adapters::driving::contact_dto::{
 };
 use crate::application::contact_service::ConcreteContactService;
 use crate::domain::errors::contact_error::ContactError;
-use crate::domain::ports::contact_use_cases;
-use crate::domain::ports::contact_use_cases::{
+use crate::domain::ports::use_cases::contact_use_cases;
+use crate::domain::ports::use_cases::contact_use_cases::{
     AddPhoneUseCase, FindContactUseCase, ListContactsUseCase, ListPhonesUseCase,
     RegisterContactUseCase, RemovePhoneUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };

@@ -7,11 +7,11 @@ use crate::domain::models::db::collaborator_row::{
     CollaboratorLevel, CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow,
     UpdateCollaboratorRow,
 };
-use crate::domain::ports::collaborator_repository::{
+use crate::domain::ports::repositories::collaborator_repository::{
     CollaboratorRepository, CreateCollaborator, DeleteCollaborator, FindAllCollaborators,
     FindCollaboratorByDocument, FindCollaboratorById, UpdateCollaborator,
 };
-use crate::domain::ports::collaborator_use_cases::{
+use crate::domain::ports::use_cases::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
     FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
     RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
@@ -191,11 +191,11 @@ mod tests {
     use crate::domain::models::db::collaborator_row::{
         CollaboratorRow, CreateCollaboratorRow, UpdateCollaboratorRow,
     };
-    use crate::domain::ports::collaborator_repository::{
+    use crate::domain::ports::repositories::collaborator_repository::{
         CreateCollaborator, DeleteCollaborator, FindAllCollaborators, FindCollaboratorByDocument,
         FindCollaboratorById, UpdateCollaborator,
     };
-    use crate::domain::ports::collaborator_use_cases::{
+    use crate::domain::ports::use_cases::collaborator_use_cases::{
         ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
         FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
         RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
