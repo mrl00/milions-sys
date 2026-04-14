@@ -2,14 +2,14 @@ use actix_web::{HttpResponse, web};
 use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
-use crate::adapters::driving::project_dto::{
+use crate::application::project_service::ConcreteProjectService;
+use crate::domain::errors::project_error::ProjectError;
+use crate::domain::models::dtos::project_dto::{
     AllocationResponse, CostReportResponse, CreateAllocationRequest, CreateProjectRequest,
     CreateStageRequest, HistoryReportResponse, ProgressReportResponse, ProjectResponse,
     ProjectStatusRequest, StageResponse, UpdateAllocationRequest, UpdateProjectRequest,
     UpdateStageRequest,
 };
-use crate::application::project_service::ConcreteProjectService;
-use crate::domain::errors::project_error::ProjectError;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
@@ -335,14 +335,16 @@ async fn get_progress_report(
             stages: report
                 .stages
                 .into_iter()
-                .map(|s| crate::adapters::driving::project_dto::StageProgress {
-                    stage_id: s.pk_project_stage,
-                    name: s.tx_name,
-                    order: s.nr_order,
-                    status: s.tx_status,
-                    start_date: s.dt_start_date,
-                    end_date: s.dt_end_date,
-                })
+                .map(
+                    |s| crate::domain::models::dtos::project_dto::StageProgress {
+                        stage_id: s.pk_project_stage,
+                        name: s.tx_name,
+                        order: s.nr_order,
+                        status: s.tx_status,
+                        start_date: s.dt_start_date,
+                        end_date: s.dt_end_date,
+                    },
+                )
                 .collect(),
             total_stages: report.total_stages,
             completed_stages: report.completed_stages,
@@ -365,7 +367,7 @@ async fn get_history_report(
                 .allocations
                 .into_iter()
                 .map(
-                    |a| crate::adapters::driving::project_dto::AllocationHistory {
+                    |a| crate::domain::models::dtos::project_dto::AllocationHistory {
                         allocation_id: a.allocation_id,
                         project_id: a.project_id,
                         project_name: a.project_name,

@@ -66,7 +66,7 @@ impl<R: LocationRepository> LocationService<R> {
     }
 }
 
-pub type ConcreteLocationService = LocationService<PgLocationRepository>;
+pub type PgLocationService = LocationService<PgLocationRepository>;
 
 #[async_trait]
 impl<R: LocationRepository> FindLocationUseCase for LocationService<R> {

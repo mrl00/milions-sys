@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::location_dto::{
+use crate::application::location_service::PgLocationService;
+use crate::domain::errors::location_error::LocationError;
+use crate::domain::models::dtos::location_dto::{
     CreateLocationRequest, LocationResponse, UpdateLocationRequest,
 };
-use crate::application::location_service::ConcreteLocationService;
-use crate::domain::errors::location_error::LocationError;
 use crate::domain::ports::use_cases::location_use_cases;
 use crate::domain::ports::use_cases::location_use_cases::{
     CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,
@@ -27,7 +27,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn create_location(
-    service: web::Data<ConcreteLocationService>,
+    service: web::Data<PgLocationService>,
     body: web::Json<CreateLocationRequest>,
 ) -> HttpResponse {
     let input = location_use_cases::CreateLocationInput {
@@ -54,7 +54,7 @@ async fn create_location(
     }
 }
 
-async fn list_locations(service: web::Data<ConcreteLocationService>) -> HttpResponse {
+async fn list_locations(service: web::Data<PgLocationService>) -> HttpResponse {
     match ListLocationsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<LocationResponse> =
@@ -66,7 +66,7 @@ async fn list_locations(service: web::Data<ConcreteLocationService>) -> HttpResp
 }
 
 async fn get_location(
-    service: web::Data<ConcreteLocationService>,
+    service: web::Data<PgLocationService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -77,7 +77,7 @@ async fn get_location(
 }
 
 async fn update_location(
-    service: web::Data<ConcreteLocationService>,
+    service: web::Data<PgLocationService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateLocationRequest>,
 ) -> HttpResponse {
@@ -107,7 +107,7 @@ async fn update_location(
 }
 
 async fn delete_location(
-    service: web::Data<ConcreteLocationService>,
+    service: web::Data<PgLocationService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
