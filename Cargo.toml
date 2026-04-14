@@ -16,24 +16,18 @@ chrono = { workspace = true }
 uuid = { workspace = true }
 bigdecimal = { workspace = true }
 regex = { workspace = true }
+snafu = { workspace = true }
+brazilian_utils = { version = "0.1.0" }
+unicode-normalization = "0.1"
+async-trait = "0.1.89"
+
 
 # Bounded contexts
-client = { path = "client" }
-collaborator = { path = "collaborator" }
-contact = { path = "contact" }
-location = { path = "location" }
-project = { path = "project" }
-types = { path = "types" }
+viacep = { path = "viacep"}
 
 [workspace]
 members = [
-  "client",
-  "collaborator",
-  "contact",
-  "location",
-  "project",
   "settings",
-  "types",
   "viacep",
 ]
 

@@ -3,7 +3,7 @@ application:
   port: 8000
 database:
   host: "localhost"
-  port: 5433
+  port: 5432
   database_name: "milions_db"
   username: "postgres"
-  password: "qwerty"
+  password: "qwert"
