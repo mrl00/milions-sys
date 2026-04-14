@@ -77,7 +77,7 @@ impl<R: CollaboratorRepository> RegisterCollaboratorUseCase for CollaboratorServ
 
         self.repo
             .create(CreateCollaboratorRow {
-                tx_name: crate::domain::value_objects::text::remove_accents(&input.name),
+                tx_name: input.name,
                 tx_cpf: input.cpf,
                 tx_level: CollaboratorLevel::P0,
                 tx_status: CollaboratorStatus::Active,
@@ -106,9 +106,7 @@ impl<R: CollaboratorRepository> UpdateCollaboratorUseCase for CollaboratorServic
             .update(
                 uuid,
                 UpdateCollaboratorRow {
-                    tx_name: input
-                        .name
-                        .map(|n| crate::domain::value_objects::text::remove_accents(&n)),
+                    tx_name: input.name.map(|n| n),
                     tx_level: input.level,
                     tx_status: None,
                     tx_cpf: input.cpf,
