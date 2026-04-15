@@ -30,7 +30,7 @@ impl<R: ProjectRepository> ProjectService<R> {
     }
 }
 
-pub type ConcreteProjectService = ProjectService<PgProjectRepository>;
+pub type PgProjectService = ProjectService<PgProjectRepository>;
 
 #[async_trait]
 impl<R: ProjectRepository> FindProjectUseCase for ProjectService<R> {

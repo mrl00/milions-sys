@@ -37,7 +37,7 @@ where
     }
 }
 
-pub type ConcreteCollaboratorService = CollaboratorService<PgCollaboratorRepository>;
+pub type PgCollaboratorService = CollaboratorService<PgCollaboratorRepository>;
 
 #[async_trait]
 impl<R: CollaboratorRepository> FindCollaboratorUseCase for CollaboratorService<R> {
