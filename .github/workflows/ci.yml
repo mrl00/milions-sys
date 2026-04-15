@@ -1,9 +1,7 @@
 name: CI
-
 on:
   pull_request:
     branches: [main, dev]
-
 env:
   CARGO_TERM_COLOR: always
   SQLX_OFFLINE: true
@@ -12,31 +10,19 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
-      - name: Cache cargo registry & build
-        uses: actions/cache@v4
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
+          shared-key: "ci-cargo" # chave compartilhada entre jobs
+          cache-on-failure: true
       - name: Format check
         run: cargo fmt --all -- --check
-
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
-
       - name: Build
         run: cargo check --workspace
 
@@ -44,7 +30,6 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
-
     services:
       postgres:
         image: postgres:16
@@ -59,31 +44,26 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/milions_test
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry & build
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci-cargo" # mesma chave → restaura cache do lint
+          save-if: false # só o lint salva; test só lê
+      - name: Cache sqlx-cli binary # evita recompilar a CLI toda vez
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
+          path: ~/.cargo/bin/sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
-
+        run: |
+          which sqlx || cargo install sqlx-cli \
+            --no-default-features \
+            --features native-tls,postgres
       - name: Run migrations
         run: sqlx migrate run --source migrations
-
       - name: Test
         run: cargo test --workspace
