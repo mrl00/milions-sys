@@ -3,15 +3,33 @@
 # Ensure backend is running on localhost:8000 before running.
 # Run with: hurl --test errors.hurl
 
+# Payload base reutilizável como referência (não executável — apenas documentação):
+# {
+#     "street": "Rua das Flores", "number": "42", "city": "Brasília",
+#     "state": "DF", "zipcode": "70040-010", "complement": "Bloco A",
+#     "public_space": "Rua", "unit": "Apt 101", "neighborhood": "Asa Norte",
+#     "locality": "Brasília", "region": "Centro-Oeste", "ddd": "61"
+# }
+
 ###############################################################
-# INPUT VALIDATION — CREATE
+# INPUT VALIDATION — CREATE: campos obrigatórios ausentes
 ###############################################################
 
-# Campo obrigatório ausente (name)
+# street ausente
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "description": "Missing name field"
+    "number": "42",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70040-010",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "Apt 101",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
 }
 HTTP/1.1 400
 [Asserts]
@@ -19,12 +37,21 @@ header "Content-Type" contains "application/json"
 jsonpath "$.error" isString
 jsonpath "$.status" == 400
 
-# Tipo inválido no campo name (int em vez de string)
+# ddd ausente
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": 1234,
-    "description": "Name should be a string"
+    "street": "Rua das Flores",
+    "number": "42",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70040-010",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "Apt 101",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste"
 }
 HTTP/1.1 400
 [Asserts]
@@ -32,25 +59,78 @@ header "Content-Type" contains "application/json"
 jsonpath "$.error" isString
 jsonpath "$.status" == 400
 
-# name vazio (string vazia)
+# city ausente
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": "",
-    "description": "Empty name should not be allowed"
+    "street": "Rua das Flores",
+    "number": "42",
+    "state": "DF",
+    "zipcode": "70040-010",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "Apt 101",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
 }
 HTTP/1.1 400
 [Asserts]
 header "Content-Type" contains "application/json"
-jsonpath "$.error" isString
 jsonpath "$.status" == 400
 
-# name excede limite de caracteres (500 chars)
+# Payload completamente vazio
+POST http://localhost:8000/api/locations
+Content-Type: application/json
+{}
+HTTP/1.1 400
+[Asserts]
+header "Content-Type" contains "application/json"
+jsonpath "$.status" == 400
+
+###############################################################
+# INPUT VALIDATION — CREATE: tipos inválidos
+###############################################################
+
+# zipcode como inteiro (deve ser string)
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "description": "Name too long"
+    "street": "Rua das Flores",
+    "number": "42",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": 70040010,
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "Apt 101",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
+}
+HTTP/1.1 400
+[Asserts]
+header "Content-Type" contains "application/json"
+jsonpath "$.status" == 400
+
+# ddd como inteiro (deve ser string)
+POST http://localhost:8000/api/locations
+Content-Type: application/json
+{
+    "street": "Rua das Flores",
+    "number": "42",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70040-010",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "Apt 101",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": 61
 }
 HTTP/1.1 400
 [Asserts]
@@ -78,15 +158,14 @@ jsonpath "$.error" isString
 jsonpath "$.status" == 404
 
 ###############################################################
-# UPDATE — IDs inválidos, inexistentes e payload inválido
+# UPDATE — IDs inválidos e inexistentes
 ###############################################################
 
 # UUID sintaticamente inválido
 PUT http://localhost:8000/api/locations/not-a-uuid
 Content-Type: application/json
 {
-    "name": "Ghost",
-    "description": "Invalid UUID format"
+    "street": "Qualquer"
 }
 HTTP/1.1 400
 [Asserts]
@@ -97,8 +176,8 @@ jsonpath "$.status" == 400
 PUT http://localhost:8000/api/locations/00000000-0000-0000-0000-000000000000
 Content-Type: application/json
 {
-    "name": "Ghost",
-    "description": "Nonexistent location"
+    "street": "Fantasma",
+    "city": "Nenhuma"
 }
 HTTP/1.1 404
 [Asserts]
@@ -106,13 +185,23 @@ header "Content-Type" contains "application/json"
 jsonpath "$.error" isString
 jsonpath "$.status" == 404
 
-# Payload inválido (name ausente) em recurso existente
-# — cria fixture própria para não depender do fluxo crud.hurl
+# Tipo inválido em campo do UPDATE (zipcode como inteiro)
+# — cria fixture própria para garantir que o recurso existe
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": "Fixture For Update Validation",
-    "description": "Temp fixture"
+    "street": "Fixture Update Validation",
+    "number": "1",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70040-010",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "S/N",
+    "neighborhood": "Asa Norte",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
 }
 HTTP/1.1 201
 [Captures]
@@ -121,15 +210,14 @@ fixture_update_id: jsonpath "$.id"
 PUT http://localhost:8000/api/locations/{{fixture_update_id}}
 Content-Type: application/json
 {
-    "description": "Missing name field"
+    "zipcode": 99999999
 }
 HTTP/1.1 400
 [Asserts]
 header "Content-Type" contains "application/json"
-jsonpath "$.error" isString
 jsonpath "$.status" == 400
 
-# Cleanup do fixture
+# Cleanup
 DELETE http://localhost:8000/api/locations/{{fixture_update_id}}
 HTTP/1.1 204
 
@@ -153,27 +241,48 @@ jsonpath "$.error" isString
 jsonpath "$.status" == 404
 
 ###############################################################
-# NOME DUPLICADO (unicidade)
+# HASH / DUPLICATA (deduplicação por conteúdo)
+# O campo `hash` é gerado via MD5 no banco (GENERATED ALWAYS AS).
+# Dois payloads idênticos devem ser rejeitados se unicidade for imposta.
 ###############################################################
 
-# Cria fixture com nome único
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": "Unique Location Name",
-    "description": "First instance"
+    "street": "Rua Única",
+    "number": "1",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70000-000",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "S/N",
+    "neighborhood": "Plano Piloto",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
 }
 HTTP/1.1 201
 [Captures]
 fixture_dup_id: jsonpath "$.id"
 
-# Tenta criar com o mesmo nome — espera conflito
-# Se a API não impõe unicidade, ajuste para HTTP/1.1 201
+# Segundo POST com payload idêntico — espera conflito por hash duplicado
+# Se a API não impõe unicidade via hash, ajuste para HTTP/1.1 201
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-    "name": "Unique Location Name",
-    "description": "Duplicate — should fail"
+    "street": "Rua Única",
+    "number": "1",
+    "city": "Brasília",
+    "state": "DF",
+    "zipcode": "70000-000",
+    "complement": "",
+    "public_space": "Rua",
+    "unit": "S/N",
+    "neighborhood": "Plano Piloto",
+    "locality": "Brasília",
+    "region": "Centro-Oeste",
+    "ddd": "61"
 }
 HTTP/1.1 409
 [Asserts]
@@ -181,32 +290,32 @@ header "Content-Type" contains "application/json"
 jsonpath "$.error" isString
 jsonpath "$.status" == 409
 
-# Cleanup do fixture
+# Cleanup
 DELETE http://localhost:8000/api/locations/{{fixture_dup_id}}
 HTTP/1.1 204
 
 ###############################################################
-# AUTENTICAÇÃO (TODO — implementar quando Keycloak estiver ativo)
+# AUTENTICAÇÃO (TODO — descomentar quando Keycloak estiver ativo)
 ###############################################################
 
-# Sem token — deve retornar 401
+# Sem token — 401
 # POST http://localhost:8000/api/locations
 # Content-Type: application/json
-# { "name": "No Auth" }
+# { "street": "No Auth", ... }
 # HTTP/1.1 401
 # [Asserts]
 # jsonpath "$.status" == 401
 
-# Token inválido — deve retornar 401
+# Token inválido — 401
 # POST http://localhost:8000/api/locations
 # Authorization: Bearer invalid.token.here
 # Content-Type: application/json
-# { "name": "Bad Token" }
+# { "street": "Bad Token", ... }
 # HTTP/1.1 401
 
-# Token válido sem permissão de escrita — deve retornar 403
+# Token sem permissão de escrita — 403
 # POST http://localhost:8000/api/locations
 # Authorization: Bearer {{readonly_token}}
 # Content-Type: application/json
-# { "name": "Forbidden" }
+# { "street": "Forbidden", ... }
 # HTTP/1.1 403

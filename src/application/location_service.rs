@@ -21,22 +21,16 @@ impl<R: LocationRepository> LocationService<R> {
 
     fn to_create_row(input: CreateLocationInput) -> CreateLocationRow {
         CreateLocationRow {
-            tx_street: crate::domain::value_objects::text::remove_accents(&input.street),
+            tx_street: input.street,
             tx_number: input.number,
-            tx_city: crate::domain::value_objects::text::remove_accents(&input.city),
+            tx_city: input.city,
             tx_state: input.state,
             tx_zipcode: input.zipcode,
-            tx_address_complement: crate::domain::value_objects::text::remove_accents(
-                &input.complement,
-            ),
-            tx_public_space: crate::domain::value_objects::text::remove_accents(
-                &input.public_space,
-            ),
+            tx_address_complement: input.complement,
+            tx_public_space: input.public_space,
             tx_unit: input.unit,
-            tx_neighborhood: crate::domain::value_objects::text::remove_accents(
-                &input.neighborhood,
-            ),
-            tx_locality: crate::domain::value_objects::text::remove_accents(&input.locality),
+            tx_neighborhood: input.neighborhood,
+            tx_locality: input.locality,
             tx_region: input.region,
             tx_ibge: input.ibge,
             tx_gia: input.gia,
@@ -66,7 +60,7 @@ impl<R: LocationRepository> LocationService<R> {
     }
 }
 
-pub type ConcreteLocationService = LocationService<PgLocationRepository>;
+pub type PgLocationService = LocationService<PgLocationRepository>;
 
 #[async_trait]
 impl<R: LocationRepository> FindLocationUseCase for LocationService<R> {

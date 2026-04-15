@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::client_dto::{
-    ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
-};
 use crate::application::client_service::ConcreteClientService;
 use crate::domain::errors::client_errors::ClientError;
+use crate::domain::models::dtos::client_dto::{
+    ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
+};
 use crate::domain::ports;
 use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase, FindClientByIdUseCase,

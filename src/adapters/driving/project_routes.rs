@@ -2,14 +2,14 @@ use actix_web::{HttpResponse, web};
 use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
-use crate::adapters::driving::project_dto::{
+use crate::application::project_service::PgProjectService;
+use crate::domain::errors::project_error::ProjectError;
+use crate::domain::models::dtos::project_dto::{
     AllocationResponse, CostReportResponse, CreateAllocationRequest, CreateProjectRequest,
     CreateStageRequest, HistoryReportResponse, ProgressReportResponse, ProjectResponse,
     ProjectStatusRequest, StageResponse, UpdateAllocationRequest, UpdateProjectRequest,
     UpdateStageRequest,
 };
-use crate::application::project_service::ConcreteProjectService;
-use crate::domain::errors::project_error::ProjectError;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
@@ -64,7 +64,7 @@ fn parse_bd(val: &Option<String>) -> Option<BigDecimal> {
 }
 
 async fn create_project(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     body: web::Json<CreateProjectRequest>,
 ) -> HttpResponse {
     let input = ports::use_cases::project_use_cases::CreateProjectInput {
@@ -84,7 +84,7 @@ async fn create_project(
     }
 }
 
-async fn list_projects(service: web::Data<ConcreteProjectService>) -> HttpResponse {
+async fn list_projects(service: web::Data<PgProjectService>) -> HttpResponse {
     match ListProjectsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ProjectResponse> = rows.into_iter().map(ProjectResponse::from).collect();
@@ -94,10 +94,7 @@ async fn list_projects(service: web::Data<ConcreteProjectService>) -> HttpRespon
     }
 }
 
-async fn get_project(
-    service: web::Data<ConcreteProjectService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn get_project(service: web::Data<PgProjectService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match FindProjectUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
@@ -106,7 +103,7 @@ async fn get_project(
 }
 
 async fn update_project(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateProjectRequest>,
 ) -> HttpResponse {
@@ -131,7 +128,7 @@ async fn update_project(
 }
 
 async fn delete_project(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -142,7 +139,7 @@ async fn delete_project(
 }
 
 async fn update_project_status(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
     body: web::Json<ProjectStatusRequest>,
 ) -> HttpResponse {
@@ -207,7 +204,7 @@ fn error_to_response(err: ProjectError) -> HttpResponse {
 }
 
 async fn create_stage(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
     body: web::Json<CreateStageRequest>,
 ) -> HttpResponse {
@@ -227,7 +224,7 @@ async fn create_stage(
 }
 
 async fn update_stage(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<(Uuid, Uuid)>,
     body: web::Json<UpdateStageRequest>,
 ) -> HttpResponse {
@@ -248,7 +245,7 @@ async fn update_stage(
 }
 
 async fn create_allocation(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
     body: web::Json<CreateAllocationRequest>,
 ) -> HttpResponse {
@@ -269,7 +266,7 @@ async fn create_allocation(
 }
 
 async fn list_allocations(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
@@ -284,7 +281,7 @@ async fn list_allocations(
 }
 
 async fn update_allocation(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<(Uuid, Uuid)>,
     body: web::Json<UpdateAllocationRequest>,
 ) -> HttpResponse {
@@ -303,7 +300,7 @@ async fn update_allocation(
 }
 
 async fn get_cost_report(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
@@ -324,7 +321,7 @@ async fn get_cost_report(
 }
 
 async fn get_progress_report(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
@@ -335,14 +332,16 @@ async fn get_progress_report(
             stages: report
                 .stages
                 .into_iter()
-                .map(|s| crate::adapters::driving::project_dto::StageProgress {
-                    stage_id: s.pk_project_stage,
-                    name: s.tx_name,
-                    order: s.nr_order,
-                    status: s.tx_status,
-                    start_date: s.dt_start_date,
-                    end_date: s.dt_end_date,
-                })
+                .map(
+                    |s| crate::domain::models::dtos::project_dto::StageProgress {
+                        stage_id: s.pk_project_stage,
+                        name: s.tx_name,
+                        order: s.nr_order,
+                        status: s.tx_status,
+                        start_date: s.dt_start_date,
+                        end_date: s.dt_end_date,
+                    },
+                )
                 .collect(),
             total_stages: report.total_stages,
             completed_stages: report.completed_stages,
@@ -353,7 +352,7 @@ async fn get_progress_report(
 }
 
 async fn get_history_report(
-    service: web::Data<ConcreteProjectService>,
+    service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let collaborator_id = path.into_inner();
@@ -365,7 +364,7 @@ async fn get_history_report(
                 .allocations
                 .into_iter()
                 .map(
-                    |a| crate::adapters::driving::project_dto::AllocationHistory {
+                    |a| crate::domain::models::dtos::project_dto::AllocationHistory {
                         allocation_id: a.allocation_id,
                         project_id: a.project_id,
                         project_name: a.project_name,

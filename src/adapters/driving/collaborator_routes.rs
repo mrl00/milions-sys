@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::collaborator_dto::{
+use crate::application::collaborator_service::PgCollaboratorService;
+use crate::domain::errors::collaborator_error::CollaboratorError;
+use crate::domain::models::dtos::collaborator_dto::{
     CollaboratorResponse, RegisterCollaboratorRequest, StatusRequest, UpdateCollaboratorRequest,
 };
-use crate::application::collaborator_service::ConcreteCollaboratorService;
-use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::ports::use_cases::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
     FindCollaboratorUseCase, ListCollaboratorsUseCase, RegisterCollaboratorUseCase,
@@ -31,7 +31,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_collaborator(
-    service: web::Data<ConcreteCollaboratorService>,
+    service: web::Data<PgCollaboratorService>,
     body: web::Json<RegisterCollaboratorRequest>,
 ) -> HttpResponse {
     let input =
@@ -46,7 +46,7 @@ async fn register_collaborator(
     }
 }
 
-async fn list_collaborators(service: web::Data<ConcreteCollaboratorService>) -> HttpResponse {
+async fn list_collaborators(service: web::Data<PgCollaboratorService>) -> HttpResponse {
     match ListCollaboratorsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<CollaboratorResponse> =
@@ -58,7 +58,7 @@ async fn list_collaborators(service: web::Data<ConcreteCollaboratorService>) -> 
 }
 
 async fn get_collaborator(
-    service: web::Data<ConcreteCollaboratorService>,
+    service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -69,7 +69,7 @@ async fn get_collaborator(
 }
 
 async fn update_collaborator(
-    service: web::Data<ConcreteCollaboratorService>,
+    service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateCollaboratorRequest>,
 ) -> HttpResponse {
@@ -87,7 +87,7 @@ async fn update_collaborator(
 }
 
 async fn delete_collaborator(
-    service: web::Data<ConcreteCollaboratorService>,
+    service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
@@ -98,7 +98,7 @@ async fn delete_collaborator(
 }
 
 async fn update_collaborator_status(
-    service: web::Data<ConcreteCollaboratorService>,
+    service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
     body: web::Json<StatusRequest>,
 ) -> HttpResponse {

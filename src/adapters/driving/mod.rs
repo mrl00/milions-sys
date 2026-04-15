@@ -1,10 +1,5 @@
-pub mod client_dto;
 pub mod client_routes;
-pub mod collaborator_dto;
 pub mod collaborator_routes;
-pub mod contact_dto;
 pub mod contact_routes;
-pub mod location_dto;
 pub mod location_routes;
-pub mod project_dto;
 pub mod project_routes;

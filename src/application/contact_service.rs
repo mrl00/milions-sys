@@ -15,7 +15,7 @@ use crate::domain::ports::use_cases::contact_use_cases::{
 };
 use crate::domain::value_objects::phone::Phone;
 
-pub type ConcreteContactService = ContactService<PgContactRepository, PgPhoneRepository>;
+pub type PgContactService = ContactService<PgContactRepository, PgPhoneRepository>;
 
 pub struct ContactService<C, P> {
     contact_repo: C,

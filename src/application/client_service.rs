@@ -70,20 +70,17 @@ impl RegisterClientUseCase for ConcreteClientService {
         })?;
 
         let location_input = CreateLocationRow {
-            tx_street: crate::domain::value_objects::text::remove_accents(&input.street),
+            tx_street: input.street,
             tx_number: input.number.clone(),
-            tx_city: crate::domain::value_objects::text::remove_accents(&input.city),
+            tx_city: input.city.clone(),
             tx_state: input.state.clone(),
             tx_zipcode: input.cep.clone(),
             tx_public_space: "".to_string(),
-            tx_address_complement: crate::domain::value_objects::text::remove_accents(
-                &input.complement,
-            ),
+            tx_address_complement: input.complement,
             tx_unit: "".to_string(),
-            tx_neighborhood: crate::domain::value_objects::text::remove_accents(
-                &input.neighborhood,
-            ),
-            tx_locality: crate::domain::value_objects::text::remove_accents(&input.city),
+            tx_neighborhood: input.neighborhood,
+
+            tx_locality: input.city.clone(),
             tx_region: input.state.clone(),
             tx_ibge: None,
             tx_gia: None,
@@ -144,7 +141,7 @@ impl RegisterClientUseCase for ConcreteClientService {
             &self.repo,
             &mut tx,
             crate::domain::models::db::client_row::CreateClientRow {
-                tx_name: crate::domain::value_objects::text::remove_accents(&input.name),
+                tx_name: input.name,
                 tx_status: ClientStatus::Active,
                 tx_doc: input.doc,
             },
