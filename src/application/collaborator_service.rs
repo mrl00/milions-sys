@@ -106,7 +106,7 @@ impl<R: CollaboratorRepository> UpdateCollaboratorUseCase for CollaboratorServic
             .update(
                 uuid,
                 UpdateCollaboratorRow {
-                    tx_name: input.name.map(|n| n),
+                    tx_name: input.name,
                     tx_level: input.level,
                     tx_status: None,
                     tx_cpf: input.cpf,
