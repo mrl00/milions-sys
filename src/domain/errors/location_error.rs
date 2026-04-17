@@ -9,9 +9,9 @@ pub enum LocationError {
     #[error("location not found: {uuid}")]
     NotFound { uuid: Uuid },
 
-    #[error("invalid field: {field} -- {reason}")]
+    #[error("invalid field '{field}': {reason}")]
     InvalidField { field: &'static str, reason: String },
 
     #[error(transparent)]
-    Infra { source: InfraError },
+    Infra(#[from] InfraError),
 }
