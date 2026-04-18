@@ -70,9 +70,7 @@ impl PgPhoneRepository {
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> ContactError {
-    move |e| ContactError::Infra {
-        source: InfraError::Database { action, source: e },
-    }
+    move |e| ContactError::Infra(InfraError::Database { action, source: e })
 }
 
 #[async_trait]

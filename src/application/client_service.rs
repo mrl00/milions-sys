@@ -6,7 +6,7 @@ use crate::adapters::driven::pg_client_repository::PgClientRepository;
 use crate::adapters::driven::pg_contact_repository::PgContactRepository;
 use crate::adapters::driven::pg_location_repository::PgLocationRepository;
 use crate::adapters::driven::pg_phone_repository::PgPhoneRepository;
-use crate::domain::errors::client_errors::ClientError;
+use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, UpdateClientRow};
 use crate::domain::models::db::contact_row::CreateContactRow as ContactCreateRow;
 use crate::domain::models::db::location_row::CreateLocationRow;

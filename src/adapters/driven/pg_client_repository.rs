@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::errors::client_errors::ClientError;
+use crate::domain::errors::client_error::ClientError;
 use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::client_address_row::ClientAddressRow;
 use crate::domain::models::db::client_contact_row::ClientContactRow;

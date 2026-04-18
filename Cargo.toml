@@ -20,18 +20,17 @@ snafu = { workspace = true }
 brazilian_utils = { version = "0.1.0" }
 unicode-normalization = "0.1"
 async-trait = "0.1.89"
-
+garde = { version = "0.22.1", features = ["derive", "full"] }
 
 # Bounded contexts
-viacep = { path = "viacep"}
+viacep = { path = "viacep" }
+futures = "0.3.32"
 
 [workspace]
-members = [
-  "settings",
-  "viacep",
-]
+members = ["settings", "viacep"]
 
 [workspace.dependencies]
+regex = { version = "1.12.3", features = ["unicode-perl"] }
 actix-web = "4.3.3"
 anyhow = { version = "1.0.75", default-features = false }
 argon2 = "0.5.3"
@@ -40,7 +39,6 @@ bigdecimal = "0.4.7"
 chrono = { version = "0.4.26", features = ["serde"] }
 keycloak = "26.5.200"
 rand = "0.10.0"
-regex = "1.12.3"
 rsa = "0.9.10"
 secrecy = { version = "0.10.0", features = ["serde"] }
 serde = { version = "1.0.183", features = ["derive"] }

@@ -1,4 +1,4 @@
-pub mod client_errors;
+pub mod client_error;
 pub mod collaborator_error;
 pub mod contact_error;
 pub mod infra_error;

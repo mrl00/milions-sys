@@ -24,5 +24,5 @@ pub enum CollaboratorError {
     InvalidPhone(#[from] PhoneError),
 
     #[error(transparent)]
-    Infra { source: InfraError },
+    Infra(#[from] InfraError),
 }

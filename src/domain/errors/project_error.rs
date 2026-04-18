@@ -18,7 +18,7 @@ pub enum ProjectError {
     #[error("collaborator not found: {uuid}")]
     CollaboratorNotFound { uuid: Uuid },
 
-    #[error("invalid field: {field} -- {reason}")]
+    #[error("invalid field '{field}': {reason}")]
     InvalidField { field: &'static str, reason: String },
 
     #[error(transparent)]

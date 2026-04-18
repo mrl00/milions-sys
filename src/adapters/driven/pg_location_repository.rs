@@ -100,9 +100,7 @@ impl PgLocationRepository {
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> LocationError {
-    move |e| LocationError::Infra {
-        source: InfraError::Database { action, source: e },
-    }
+    move |e| LocationError::Infra(InfraError::Database { action, source: e })
 }
 
 #[async_trait]
@@ -143,7 +141,7 @@ impl FindAllLocations for PgLocationRepository {
 #[async_trait]
 impl CreateLocation for PgLocationRepository {
     async fn create(&self, c: CreateLocationRow) -> Result<LocationRow, LocationError> {
-        sqlx::query_as!(
+        let result = sqlx::query_as!(
             LocationRow,
             r#"INSERT INTO locations.tb_location (
             pk_location, 
@@ -164,6 +162,7 @@ impl CreateLocation for PgLocationRepository {
             tx_siafi
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            ON CONFLICT (nr_hash) DO NOTHING
             RETURNING *"#,
             Uuid::now_v7(),
             &c.tx_street,
@@ -182,9 +181,29 @@ impl CreateLocation for PgLocationRepository {
             &c.tx_ddd,
             c.tx_siafi,
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(sqlx_err("create location"))
+        .map_err(sqlx_err("create location"))?;
+
+        match result {
+            Some(row) => Ok(row),
+            None => {
+                let hash = sqlx::query_scalar!(
+                    r#"SELECT locations.compute_location_hash($1, $2, $3, $4, $5)"#,
+                    &c.tx_street,
+                    &c.tx_number,
+                    &c.tx_city,
+                    &c.tx_state,
+                    &c.tx_zipcode
+                )
+                .fetch_one(&self.pool)
+                .await
+                .map_err(sqlx_err("compute location hash"))?
+                .unwrap_or(0);
+
+                Err(LocationError::AlreadyExists { hash })
+            }
+        }
     }
 }
 
