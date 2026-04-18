@@ -1,42 +1,101 @@
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateLocationRequest {
+    #[garde(length(min = 1, max = 128))]
     pub street: String,
+
+    #[garde(length(min = 1, max = 128))]
     pub number: String,
+
+    #[garde(length(min = 1, max = 128))]
     pub city: String,
+
+    #[garde(length(min = 2, max = 2))]
     pub state: String,
+
+    #[garde(pattern(r"^[0-9]{5}-?[0-9]{3}$"))]
     pub zipcode: String,
+
+    #[garde(length(min = 0, max = 256))]
     pub complement: String,
+
+    #[garde(length(min = 1, max = 128))]
     pub public_space: String,
+
+    #[garde(length(min = 1, max = 64))]
     pub unit: String,
+
+    #[garde(length(min = 1, max = 128))]
     pub neighborhood: String,
+
+    #[garde(length(min = 1, max = 128))]
     pub locality: String,
+
+    #[garde(length(min = 1, max = 64))]
     pub region: String,
+
+    #[garde(skip)]
     pub ibge: Option<String>,
+
+    #[garde(skip)]
     pub gia: Option<String>,
+
+    #[garde(length(min = 1, max = 3))]
     pub ddd: String,
+
+    #[garde(skip)]
     pub siafi: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateLocationRequest {
+    #[garde(inner(length(min = 1, max = 128)))]
     pub street: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 128)))]
     pub number: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 128)))]
     pub city: Option<String>,
+
+    #[garde(inner(length(min = 2, max = 2)))]
     pub state: Option<String>,
+
+    #[garde(inner(pattern(r"^[0-9]{5}-?[0-9]{3}$")))]
     pub zipcode: Option<String>,
+
+    #[garde(inner(length(min = 0, max = 256)))]
     pub complement: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 128)))]
     pub public_space: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 64)))]
     pub unit: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 128)))]
     pub neighborhood: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 128)))]
     pub locality: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 64)))]
     pub region: Option<String>,
+
+    #[garde(skip)]
     pub ibge: Option<String>,
+
+    #[garde(skip)]
     pub gia: Option<String>,
+
+    #[garde(inner(length(min = 1, max = 3)))]
     pub ddd: Option<String>,
+
+    #[garde(skip)]
     pub siafi: Option<String>,
 }
 

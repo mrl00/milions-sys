@@ -67,9 +67,7 @@ impl PgCollaboratorRepository {
 }
 
 fn sqlx_err(action: &'static str) -> impl FnOnce(sqlx::Error) -> CollaboratorError {
-    move |e| CollaboratorError::Infra {
-        source: InfraError::Database { action, source: e },
-    }
+    move |e| CollaboratorError::Infra(InfraError::Database { action, source: e })
 }
 
 #[async_trait]

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::domain::errors::client_errors::ClientError;
+use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_project_row::{ClientProjectRow, CreateClientProjectRow};
 use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
 

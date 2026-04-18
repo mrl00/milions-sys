@@ -1,6 +1,6 @@
 # Hurl E2E: Location — Happy Path CRUD
 # Ensure backend is running on localhost:8000 before running.
-# Run with: hurl --test crud.hurl
+# Run with: hurl --test location.hurl
 
 ###############################################################
 # CREATE
@@ -83,7 +83,7 @@ HTTP/1.1 200
 [Asserts]
 header "Content-Type" contains "application/json"
 jsonpath "$" isCollection
-jsonpath "$[*].id" includes {{location_id}}
+jsonpath "$[*].id" contains {{location_id}}
 
 ###############################################################
 # UPDATE (partial — apenas campos alterados)
@@ -118,12 +118,14 @@ jsonpath "$.updated_at" isString
 GET http://localhost:8000/api/locations/{{location_id}}
 HTTP/1.1 200
 [Asserts]
+header "Content-Type" contains "application/json"
 jsonpath "$.id" == {{location_id}}
 jsonpath "$.street" == "Quadra 204"
 jsonpath "$.number" == "Lote 5"
 jsonpath "$.address_complement" == "Sala 302"
 jsonpath "$.neighborhood" == "Asa Sul"
 jsonpath "$.city" == "Brasilia"
+jsonpath "$.state" == "DF"
 jsonpath "$.ddd" == "61"
 
 ###############################################################
@@ -141,8 +143,8 @@ GET http://localhost:8000/api/locations/{{location_id}}
 HTTP/1.1 404
 [Asserts]
 header "Content-Type" contains "application/json"
-jsonpath "$.error" isString
-jsonpath "$.status" == 404
+jsonpath "$.error" == "not_found"
+jsonpath "$.message" isString
 
 ###############################################################
 # DELETE (idempotência — segundo DELETE no mesmo ID)
@@ -152,5 +154,5 @@ DELETE http://localhost:8000/api/locations/{{location_id}}
 HTTP/1.1 404
 [Asserts]
 header "Content-Type" contains "application/json"
-jsonpath "$.error" isString
-jsonpath "$.status" == 404
+jsonpath "$.error" == "not_found"
+jsonpath "$.message" isString

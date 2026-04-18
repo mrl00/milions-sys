@@ -263,11 +263,11 @@ mod tests {
 
     #[actix_web::test]
     async fn error_to_response_internal_error() {
-        let err = CollaboratorError::Infra {
-            source: crate::domain::errors::infra_error::InfraError::BeginTransaction {
+        let err = CollaboratorError::Infra(
+            crate::domain::errors::infra_error::InfraError::BeginTransaction {
                 source: sqlx::Error::PoolTimedOut,
             },
-        };
+        );
         let resp = error_to_response(err);
         assert_eq!(resp.status(), 500);
     }
