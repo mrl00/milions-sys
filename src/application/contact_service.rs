@@ -13,7 +13,6 @@ use crate::domain::ports::use_cases::contact_use_cases::{
     ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase, RemovePhoneUseCase,
     UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
-use crate::domain::value_objects::phone::Phone;
 
 pub type PgContactService = ContactService<PgContactRepository, PgPhoneRepository>;
 
@@ -89,11 +88,6 @@ impl<C: ContactRepository, P: PhoneRepository> UpdateContactEmailUseCase for Con
 }
 
 // --- Phone ---
-
-fn validate_phone(phone: &str) -> Result<Phone, ContactError> {
-    Phone::try_from(phone.to_string()).map_err(ContactError::InvalidPhone)
-}
-
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> FindPhoneUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid) -> Result<PhoneRow, ContactError> {
@@ -107,6 +101,12 @@ impl<C: ContactRepository, P: PhoneRepository> FindPhoneUseCase for ContactServi
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> ListPhonesUseCase for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError> {
+        let existing_contact = self.contact_repo.find_by_id(contact_id).await?;
+
+        if existing_contact.is_none() {
+            return Err(ContactError::NotFound { uuid: contact_id });
+        }
+
         self.phone_repo.find_by_contact_id(contact_id).await
     }
 }
@@ -114,7 +114,11 @@ impl<C: ContactRepository, P: PhoneRepository> ListPhonesUseCase for ContactServ
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> AddPhoneUseCase for ContactService<C, P> {
     async fn execute(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
-        validate_phone(&phone)?;
+        let existing_contact = self.contact_repo.find_by_id(contact_id).await?;
+
+        if existing_contact.is_none() {
+            return Err(ContactError::NotFound { uuid: contact_id });
+        }
 
         let existing = self.phone_repo.find_by_contact_id(contact_id).await?;
 
@@ -133,10 +137,6 @@ impl<C: ContactRepository, P: PhoneRepository> AddPhonesUseCase for ContactServi
         contact_id: Uuid,
         phones: Vec<String>,
     ) -> Result<Vec<PhoneRow>, ContactError> {
-        for phone in &phones {
-            validate_phone(phone)?;
-        }
-
         let nonexistent = self
             .phone_repo
             .find_nonexistent_phones(phones.clone())
@@ -157,7 +157,14 @@ impl<C: ContactRepository, P: PhoneRepository> AddPhonesUseCase for ContactServi
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneUseCase for ContactService<C, P> {
     async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
-        validate_phone(&phone)?;
+        if self
+            .phone_repo
+            .find_by_number(phone.clone())
+            .await?
+            .is_some()
+        {
+            return Err(ContactError::PhoneAlreadyExists { phone });
+        }
 
         self.phone_repo
             .find_by_id(uuid)
@@ -191,7 +198,7 @@ mod tests {
     };
     use crate::domain::ports::repositories::phone_repository::{
         CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
-        FindPhoneById, UpdatePhone,
+        FindPhoneById, FindPhoneByNumber, UpdatePhone,
     };
     use crate::domain::ports::use_cases::contact_use_cases::{
         AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase,
@@ -217,6 +224,7 @@ mod tests {
         find_by_id_result: Option<PhoneRow>,
         find_by_contact_id_result: Vec<PhoneRow>,
         find_nonexistent_result: Vec<String>,
+        find_by_number_result: Option<PhoneRow>,
     }
 
     impl MockPhoneRepo {
@@ -387,6 +395,13 @@ mod tests {
         }
     }
 
+    #[async_trait]
+    impl FindPhoneByNumber for MockPhoneRepo {
+        async fn find_by_number(&self, _number: String) -> Result<Option<PhoneRow>, ContactError> {
+            Ok(self.find_by_number_result.clone())
+        }
+    }
+
     #[tokio::test]
     async fn register_contact_succeeds_when_email_is_new() {
         let repo = MockContactRepo::new();
@@ -508,7 +523,8 @@ mod tests {
         let p2 = make_phone();
         let mut phone_repo = MockPhoneRepo::new();
         phone_repo.find_by_contact_id_result = vec![p1, p2];
-        let repo = MockContactRepo::new();
+        let mut repo = MockContactRepo::new();
+        repo.find_by_id_result = Some(make_contact()); // <- adicionar
         let service = ContactService::new(repo, phone_repo);
         let result = ListPhonesUseCase::execute(&service, Uuid::now_v7())
             .await
@@ -518,8 +534,10 @@ mod tests {
 
     #[tokio::test]
     async fn add_phone_succeeds_when_new() {
-        let contact_id = Uuid::now_v7();
-        let repo = MockContactRepo::new();
+        let contact = make_contact();
+        let contact_id = contact.pk_contact;
+        let mut repo = MockContactRepo::new();
+        repo.find_by_id_result = Some(contact); // <- adicionar
         let phone_repo = MockPhoneRepo::new();
         let service = ContactService::new(repo, phone_repo);
         let result = AddPhoneUseCase::execute(&service, contact_id, "+5511999999999".to_string())
@@ -530,12 +548,14 @@ mod tests {
 
     #[tokio::test]
     async fn add_phone_fails_when_duplicate() {
-        let contact_id = Uuid::now_v7();
+        let contact = make_contact();
+        let contact_id = contact.pk_contact;
+        let mut repo = MockContactRepo::new();
+        repo.find_by_id_result = Some(contact); // <- adicionar
         let mut phone_repo = MockPhoneRepo::new();
         let mut existing = make_phone();
         existing.tx_phone = "+5511999999999".to_string();
         phone_repo.find_by_contact_id_result = vec![existing];
-        let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
         let result =
             AddPhoneUseCase::execute(&service, contact_id, "+5511999999999".to_string()).await;
@@ -543,16 +563,6 @@ mod tests {
             result,
             Err(ContactError::PhoneAlreadyExists { .. })
         ));
-    }
-
-    #[tokio::test]
-    async fn add_phone_fails_when_invalid() {
-        let contact_id = Uuid::now_v7();
-        let repo = MockContactRepo::new();
-        let phone_repo = MockPhoneRepo::new();
-        let service = ContactService::new(repo, phone_repo);
-        let result = AddPhoneUseCase::execute(&service, contact_id, "invalid".to_string()).await;
-        assert!(matches!(result, Err(ContactError::InvalidPhone(_))));
     }
 
     #[tokio::test]

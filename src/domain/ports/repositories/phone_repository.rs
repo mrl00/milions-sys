@@ -45,6 +45,11 @@ pub trait FindNonexistentPhones: Send + Sync {
     ) -> Result<Vec<String>, ContactError>;
 }
 
+#[async_trait]
+pub trait FindPhoneByNumber: Send + Sync {
+    async fn find_by_number(&self, number: String) -> Result<Option<PhoneRow>, ContactError>;
+}
+
 pub trait FindAndCreatePhone: FindPhoneByContactId + CreatePhone {}
 pub trait FindAndUpdatePhone: FindPhoneById + UpdatePhone {}
 pub trait FindAndDeletePhone: FindPhoneById + DeletePhone {}
@@ -57,6 +62,7 @@ pub trait PhoneRepository:
     + UpdatePhone
     + DeletePhone
     + FindNonexistentPhones
+    + FindPhoneByNumber
     + Send
     + Sync
 {
@@ -69,6 +75,7 @@ impl<T> PhoneRepository for T where
         + UpdatePhone
         + DeletePhone
         + FindNonexistentPhones
+        + FindPhoneByNumber
         + Send
         + Sync
 {

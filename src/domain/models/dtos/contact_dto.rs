@@ -1,16 +1,19 @@
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 // --- Contact ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct RegisterContactRequest {
+    #[garde(email, length(max = 256))]
     pub email: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateContactEmailRequest {
+    #[garde(email, length(max = 256))]
     pub email: String,
 }
 
@@ -35,18 +38,28 @@ impl From<crate::domain::models::db::contact_row::ContactRow> for ContactRespons
 
 // --- Phone ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct AddPhoneRequest {
+    #[garde(pattern(r"^\+\d{8,16}$"))]
     pub phone: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct AddPhonesRequest {
-    pub phones: Vec<String>,
+    #[garde(dive, length(min = 1))]
+    pub phones: Vec<PhoneEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+/// Wrapper necessário para aplicar `garde` a cada item de `phones`.
+#[derive(Debug, Deserialize, Validate)]
+pub struct PhoneEntry {
+    #[garde(pattern(r"^\d{8,16}$"))]
+    pub value: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdatePhoneRequest {
+    #[garde(pattern(r"^\+\d{8,16}$"))]
     pub phone: String,
 }
 

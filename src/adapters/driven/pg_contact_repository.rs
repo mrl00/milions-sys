@@ -133,6 +133,3 @@ impl UpdateContactEmail for PgContactRepository {
         .map_err(sqlx_err("update contact email"))
     }
 }
-
-impl FindAndCreateContact for PgContactRepository {}
-impl FindAndUpdateContact for PgContactRepository {}

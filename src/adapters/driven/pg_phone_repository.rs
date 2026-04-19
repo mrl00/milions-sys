@@ -221,6 +221,20 @@ impl FindNonexistentPhones for PgPhoneRepository {
     }
 }
 
-impl FindAndCreatePhone for PgPhoneRepository {}
-impl FindAndUpdatePhone for PgPhoneRepository {}
-impl FindAndDeletePhone for PgPhoneRepository {}
+#[async_trait]
+impl FindPhoneByNumber for PgPhoneRepository {
+    async fn find_by_number(&self, number: String) -> Result<Option<PhoneRow>, ContactError> {
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            SELECT *
+            FROM contacts.tb_phone
+            WHERE tx_phone = $1
+            "#,
+            &number,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("find phone by number"))
+    }
+}

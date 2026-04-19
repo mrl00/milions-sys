@@ -1,6 +1,4 @@
 use actix_web::{HttpResponse, web};
-use garde::Validate;
-use garde::external::compact_str::ToCompactString;
 use uuid::Uuid;
 
 use crate::adapters::driving::utils::ValidatedJson;
@@ -32,10 +30,6 @@ async fn create_location(
     service: web::Data<PgLocationService>,
     ValidatedJson(body): ValidatedJson<CreateLocationRequest>,
 ) -> HttpResponse {
-    if let Err(e) = body.validate() {
-        return HttpResponse::BadRequest().json(e.to_compact_string());
-    }
-
     let input = location_use_cases::CreateLocationInput {
         street: body.street.clone(),
         number: body.number.clone(),
@@ -87,10 +81,6 @@ async fn update_location(
     path: web::Path<Uuid>,
     ValidatedJson(body): ValidatedJson<UpdateLocationRequest>,
 ) -> HttpResponse {
-    if let Err(e) = body.validate() {
-        return HttpResponse::BadRequest().json(e.to_compact_string());
-    }
-
     let uuid = path.into_inner();
 
     let input = location_use_cases::UpdateLocationInput {
