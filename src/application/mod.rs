@@ -20,3 +20,11 @@ pub fn pg_contact_serv_build(
         crate::adapters::driven::pg_phone_repository::PgPhoneRepository::new(pool.clone()),
     )
 }
+
+pub fn pg_collaborator_serv_build(
+    pool: sqlx::PgPool,
+) -> crate::application::collaborator_service::PgCollaboratorService {
+    crate::application::collaborator_service::PgCollaboratorService::new(
+        crate::adapters::driven::pg_collaborator_repository::PgCollaboratorRepository::new(pool),
+    )
+}
