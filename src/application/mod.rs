@@ -28,3 +28,11 @@ pub fn pg_collaborator_serv_build(
         crate::adapters::driven::pg_collaborator_repository::PgCollaboratorRepository::new(pool),
     )
 }
+
+pub fn pg_project_serv_build(
+    pool: sqlx::PgPool,
+) -> crate::application::project_service::PgProjectService {
+    crate::application::project_service::PgProjectService::new(
+        crate::adapters::driven::pg_project_repository::PgProjectRepository::new(pool),
+    )
+}
