@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::utils::ValidatedJson;
-use crate::application::location_service::PgLocationService;
-use crate::domain::models::dtos::location_dto::{
+use crate::adapters::driving::models::dtos::location_dto::{
     CreateLocationRequest, LocationResponse, UpdateLocationRequest,
 };
+use crate::adapters::driving::utils::ValidatedJson;
+use crate::application::location_service::PgLocationService;
 use crate::domain::ports::use_cases::location_use_cases;
 use crate::domain::ports::use_cases::location_use_cases::{
     CreateLocationUseCase, DeleteLocationUseCase, FindLocationUseCase, ListLocationsUseCase,

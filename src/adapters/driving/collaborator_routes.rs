@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::application::collaborator_service::PgCollaboratorService;
-use crate::domain::errors::collaborator_error::CollaboratorError;
-use crate::domain::models::dtos::collaborator_dto::{
+use crate::adapters::driving::models::dtos::collaborator_dto::{
     CollaboratorResponse, RegisterCollaboratorRequest, StatusRequest, UpdateCollaboratorRequest,
 };
+use crate::application::collaborator_service::PgCollaboratorService;
+use crate::domain::errors::collaborator_error::CollaboratorError;
 use crate::domain::ports::use_cases::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
     FindCollaboratorUseCase, ListCollaboratorsUseCase, RegisterCollaboratorUseCase,

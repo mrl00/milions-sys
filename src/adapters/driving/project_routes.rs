@@ -2,14 +2,14 @@ use actix_web::{HttpResponse, web};
 use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
-use crate::application::project_service::PgProjectService;
-use crate::domain::errors::project_error::ProjectError;
-use crate::domain::models::dtos::project_dto::{
+use crate::adapters::driving::models::dtos::project_dto::{
     AllocationResponse, CostReportResponse, CreateAllocationRequest, CreateProjectRequest,
     CreateStageRequest, HistoryReportResponse, ProgressReportResponse, ProjectResponse,
     ProjectStatusRequest, StageResponse, UpdateAllocationRequest, UpdateProjectRequest,
     UpdateStageRequest,
 };
+use crate::application::project_service::PgProjectService;
+use crate::domain::errors::project_error::ProjectError;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
@@ -333,7 +333,7 @@ async fn get_progress_report(
                 .stages
                 .into_iter()
                 .map(
-                    |s| crate::domain::models::dtos::project_dto::StageProgress {
+                    |s| crate::adapters::driving::models::dtos::project_dto::StageProgress {
                         stage_id: s.pk_project_stage,
                         name: s.tx_name,
                         order: s.nr_order,
@@ -364,7 +364,7 @@ async fn get_history_report(
                 .allocations
                 .into_iter()
                 .map(
-                    |a| crate::domain::models::dtos::project_dto::AllocationHistory {
+                    |a| crate::adapters::driving::models::dtos::project_dto::AllocationHistory {
                         allocation_id: a.allocation_id,
                         project_id: a.project_id,
                         project_name: a.project_name,

@@ -1,12 +1,12 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::adapters::driving::utils::ValidatedJson;
-use crate::application::contact_service::PgContactService;
-use crate::domain::models::dtos::contact_dto::{
+use crate::adapters::driving::models::dtos::contact_dto::{
     AddPhoneRequest, ContactResponse, PhoneResponse, RegisterContactRequest,
     UpdateContactEmailRequest, UpdatePhoneRequest,
 };
+use crate::adapters::driving::utils::ValidatedJson;
+use crate::application::contact_service::PgContactService;
 use crate::domain::ports::use_cases::contact_use_cases;
 use crate::domain::ports::use_cases::contact_use_cases::{
     AddPhoneUseCase, FindContactUseCase, ListContactsUseCase, ListPhonesUseCase,
