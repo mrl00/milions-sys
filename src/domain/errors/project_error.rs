@@ -9,6 +9,9 @@ pub enum ProjectError {
     #[error("project is already in status '{status}'")]
     AlreadyInStatus { uuid: Uuid, status: String },
 
+    #[error("invalid status transition: '{from}' → '{to}'")]
+    InvalidTransition { from: String, to: String },
+
     #[error("stage not found: {uuid}")]
     StageNotFound { uuid: Uuid },
 
