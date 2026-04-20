@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, web};
-use sqlx::types::BigDecimal;
 use uuid::Uuid;
 
 use crate::adapters::driving::models::dtos::project_dto::{
@@ -8,8 +7,8 @@ use crate::adapters::driving::models::dtos::project_dto::{
     ProjectStatusRequest, StageResponse, UpdateAllocationRequest, UpdateProjectRequest,
     UpdateStageRequest,
 };
+use crate::adapters::driving::utils::ValidatedJson;
 use crate::application::project_service::PgProjectService;
-use crate::domain::errors::project_error::ProjectError;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::project_use_cases::{
     CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationUseCase, CreateProjectUseCase,
@@ -59,28 +58,25 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-fn parse_bd(val: &Option<String>) -> Option<BigDecimal> {
-    val.as_deref().and_then(|s| s.parse().ok())
-}
 
 async fn create_project(
     service: web::Data<PgProjectService>,
-    body: web::Json<CreateProjectRequest>,
+    ValidatedJson(body): ValidatedJson<CreateProjectRequest>,
 ) -> HttpResponse {
     let input = ports::use_cases::project_use_cases::CreateProjectInput {
         name: body.name.clone(),
         description: body.description.clone(),
         start_date: body.start_date,
         estimated_end_date: body.estimated_end_date,
-        total_area_m2: parse_bd(&body.total_area_m2),
-        estimated_cost: parse_bd(&body.estimated_cost),
+        total_area_m2: body.total_area_m2.clone(),
+        estimated_cost: body.estimated_cost.clone(),
         notes: body.notes.clone(),
         address_id: body.address_id,
     };
 
     match CreateProjectUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(ProjectResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -90,7 +86,7 @@ async fn list_projects(service: web::Data<PgProjectService>) -> HttpResponse {
             let resp: Vec<ProjectResponse> = rows.into_iter().map(ProjectResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -98,14 +94,14 @@ async fn get_project(service: web::Data<PgProjectService>, path: web::Path<Uuid>
     let uuid = path.into_inner();
     match FindProjectUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_project(
     service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
-    body: web::Json<UpdateProjectRequest>,
+    ValidatedJson(body): ValidatedJson<UpdateProjectRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let input = ports::use_cases::project_use_cases::UpdateProjectInput {
@@ -114,16 +110,16 @@ async fn update_project(
         start_date: body.start_date,
         estimated_end_date: body.estimated_end_date,
         actual_end_date: body.actual_end_date,
-        total_area_m2: parse_bd(&body.total_area_m2),
-        estimated_cost: parse_bd(&body.estimated_cost),
-        actual_cost: parse_bd(&body.actual_cost),
+        total_area_m2: body.total_area_m2.clone(),
+        estimated_cost: body.estimated_cost.clone(),
+        actual_cost: body.actual_cost.clone(),
         notes: body.notes.clone(),
         active: body.active,
     };
 
     match UpdateProjectUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -134,14 +130,14 @@ async fn delete_project(
     let uuid = path.into_inner();
     match DeleteProjectUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ProjectResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_project_status(
     service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
-    body: web::Json<ProjectStatusRequest>,
+    ValidatedJson(body): ValidatedJson<ProjectStatusRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
@@ -157,56 +153,19 @@ async fn update_project_status(
         "cancelled" => CancelProjectUseCase::execute(&**service, uuid)
             .await
             .map(ProjectResponse::from),
-        _ => {
-            return HttpResponse::BadRequest()
-                .body("invalid status: use 'in_progress', 'paused', 'completed', or 'cancelled'");
-        }
+        _ => unreachable!("ValidatedJson garde pattern already rejected invalid status values"),
     };
 
     match result {
         Ok(resp) => HttpResponse::Ok().json(resp),
-        Err(e) => error_to_response(e),
-    }
-}
-
-fn error_to_response(err: ProjectError) -> HttpResponse {
-    use ProjectError::*;
-    match &err {
-        NotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        StageNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        AllocationNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        CollaboratorNotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        AlreadyInStatus { .. } => HttpResponse::Conflict().json(serde_json::json!({
-            "error": "conflict",
-            "message": err.to_string(),
-        })),
-        InvalidField { .. } => HttpResponse::UnprocessableEntity().json(serde_json::json!({
-            "error": "validation_error",
-            "message": err.to_string(),
-        })),
-        _ => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": "internal_error",
-            "message": "internal server error",
-        })),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn create_stage(
     service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
-    body: web::Json<CreateStageRequest>,
+    ValidatedJson(body): ValidatedJson<CreateStageRequest>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
     let input = ports::use_cases::project_use_cases::CreateStageInput {
@@ -219,14 +178,14 @@ async fn create_stage(
 
     match CreateStageUseCase::execute(&**service, project_id, input).await {
         Ok(row) => HttpResponse::Created().json(StageResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_stage(
     service: web::Data<PgProjectService>,
     path: web::Path<(Uuid, Uuid)>,
-    body: web::Json<UpdateStageRequest>,
+    ValidatedJson(body): ValidatedJson<UpdateStageRequest>,
 ) -> HttpResponse {
     let (project_id, stage_id) = path.into_inner();
     let input = ports::use_cases::project_use_cases::UpdateStageInput {
@@ -240,28 +199,28 @@ async fn update_stage(
 
     match UpdateStageUseCase::execute(&**service, project_id, stage_id, input).await {
         Ok(row) => HttpResponse::Ok().json(StageResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn create_allocation(
     service: web::Data<PgProjectService>,
     path: web::Path<Uuid>,
-    body: web::Json<CreateAllocationRequest>,
+    ValidatedJson(body): ValidatedJson<CreateAllocationRequest>,
 ) -> HttpResponse {
     let project_id = path.into_inner();
     let input = ports::use_cases::project_use_cases::CreateAllocationInput {
         collaborator_id: body.collaborator_id,
         work_date: body.work_date,
-        hours_worked: parse_bd(&body.hours_worked),
-        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        hours_worked: body.hours_worked.clone(),
+        hourly_rate_snapshot: body.hourly_rate_snapshot.clone(),
         notes: body.notes.clone(),
         present: body.present,
     };
 
     match CreateAllocationUseCase::execute(&**service, project_id, input).await {
         Ok(row) => HttpResponse::Created().json(AllocationResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -276,26 +235,26 @@ async fn list_allocations(
                 rows.into_iter().map(AllocationResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_allocation(
     service: web::Data<PgProjectService>,
     path: web::Path<(Uuid, Uuid)>,
-    body: web::Json<UpdateAllocationRequest>,
+    ValidatedJson(body): ValidatedJson<UpdateAllocationRequest>,
 ) -> HttpResponse {
     let (project_id, allocation_id) = path.into_inner();
     let input = ports::use_cases::project_use_cases::UpdateAllocationInput {
-        hours_worked: parse_bd(&body.hours_worked),
-        hourly_rate_snapshot: parse_bd(&body.hourly_rate_snapshot),
+        hours_worked: body.hours_worked.clone(),
+        hourly_rate_snapshot: body.hourly_rate_snapshot.clone(),
         notes: body.notes.clone(),
         present: body.present,
     };
 
     match UpdateAllocationUseCase::execute(&**service, project_id, allocation_id, input).await {
         Ok(row) => HttpResponse::Ok().json(AllocationResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -316,7 +275,7 @@ async fn get_cost_report(
                 .map(|v| v.to_string())
                 .unwrap_or_default(),
         }),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -347,7 +306,7 @@ async fn get_progress_report(
             completed_stages: report.completed_stages,
             progress_pct: report.progress_pct.to_string(),
         }),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -378,12 +337,14 @@ async fn get_history_report(
             total_days: report.total_days,
             total_hours: report.total_hours.to_string(),
         }),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::errors::project_error::ProjectError;
+
     use super::*;
     use actix_web::{App, test, web};
     use uuid::Uuid;
@@ -561,7 +522,7 @@ mod tests {
         let err = ProjectError::NotFound {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 404);
     }
 
@@ -571,7 +532,7 @@ mod tests {
             uuid: Uuid::now_v7(),
             status: "planning".to_string(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 409);
     }
 
@@ -581,7 +542,7 @@ mod tests {
             field: "name",
             reason: "required".to_string(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 422);
     }
 
@@ -592,7 +553,7 @@ mod tests {
                 source: sqlx::Error::PoolTimedOut,
             },
         );
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 500);
     }
 }
