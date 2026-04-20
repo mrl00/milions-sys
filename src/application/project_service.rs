@@ -120,6 +120,50 @@ impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
     }
 }
 
+/// State machine de transições de status do projeto.
+///
+/// Transições válidas:
+/// - `planning`    → `in_progress`, `cancelled`
+/// - `in_progress` → `paused`, `completed`, `cancelled`
+/// - `paused`      → `in_progress`, `cancelled`
+/// - `completed`   → (terminal — nenhuma transição)
+/// - `cancelled`   → (terminal — nenhuma transição)
+fn valid_transition(from: &str, to: &ProjectStatus) -> bool {
+    match (from, to) {
+        ("planning", ProjectStatus::InProgress)
+        | ("planning", ProjectStatus::Cancelled)
+        | ("in_progress", ProjectStatus::Paused)
+        | ("in_progress", ProjectStatus::Completed)
+        | ("in_progress", ProjectStatus::Cancelled)
+        | ("paused", ProjectStatus::InProgress)
+        | ("paused", ProjectStatus::Cancelled) => true,
+        _ => false,
+    }
+}
+
+/// Valida a transição e retorna o erro adequado se inválida.
+/// - Status igual ao alvo → `AlreadyInStatus`
+/// - Estado terminal ou transição não permitida → `InvalidTransition`
+fn check_transition(
+    uuid: Uuid,
+    current_status: &str,
+    target: &ProjectStatus,
+) -> Result<(), ProjectError> {
+    if current_status == target.to_string() {
+        return Err(ProjectError::AlreadyInStatus {
+            uuid,
+            status: target.to_string(),
+        });
+    }
+    if !valid_transition(current_status, target) {
+        return Err(ProjectError::InvalidTransition {
+            from: current_status.to_string(),
+            to: target.to_string(),
+        });
+    }
+    Ok(())
+}
+
 #[async_trait]
 impl<R: ProjectRepository> StartProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
@@ -129,12 +173,7 @@ impl<R: ProjectRepository> StartProjectUseCase for ProjectService<R> {
             .await?
             .ok_or(ProjectError::NotFound { uuid })?;
 
-        if current.tx_status == ProjectStatus::InProgress.to_string() {
-            return Err(ProjectError::AlreadyInStatus {
-                uuid,
-                status: ProjectStatus::InProgress.to_string(),
-            });
-        }
+        check_transition(uuid, &current.tx_status, &ProjectStatus::InProgress)?;
 
         self.repo
             .update(
@@ -166,12 +205,7 @@ impl<R: ProjectRepository> PauseProjectUseCase for ProjectService<R> {
             .await?
             .ok_or(ProjectError::NotFound { uuid })?;
 
-        if current.tx_status == ProjectStatus::Paused.to_string() {
-            return Err(ProjectError::AlreadyInStatus {
-                uuid,
-                status: ProjectStatus::Paused.to_string(),
-            });
-        }
+        check_transition(uuid, &current.tx_status, &ProjectStatus::Paused)?;
 
         self.repo
             .update(
@@ -203,12 +237,7 @@ impl<R: ProjectRepository> CompleteProjectUseCase for ProjectService<R> {
             .await?
             .ok_or(ProjectError::NotFound { uuid })?;
 
-        if current.tx_status == ProjectStatus::Completed.to_string() {
-            return Err(ProjectError::AlreadyInStatus {
-                uuid,
-                status: ProjectStatus::Completed.to_string(),
-            });
-        }
+        check_transition(uuid, &current.tx_status, &ProjectStatus::Completed)?;
 
         self.repo
             .update(
@@ -240,12 +269,7 @@ impl<R: ProjectRepository> CancelProjectUseCase for ProjectService<R> {
             .await?
             .ok_or(ProjectError::NotFound { uuid })?;
 
-        if current.tx_status == ProjectStatus::Cancelled.to_string() {
-            return Err(ProjectError::AlreadyInStatus {
-                uuid,
-                status: ProjectStatus::Cancelled.to_string(),
-            });
-        }
+        check_transition(uuid, &current.tx_status, &ProjectStatus::Cancelled)?;
 
         self.repo
             .update(
@@ -821,7 +845,8 @@ mod tests {
 
     #[tokio::test]
     async fn complete_project_succeeds() {
-        let row = make_project_row();
+        let mut row = make_project_row();
+        row.tx_status = "in_progress".to_string(); // planning → in_progress → completed
         let uuid = row.pk_project;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
@@ -841,6 +866,103 @@ mod tests {
         let service = ProjectService::new(repo);
         let result = CancelProjectUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_project, uuid);
+    }
+
+    // --- State machine tests ---
+
+    #[test]
+    fn valid_transition_planning_to_in_progress() {
+        assert!(valid_transition("planning", &ProjectStatus::InProgress));
+    }
+
+    #[test]
+    fn valid_transition_planning_to_cancelled() {
+        assert!(valid_transition("planning", &ProjectStatus::Cancelled));
+    }
+
+    #[test]
+    fn invalid_transition_planning_to_paused() {
+        assert!(!valid_transition("planning", &ProjectStatus::Paused));
+    }
+
+    #[test]
+    fn invalid_transition_planning_to_completed() {
+        assert!(!valid_transition("planning", &ProjectStatus::Completed));
+    }
+
+    #[test]
+    fn invalid_transition_completed_is_terminal() {
+        assert!(!valid_transition("completed", &ProjectStatus::InProgress));
+        assert!(!valid_transition("completed", &ProjectStatus::Paused));
+        assert!(!valid_transition("completed", &ProjectStatus::Cancelled));
+    }
+
+    #[test]
+    fn invalid_transition_cancelled_is_terminal() {
+        assert!(!valid_transition("cancelled", &ProjectStatus::InProgress));
+        assert!(!valid_transition("cancelled", &ProjectStatus::Paused));
+        assert!(!valid_transition("cancelled", &ProjectStatus::Completed));
+    }
+
+    #[test]
+    fn check_transition_same_status_returns_already_in_status() {
+        let uuid = Uuid::now_v7();
+        let result = check_transition(uuid, "in_progress", &ProjectStatus::InProgress);
+        assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
+    }
+
+    #[test]
+    fn check_transition_invalid_returns_invalid_transition() {
+        let uuid = Uuid::now_v7();
+        let result = check_transition(uuid, "completed", &ProjectStatus::InProgress);
+        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+    }
+
+    #[tokio::test]
+    async fn start_project_fails_when_completed() {
+        let mut row = make_project_row();
+        row.tx_status = "completed".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = StartProjectUseCase::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+    }
+
+    #[tokio::test]
+    async fn pause_project_fails_when_planning() {
+        let row = make_project_row(); // status = "planning"
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = PauseProjectUseCase::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+    }
+
+    #[tokio::test]
+    async fn complete_project_fails_when_paused() {
+        let mut row = make_project_row();
+        row.tx_status = "paused".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = CompleteProjectUseCase::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+    }
+
+    #[tokio::test]
+    async fn cancel_project_from_cancelled_returns_already_in_status() {
+        let mut row = make_project_row();
+        row.tx_status = "cancelled".to_string();
+        let uuid = row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(row);
+        let service = ProjectService::new(repo);
+        let result = CancelProjectUseCase::execute(&service, uuid).await;
+        assert!(matches!(result, Err(ProjectError::AlreadyInStatus { .. })));
     }
 
     #[tokio::test]
