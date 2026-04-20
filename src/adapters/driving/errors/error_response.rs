@@ -230,6 +230,11 @@ impl From<ProjectError> for HttpResponse {
                 "conflict",
                 format!("project {uuid} is already in status '{status}'"),
             ),
+            InvalidTransition { from, to } => ErrorResponse::response(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!("invalid status transition: '{from}' → '{to}'"),
+            ),
             StageNotFound { uuid } => ErrorResponse::response(
                 StatusCode::NOT_FOUND,
                 "not_found",
