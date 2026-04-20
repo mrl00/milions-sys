@@ -69,7 +69,7 @@ impl<R: CollaboratorRepository> RegisterCollaboratorUseCase for CollaboratorServ
         &self,
         input: RegisterCollaboratorInput,
     ) -> Result<CollaboratorRow, CollaboratorError> {
-        let _validated_cpf: Cpf = input.cpf.clone().try_into()?;
+        let _: Cpf = input.cpf.clone().try_into()?;
 
         if self.repo.find_by_document(&input.cpf).await?.is_some() {
             return Err(CollaboratorError::CpfAlreadyExists { cpf: input.cpf });
