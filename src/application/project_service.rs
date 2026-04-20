@@ -32,6 +32,25 @@ impl<R: ProjectRepository> ProjectService<R> {
 
 pub type PgProjectService = ProjectService<PgProjectRepository>;
 
+/// Parseia `Option<String>` para `Option<BigDecimal>`.
+/// Retorna `ProjectError::InvalidField` se a string estiver presente
+/// mas não for um número decimal válido.
+fn parse_decimal(
+    val: Option<String>,
+    field: &'static str,
+) -> Result<Option<BigDecimal>, ProjectError> {
+    match val {
+        None => Ok(None),
+        Some(s) => s
+            .parse::<BigDecimal>()
+            .map(Some)
+            .map_err(|_| ProjectError::InvalidField {
+                field,
+                reason: format!("'{}' is not a valid decimal number", s),
+            }),
+    }
+}
+
 #[async_trait]
 impl<R: ProjectRepository> FindProjectUseCase for ProjectService<R> {
     async fn execute(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
@@ -58,8 +77,8 @@ impl<R: ProjectRepository> CreateProjectUseCase for ProjectService<R> {
             tx_status: ProjectStatus::Planning,
             dt_start_date: input.start_date,
             dt_estimated_end_date: input.estimated_end_date,
-            nr_total_area_m2: input.total_area_m2,
-            nr_estimated_cost: input.estimated_cost,
+            nr_total_area_m2: parse_decimal(input.total_area_m2, "total_area_m2")?,
+            nr_estimated_cost: parse_decimal(input.estimated_cost, "estimated_cost")?,
             tx_notes: input.notes,
             fk_address: input.address_id,
         };
@@ -90,9 +109,9 @@ impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
                     dt_start_date: input.start_date,
                     dt_estimated_end_date: input.estimated_end_date,
                     dt_actual_end_date: input.actual_end_date,
-                    nr_total_area_m2: input.total_area_m2,
-                    nr_estimated_cost: input.estimated_cost,
-                    nr_actual_cost: input.actual_cost,
+                    nr_total_area_m2: parse_decimal(input.total_area_m2, "total_area_m2")?,
+                    nr_estimated_cost: parse_decimal(input.estimated_cost, "estimated_cost")?,
+                    nr_actual_cost: parse_decimal(input.actual_cost, "actual_cost")?,
                     tx_notes: input.notes,
                     bl_active: input.active,
                 },
@@ -348,8 +367,8 @@ impl<R: ProjectRepository> CreateAllocationUseCase for ProjectService<R> {
             fk_project: project_id,
             fk_collaborator: input.collaborator_id,
             dt_work_date: input.work_date,
-            nr_hours_worked: input.hours_worked,
-            nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+            nr_hours_worked: parse_decimal(input.hours_worked, "hours_worked")?,
+            nr_hourly_rate_snapshot: parse_decimal(input.hourly_rate_snapshot, "hourly_rate_snapshot")?,
             tx_notes: input.notes,
             bl_present: input.present,
         };
@@ -404,8 +423,8 @@ impl<R: ProjectRepository> UpdateAllocationUseCase for ProjectService<R> {
             .update_allocation(
                 allocation_id,
                 db::project_rows::UpdateProjectDailyAllocationRow {
-                    nr_hours_worked: input.hours_worked,
-                    nr_hourly_rate_snapshot: input.hourly_rate_snapshot,
+                    nr_hours_worked: parse_decimal(input.hours_worked, "hours_worked")?,
+                    nr_hourly_rate_snapshot: parse_decimal(input.hourly_rate_snapshot, "hourly_rate_snapshot")?,
                     tx_notes: input.notes,
                     bl_present: input.present,
                 },
@@ -884,4 +903,31 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("in_progress"));
     }
+
+    #[test]
+    fn parse_decimal_valid_string_returns_bigdecimal() {
+        let result = parse_decimal(Some("150.75".to_string()), "total_area_m2");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Some("150.75".parse::<BigDecimal>().unwrap()));
+    }
+
+    #[test]
+    fn parse_decimal_invalid_string_returns_invalid_field() {
+        let result = parse_decimal(Some("abc".to_string()), "total_area_m2");
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidField {
+                field: "total_area_m2",
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn parse_decimal_none_returns_none() {
+        let result = parse_decimal(None, "estimated_cost");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), None);
+    }
 }
+
