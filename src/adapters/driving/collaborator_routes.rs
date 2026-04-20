@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
-use crate::application::collaborator_service::PgCollaboratorService;
-use crate::domain::errors::collaborator_error::CollaboratorError;
-use crate::domain::models::dtos::collaborator_dto::{
+use crate::adapters::driving::models::dtos::collaborator_dto::{
     CollaboratorResponse, RegisterCollaboratorRequest, StatusRequest, UpdateCollaboratorRequest,
 };
+use crate::adapters::driving::utils::ValidatedJson;
+use crate::application::collaborator_service::PgCollaboratorService;
 use crate::domain::ports::use_cases::collaborator_use_cases::{
     ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
     FindCollaboratorUseCase, ListCollaboratorsUseCase, RegisterCollaboratorUseCase,
@@ -32,7 +32,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 
 async fn register_collaborator(
     service: web::Data<PgCollaboratorService>,
-    body: web::Json<RegisterCollaboratorRequest>,
+    ValidatedJson(body): ValidatedJson<RegisterCollaboratorRequest>,
 ) -> HttpResponse {
     let input =
         crate::domain::ports::use_cases::collaborator_use_cases::RegisterCollaboratorInput {
@@ -42,7 +42,7 @@ async fn register_collaborator(
 
     match RegisterCollaboratorUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(CollaboratorResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -53,7 +53,7 @@ async fn list_collaborators(service: web::Data<PgCollaboratorService>) -> HttpRe
                 rows.into_iter().map(CollaboratorResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -64,14 +64,14 @@ async fn get_collaborator(
     let uuid = path.into_inner();
     match FindCollaboratorUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_collaborator(
     service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
-    body: web::Json<UpdateCollaboratorRequest>,
+    ValidatedJson(body): ValidatedJson<UpdateCollaboratorRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let input = crate::domain::ports::use_cases::collaborator_use_cases::UpdateCollaboratorInput {
@@ -82,7 +82,7 @@ async fn update_collaborator(
 
     match UpdateCollaboratorUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
@@ -93,14 +93,14 @@ async fn delete_collaborator(
     let uuid = path.into_inner();
     match DeleteCollaboratorUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(CollaboratorResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_collaborator_status(
     service: web::Data<PgCollaboratorService>,
     path: web::Path<Uuid>,
-    body: web::Json<StatusRequest>,
+    ValidatedJson(body): ValidatedJson<StatusRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
@@ -115,38 +115,14 @@ async fn update_collaborator_status(
 
     match result {
         Ok(resp) => HttpResponse::Ok().json(resp),
-        Err(e) => error_to_response(e),
-    }
-}
-
-fn error_to_response(err: CollaboratorError) -> HttpResponse {
-    use CollaboratorError::*;
-    match &err {
-        NotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        CpfAlreadyExists { .. } => HttpResponse::Conflict().json(serde_json::json!({
-            "error": "conflict",
-            "message": err.to_string(),
-        })),
-        AlreadyActive { .. } | AlreadyInactive { .. } => HttpResponse::BadRequest()
-            .json(serde_json::json!({"error": "bad_request", "message": err.to_string()})),
-        InvalidCpf(_) | InvalidPhone(_) => {
-            HttpResponse::UnprocessableEntity().json(serde_json::json!({
-                "error": "validation_error",
-                "message": err.to_string(),
-            }))
-        }
-        _ => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": "internal_error",
-            "message": "internal server error",
-        })),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::errors::collaborator_error::CollaboratorError;
+
     use super::*;
     use actix_web::{App, test, web};
     use uuid::Uuid;
@@ -232,7 +208,7 @@ mod tests {
         let err = CollaboratorError::NotFound {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 404);
     }
 
@@ -241,7 +217,7 @@ mod tests {
         let err = CollaboratorError::CpfAlreadyExists {
             cpf: "123".to_string(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 409);
     }
 
@@ -250,14 +226,14 @@ mod tests {
         let err = CollaboratorError::AlreadyActive {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
-        assert_eq!(resp.status(), 400);
+        let resp = HttpResponse::from(err);
+        assert_eq!(resp.status(), 409);
     }
 
     #[actix_web::test]
     async fn error_to_response_validation_error() {
         let err = CollaboratorError::InvalidCpf(crate::domain::value_objects::cpf::CpfError::Empty);
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 422);
     }
 
@@ -268,7 +244,7 @@ mod tests {
                 source: sqlx::Error::PoolTimedOut,
             },
         );
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 500);
     }
 }

@@ -11,7 +11,7 @@ CREATE SCHEMA IF NOT EXISTS collaborators;
 -- COLABORADOR
 -- Pessoa física que executa serviços nas obras.
 -- tx_level indica a especialização: painter | helper | supervisor | generalist.
--- tx_status controla a disponibilidade: active | inactive | suspended.
+-- tx_status controla a disponibilidade: active | inactive.
 -- tx_cpf armazenado sem formatação (apenas dígitos): ex: 00000000000.
 -- =============================================================================
 CREATE TABLE collaborators.tb_collaborator
