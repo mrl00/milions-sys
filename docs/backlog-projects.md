@@ -152,10 +152,10 @@ O service agora verifica que o project existe **e** que o `collaborator_id` exis
 
 A constraint `uq_allocation_collaborator_day(fk_project, fk_collaborator, dt_work_date)` causa unique violation no DB → erro opaco `500`.
 
-- [ ] Adicionar variante `AllocationConflict { project_id, collaborator_id, work_date }` em `ProjectError`
-- [ ] Interceptar `sqlx::Error::Database` com código `23505` no repository e mapear para o novo erro
-- [ ] Mapear para `409 Conflict` no `From<ProjectError> for HttpResponse`
-- [ ] Adicionar teste hurl
+- [x] Adicionar variante `AllocationConflict { project_id, collaborator_id, work_date }` em `ProjectError`
+- [x] Interceptar `sqlx::Error::Database` com código `23505` no repository e mapear para o novo erro
+- [x] Mapear para `409 Conflict` no `From<ProjectError> for HttpResponse`
+- [x] Adicionar teste hurl ✅ 2026-04-21
 
 ### T09 — Rejeitar status de stage inválido em vez de defaultar para Pending
 
@@ -165,9 +165,9 @@ A constraint `uq_allocation_collaborator_day(fk_project, fk_collaborator, dt_wor
 _ => ProjectStageStatus::Pending, // ← silencia erro
 ```
 
-- [ ] Retornar `ProjectError::InvalidField { field: "status", reason: "..." }` quando o valor não é um dos 4 válidos
-- [ ] Se T02 (garde) for implementado primeiro, valores inválidos já serão rejeitados com 400 no DTO — este match se torna unreachable
-- [ ] Considerar usar `FromStr` no enum `ProjectStageStatus` em vez de match manual
+- [x] Retornar `ProjectError::InvalidField { field: "status", reason: "..." }` quando o valor não é um dos 4 válidos ✅ 2026-04-21
+- [x] Se T02 (garde) for implementado primeiro, valores inválidos já serão rejeitados com 400 no DTO — este match se torna unreachable ✅ 2026-04-21
+- [x] Considerar usar `FromStr` no enum `ProjectStageStatus` em vez de match manual ✅ 2026-04-21
 
 ### T10 — Preencher `collaborator_name` no history report
 
