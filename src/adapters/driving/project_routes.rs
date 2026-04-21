@@ -58,7 +58,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-
 async fn create_project(
     service: web::Data<PgProjectService>,
     ValidatedJson(body): ValidatedJson<CreateProjectRequest>,
