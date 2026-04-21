@@ -303,7 +303,21 @@ impl CreateAllocation for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| db_err("create allocation", e))
+        .map_err(|e| {
+            if let sqlx::Error::Database(db_err) = &e {
+                // Postgres retorna constraint name em db_err.constraint()
+                if let Some(constraint) = db_err.constraint() {
+                    if constraint == "uq_allocation_collaborator_day" {
+                        return ProjectError::AllocationConflict {
+                            project_id: input.fk_project,
+                            collaborator_id: input.fk_collaborator,
+                            work_date: input.dt_work_date,
+                        };
+                    }
+                }
+            }
+            db_err("create allocation", e)
+        })
     }
 }
 
