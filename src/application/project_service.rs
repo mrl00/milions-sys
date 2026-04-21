@@ -32,9 +32,6 @@ impl<R: ProjectRepository> ProjectService<R> {
 
 pub type PgProjectService = ProjectService<PgProjectRepository>;
 
-/// Parseia `Option<String>` para `Option<BigDecimal>`.
-/// Retorna `ProjectError::InvalidField` se a string estiver presente
-/// mas não for um número decimal válido.
 fn parse_decimal(
     val: Option<String>,
     field: &'static str,
@@ -129,16 +126,16 @@ impl<R: ProjectRepository> UpdateProjectUseCase for ProjectService<R> {
 /// - `completed`   → (terminal — nenhuma transição)
 /// - `cancelled`   → (terminal — nenhuma transição)
 fn valid_transition(from: &str, to: &ProjectStatus) -> bool {
-    match (from, to) {
+    matches!(
+        (from, to),
         ("planning", ProjectStatus::InProgress)
-        | ("planning", ProjectStatus::Cancelled)
-        | ("in_progress", ProjectStatus::Paused)
-        | ("in_progress", ProjectStatus::Completed)
-        | ("in_progress", ProjectStatus::Cancelled)
-        | ("paused", ProjectStatus::InProgress)
-        | ("paused", ProjectStatus::Cancelled) => true,
-        _ => false,
-    }
+            | ("planning", ProjectStatus::Cancelled)
+            | ("in_progress", ProjectStatus::Paused)
+            | ("in_progress", ProjectStatus::Completed)
+            | ("in_progress", ProjectStatus::Cancelled)
+            | ("paused", ProjectStatus::InProgress)
+            | ("paused", ProjectStatus::Cancelled)
+    )
 }
 
 /// Valida a transição e retorna o erro adequado se inválida.
@@ -353,6 +350,18 @@ impl<R: ProjectRepository> UpdateStageUseCase for ProjectService<R> {
             return Err(ProjectError::StageNotFound { uuid: stage_id });
         }
 
+        let input_status = input
+            .status
+            .map(|s| {
+                s.as_str()
+                    .parse::<ProjectStageStatus>()
+                    .map_err(|e| ProjectError::InvalidField {
+                        field: "status",
+                        reason: e.to_string(),
+                    })
+            })
+            .transpose()?;
+
         self.repo
             .update_stage(
                 stage_id,
@@ -360,13 +369,7 @@ impl<R: ProjectRepository> UpdateStageUseCase for ProjectService<R> {
                     tx_name: input.name,
                     tx_description: input.description,
                     nr_order: input.order,
-                    tx_status: input.status.map(|s| match s.as_str() {
-                        "pending" => ProjectStageStatus::Pending,
-                        "in_progress" => ProjectStageStatus::InProgress,
-                        "completed" => ProjectStageStatus::Completed,
-                        "skipped" => ProjectStageStatus::Skipped,
-                        _ => ProjectStageStatus::Pending,
-                    }),
+                    tx_status: input_status,
                     dt_start_date: input.start_date,
                     dt_end_date: input.end_date,
                 },
@@ -399,7 +402,10 @@ impl<R: ProjectRepository> CreateAllocationUseCase for ProjectService<R> {
             fk_collaborator: collaborator_id,
             dt_work_date: input.work_date,
             nr_hours_worked: parse_decimal(input.hours_worked, "hours_worked")?,
-            nr_hourly_rate_snapshot: parse_decimal(input.hourly_rate_snapshot, "hourly_rate_snapshot")?,
+            nr_hourly_rate_snapshot: parse_decimal(
+                input.hourly_rate_snapshot,
+                "hourly_rate_snapshot",
+            )?,
             tx_notes: input.notes,
             bl_present: input.present,
         };
@@ -455,7 +461,10 @@ impl<R: ProjectRepository> UpdateAllocationUseCase for ProjectService<R> {
                 allocation_id,
                 db::project_rows::UpdateProjectDailyAllocationRow {
                     nr_hours_worked: parse_decimal(input.hours_worked, "hours_worked")?,
-                    nr_hourly_rate_snapshot: parse_decimal(input.hourly_rate_snapshot, "hourly_rate_snapshot")?,
+                    nr_hourly_rate_snapshot: parse_decimal(
+                        input.hourly_rate_snapshot,
+                        "hourly_rate_snapshot",
+                    )?,
                     tx_notes: input.notes,
                     bl_present: input.present,
                 },
@@ -603,9 +612,9 @@ mod tests {
         UpdateAllocation, UpdateProject, UpdateStage,
     };
     use crate::domain::ports::use_cases::project_use_cases::{
-        CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
-        DeleteProjectUseCase, FindProjectUseCase, ListProjectsUseCase, PauseProjectUseCase,
-        StartProjectUseCase, UpdateProjectUseCase,
+        CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput,
+        CreateAllocationUseCase, DeleteProjectUseCase, FindProjectUseCase, ListProjectsUseCase,
+        PauseProjectUseCase, StartProjectUseCase, UpdateProjectUseCase,
     };
 
     #[derive(Default)]
@@ -613,6 +622,8 @@ mod tests {
         find_by_id_result: Option<ProjectRow>,
         find_all_result: Vec<ProjectRow>,
         collaborator_exists_result: bool,
+        find_stage_by_id_result: Option<ProjectStageRow>,
+        update_stage_result: Option<ProjectStageRow>,
     }
 
     impl MockRepo {
@@ -624,6 +635,7 @@ mod tests {
         }
     }
 
+    use chrono::Local;
     use sqlx::types::chrono::NaiveDateTime;
 
     fn now() -> NaiveDateTime {
@@ -651,6 +663,26 @@ mod tests {
         }
     }
 
+    fn make_stage_row(project_id: Uuid) -> ProjectStageRow {
+        ProjectStageRow {
+            pk_project_stage: Uuid::now_v7(),
+            fk_project: project_id,
+            idx_project_stage: 1,
+            tx_name: "Test Stage".to_string(),
+            tx_description: None,
+            nr_order: 1,
+            tx_status: "pending".to_string(),
+            dt_start_date: None,
+            dt_end_date: None,
+            ts_created_at_project_stage: Local::now().naive_local(),
+            ts_updated_at_project_stage: Local::now().naive_local(),
+        }
+    }
+
+    fn make_stage_row_default() -> ProjectStageRow {
+        make_stage_row(Uuid::now_v7())
+    }
+
     #[async_trait]
     impl FindProjectById for MockRepo {
         async fn find_by_id(&self, _uuid: Uuid) -> Result<Option<ProjectRow>, ProjectError> {
@@ -664,12 +696,14 @@ mod tests {
             Ok(self.find_all_result.clone())
         }
     }
+
     #[async_trait]
     impl CreateProject for MockRepo {
         async fn create(&self, _input: CreateProjectRow) -> Result<ProjectRow, ProjectError> {
             Ok(make_project_row())
         }
     }
+
     #[async_trait]
     impl UpdateProject for MockRepo {
         async fn update(
@@ -683,6 +717,7 @@ mod tests {
             })
         }
     }
+
     #[async_trait]
     impl DeleteProject for MockRepo {
         async fn delete(&self, uuid: Uuid) -> Result<ProjectRow, ProjectError> {
@@ -692,15 +727,17 @@ mod tests {
             })
         }
     }
+
     #[async_trait]
     impl FindStageById for MockRepo {
         async fn find_stage_by_id(
             &self,
             _uuid: Uuid,
         ) -> Result<Option<ProjectStageRow>, ProjectError> {
-            Ok(None)
+            Ok(self.find_stage_by_id_result.clone())
         }
     }
+
     #[async_trait]
     impl CreateStage for MockRepo {
         async fn create_stage(
@@ -710,6 +747,7 @@ mod tests {
             unreachable!()
         }
     }
+
     #[async_trait]
     impl UpdateStage for MockRepo {
         async fn update_stage(
@@ -717,9 +755,13 @@ mod tests {
             _uuid: Uuid,
             _input: UpdateProjectStageRow,
         ) -> Result<ProjectStageRow, ProjectError> {
-            unreachable!()
+            Ok(self
+                .update_stage_result
+                .clone()
+                .unwrap_or_else(make_stage_row_default))
         }
     }
+
     #[async_trait]
     impl FindAllocationById for MockRepo {
         async fn find_allocation_by_id(
@@ -729,6 +771,7 @@ mod tests {
             Ok(None)
         }
     }
+
     #[async_trait]
     impl FindAllocationsByProjectId for MockRepo {
         async fn find_allocations_by_project_id(
@@ -738,6 +781,7 @@ mod tests {
             Ok(vec![])
         }
     }
+
     #[async_trait]
     impl CreateAllocation for MockRepo {
         async fn create_allocation(
@@ -759,6 +803,7 @@ mod tests {
             })
         }
     }
+
     #[async_trait]
     impl UpdateAllocation for MockRepo {
         async fn update_allocation(
@@ -769,6 +814,7 @@ mod tests {
             unreachable!()
         }
     }
+
     #[async_trait]
     impl FindStagesByProjectId for MockRepo {
         async fn find_stages_by_project_id(
@@ -778,6 +824,7 @@ mod tests {
             Ok(vec![])
         }
     }
+
     #[async_trait]
     impl FindAllocationsByCollaboratorId for MockRepo {
         async fn find_allocations_by_collaborator_id(
@@ -787,6 +834,7 @@ mod tests {
             Ok(vec![])
         }
     }
+
     #[async_trait]
     impl FindCollaboratorById for MockRepo {
         async fn collaborator_exists(&self, _collaborator_id: Uuid) -> Result<bool, ProjectError> {
@@ -945,7 +993,10 @@ mod tests {
     fn check_transition_invalid_returns_invalid_transition() {
         let uuid = Uuid::now_v7();
         let result = check_transition(uuid, "completed", &ProjectStatus::InProgress);
-        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidTransition { .. })
+        ));
     }
 
     #[tokio::test]
@@ -957,7 +1008,10 @@ mod tests {
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
         let result = StartProjectUseCase::execute(&service, uuid).await;
-        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidTransition { .. })
+        ));
     }
 
     #[tokio::test]
@@ -968,7 +1022,10 @@ mod tests {
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
         let result = PauseProjectUseCase::execute(&service, uuid).await;
-        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidTransition { .. })
+        ));
     }
 
     #[tokio::test]
@@ -980,7 +1037,10 @@ mod tests {
         repo.find_by_id_result = Some(row);
         let service = ProjectService::new(repo);
         let result = CompleteProjectUseCase::execute(&service, uuid).await;
-        assert!(matches!(result, Err(ProjectError::InvalidTransition { .. })));
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidTransition { .. })
+        ));
     }
 
     #[tokio::test]
@@ -1083,7 +1143,10 @@ mod tests {
     fn parse_decimal_valid_string_returns_bigdecimal() {
         let result = parse_decimal(Some("150.75".to_string()), "total_area_m2");
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Some("150.75".parse::<BigDecimal>().unwrap()));
+        assert_eq!(
+            result.unwrap(),
+            Some("150.75".parse::<BigDecimal>().unwrap())
+        );
     }
 
     #[test]
@@ -1104,5 +1167,188 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), None);
     }
-}
 
+    // ── projeto não encontrado ───────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_fails_when_project_not_found() {
+        let repo = MockRepo::new();
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: Some("Nova etapa".to_string()),
+            description: None,
+            order: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+        };
+        let result =
+            UpdateStageUseCase::execute(&service, Uuid::now_v7(), Uuid::now_v7(), input).await;
+        assert!(matches!(result, Err(ProjectError::NotFound { .. })));
+    }
+
+    // ── etapa não encontrada ─────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_fails_when_stage_not_found() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        // find_stage_by_id_result permanece None (default)
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: Some("Nova etapa".to_string()),
+            description: None,
+            order: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, Uuid::now_v7(), input).await;
+        assert!(matches!(result, Err(ProjectError::StageNotFound { .. })));
+    }
+
+    // ── etapa pertence a outro projeto ───────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_fails_when_stage_belongs_to_different_project() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let stage = make_stage_row(Uuid::now_v7()); // fk_project diferente
+        let stage_id = stage.pk_project_stage;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        repo.find_stage_by_id_result = Some(stage);
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: Some("Nova etapa".to_string()),
+            description: None,
+            order: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, stage_id, input).await;
+        assert!(matches!(
+            result,
+            Err(ProjectError::StageNotFound { uuid }) if uuid == stage_id
+        ));
+    }
+
+    // ── status inválido ──────────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_fails_with_invalid_status() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let stage = make_stage_row(project_id);
+        let stage_id = stage.pk_project_stage;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        repo.find_stage_by_id_result = Some(stage);
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: None,
+            description: None,
+            order: None,
+            status: Some("nao_existe".to_string()),
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, stage_id, input).await;
+        assert!(matches!(
+            result,
+            Err(ProjectError::InvalidField {
+                field: "status",
+                ..
+            })
+        ));
+    }
+
+    // ── caminho feliz: atualiza nome ─────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_succeeds_updating_name() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let stage = make_stage_row(project_id);
+        let stage_id = stage.pk_project_stage;
+        let mut expected = stage.clone();
+        expected.tx_name = "Etapa Renomeada".to_string();
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        repo.find_stage_by_id_result = Some(stage);
+        repo.update_stage_result = Some(expected.clone());
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: Some("Etapa Renomeada".to_string()),
+            description: None,
+            order: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, stage_id, input)
+            .await
+            .unwrap();
+        assert_eq!(result.pk_project_stage, stage_id);
+        assert_eq!(result.tx_name, "Etapa Renomeada");
+    }
+
+    // ── caminho feliz: status válido ─────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_stage_succeeds_with_valid_status() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let stage = make_stage_row(project_id);
+        let stage_id = stage.pk_project_stage;
+        let mut expected = stage.clone();
+        expected.tx_status = "in_progress".to_string();
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        repo.find_stage_by_id_result = Some(stage);
+        repo.update_stage_result = Some(expected);
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: None,
+            description: None,
+            order: None,
+            status: Some("in_progress".to_string()),
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, stage_id, input)
+            .await
+            .unwrap();
+        assert_eq!(result.tx_status, "in_progress");
+    }
+
+    // ── caminho feliz: input totalmente vazio (sem alterações) ───────────────────
+
+    #[tokio::test]
+    async fn update_stage_succeeds_with_empty_input() {
+        let project = make_project_row();
+        let project_id = project.pk_project;
+        let stage = make_stage_row(project_id);
+        let stage_id = stage.pk_project_stage;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project);
+        repo.find_stage_by_id_result = Some(stage.clone());
+        repo.update_stage_result = Some(stage);
+        let service = ProjectService::new(repo);
+        let input = UpdateStageInput {
+            name: None,
+            description: None,
+            order: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+        };
+        let result = UpdateStageUseCase::execute(&service, project_id, stage_id, input)
+            .await
+            .unwrap();
+        assert_eq!(result.fk_project, project_id);
+    }
+}
