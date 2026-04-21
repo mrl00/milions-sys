@@ -4,14 +4,14 @@
 POST http://localhost:8000/api/locations
 Content-Type: application/json
 {
-  "street": "Rua Projeto",
-  "number": "100",
+  "street": "Rua das Flores",
+  "number": "42",
   "city": "Brasilia",
   "state": "DF",
   "zipcode": "70040-010",
-  "complement": null,
+  "complement": "Bloco A",
   "public_space": "Rua",
-  "unit": null,
+  "unit": "Apt 101",
   "neighborhood": "Asa Norte",
   "locality": "Brasilia",
   "region": "Centro-Oeste",
@@ -505,7 +505,7 @@ jsonpath "$.message" isString
 
 
 # =============================================================================
-# POST /api/projects/{project_id}/allocations — Duplicate (same day, 500 from DB)
+# POST /api/projects/{project_id}/allocations — Duplicate (same collaborator + day = 409)
 # =============================================================================
 POST http://localhost:8000/api/projects/{{project_id}}/allocations
 Content-Type: application/json
@@ -515,9 +515,9 @@ Content-Type: application/json
   "present": true
 }
 
-HTTP 500
+HTTP 409
 [Asserts]
-jsonpath "$.error" == "internal_error"
+jsonpath "$.error" == "conflict"
 jsonpath "$.message" isString
 
 
