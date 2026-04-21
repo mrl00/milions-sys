@@ -139,11 +139,12 @@ Atualmente qualquer transição é permitida desde que o status atual ≠ status
 
 **Arquivo:** `src/application/project_service.rs` — `CreateAllocationUseCase`
 
-Atualmente o service verifica que o project existe, mas **não** verifica o `collaborator_id`. FK violation no DB gera `500 Internal Server Error` genérico.
+O service agora verifica que o project existe **e** que o `collaborator_id` existe antes de criar allocation. Caso não exista, retorna `ProjectError::CollaboratorNotFound`, corretamente mapeado para HTTP 404.
 
-- [ ] Opção A (recomendada): adicionar port `FindCollaboratorById` no `ProjectRepository` (ou via ACL adapter) e verificar no service, retornando `ProjectError::CollaboratorNotFound`
-- [ ] Opção B: interceptar `sqlx::Error` de FK violation no repository e mapear para `CollaboratorNotFound`
-- [ ] Adicionar teste unitário
+- [x] Opção A (recomendada): adicionar port `FindCollaboratorById` no `ProjectRepository` e verificar no service, retornando `ProjectError::CollaboratorNotFound`
+- [x] Opção B: interceptar `sqlx::Error` de FK violation no repository e mapear para `CollaboratorNotFound` (**não necessário**)
+- [x] Adicionado teste unitário cobrindo colaborador ausente
+- [x] Mapeamento para 404 em `impl From<ProjectError> for HttpResponse`
 
 ### T08 — Tratar conflito de allocation duplicada como `409`
 
