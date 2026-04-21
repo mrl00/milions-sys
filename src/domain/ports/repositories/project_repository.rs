@@ -104,6 +104,13 @@ pub trait FindAllocationsByCollaboratorId: Send + Sync {
     ) -> Result<Vec<AllocationWithProjectName>, ProjectError>;
 }
 
+/// Verifica existência de um collaborator no contexto cross-context (ACL).
+/// Retorna `Ok(true)` se existe, `Ok(false)` se não existe.
+#[async_trait]
+pub trait FindCollaboratorById: Send + Sync {
+    async fn collaborator_exists(&self, collaborator_id: Uuid) -> Result<bool, ProjectError>;
+}
+
 pub trait ProjectRepository:
     FindProjectById
     + FindAllProjects
@@ -119,6 +126,7 @@ pub trait ProjectRepository:
     + UpdateAllocation
     + FindStagesByProjectId
     + FindAllocationsByCollaboratorId
+    + FindCollaboratorById
     + Send
     + Sync
 {
@@ -138,6 +146,7 @@ impl<T> ProjectRepository for T where
         + UpdateAllocation
         + FindStagesByProjectId
         + FindAllocationsByCollaboratorId
+        + FindCollaboratorById
         + Send
         + Sync
 {
