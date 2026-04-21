@@ -387,9 +387,16 @@ impl<R: ProjectRepository> CreateAllocationUseCase for ProjectService<R> {
             .await?
             .ok_or(ProjectError::NotFound { uuid: project_id })?;
 
+        let collaborator_id = input.collaborator_id;
+        if !self.repo.collaborator_exists(collaborator_id).await? {
+            return Err(ProjectError::CollaboratorNotFound {
+                uuid: collaborator_id,
+            });
+        }
+
         let row = CreateProjectDailyAllocationRow {
             fk_project: project_id,
-            fk_collaborator: input.collaborator_id,
+            fk_collaborator: collaborator_id,
             dt_work_date: input.work_date,
             nr_hours_worked: parse_decimal(input.hours_worked, "hours_worked")?,
             nr_hourly_rate_snapshot: parse_decimal(input.hourly_rate_snapshot, "hourly_rate_snapshot")?,
@@ -592,23 +599,28 @@ mod tests {
     use crate::domain::ports::repositories::project_repository::{
         CreateAllocation, CreateProject, CreateStage, DeleteProject, FindAllProjects,
         FindAllocationById, FindAllocationsByCollaboratorId, FindAllocationsByProjectId,
-        FindProjectById, FindStageById, FindStagesByProjectId, UpdateAllocation, UpdateProject,
-        UpdateStage,
+        FindCollaboratorById, FindProjectById, FindStageById, FindStagesByProjectId,
+        UpdateAllocation, UpdateProject, UpdateStage,
     };
     use crate::domain::ports::use_cases::project_use_cases::{
-        CancelProjectUseCase, CompleteProjectUseCase, DeleteProjectUseCase, FindProjectUseCase,
-        ListProjectsUseCase, PauseProjectUseCase, StartProjectUseCase, UpdateProjectUseCase,
+        CancelProjectUseCase, CompleteProjectUseCase, CreateAllocationInput, CreateAllocationUseCase,
+        DeleteProjectUseCase, FindProjectUseCase, ListProjectsUseCase, PauseProjectUseCase,
+        StartProjectUseCase, UpdateProjectUseCase,
     };
 
     #[derive(Default)]
     struct MockRepo {
         find_by_id_result: Option<ProjectRow>,
         find_all_result: Vec<ProjectRow>,
+        collaborator_exists_result: bool,
     }
 
     impl MockRepo {
         fn new() -> Self {
-            Self::default()
+            Self {
+                collaborator_exists_result: true, // default: collaborator exists
+                ..Self::default()
+            }
         }
     }
 
@@ -730,9 +742,21 @@ mod tests {
     impl CreateAllocation for MockRepo {
         async fn create_allocation(
             &self,
-            _input: CreateProjectDailyAllocationRow,
+            input: CreateProjectDailyAllocationRow,
         ) -> Result<ProjectDailyAllocationRow, ProjectError> {
-            unreachable!()
+            Ok(ProjectDailyAllocationRow {
+                pk_project_daily_allocation: Uuid::now_v7(),
+                idx_project_daily_allocation: 1,
+                fk_project: input.fk_project,
+                fk_collaborator: input.fk_collaborator,
+                dt_work_date: input.dt_work_date,
+                nr_hours_worked: input.nr_hours_worked,
+                nr_hourly_rate_snapshot: input.nr_hourly_rate_snapshot,
+                tx_notes: input.tx_notes,
+                bl_present: input.bl_present,
+                ts_allocated_collaborator_created_at: now(),
+                ts_allocated_collaborator_updated_at: now(),
+            })
         }
     }
     #[async_trait]
@@ -761,6 +785,12 @@ mod tests {
             _id: Uuid,
         ) -> Result<Vec<AllocationWithProjectName>, ProjectError> {
             Ok(vec![])
+        }
+    }
+    #[async_trait]
+    impl FindCollaboratorById for MockRepo {
+        async fn collaborator_exists(&self, _collaborator_id: Uuid) -> Result<bool, ProjectError> {
+            Ok(self.collaborator_exists_result)
         }
     }
 
@@ -976,6 +1006,29 @@ mod tests {
         assert_eq!(result.pk_project, uuid);
     }
 
+    #[tokio::test]
+    async fn create_allocation_fails_when_collaborator_not_found() {
+        let project_row = make_project_row();
+        let project_id = project_row.pk_project;
+        let mut repo = MockRepo::new();
+        repo.find_by_id_result = Some(project_row);
+        repo.collaborator_exists_result = false;
+        let service = ProjectService::new(repo);
+        let collaborator_id = Uuid::now_v7(); // colaborador inexistente
+        let input = CreateAllocationInput {
+            collaborator_id,
+            work_date: chrono::NaiveDate::from_ymd_opt(2023, 11, 30).expect("valid date"),
+            hours_worked: Some("8".to_string()),
+            hourly_rate_snapshot: Some("10".to_string()),
+            notes: Some("test".to_string()),
+            present: true,
+        };
+        let result = CreateAllocationUseCase::execute(&service, project_id, input).await;
+        match result {
+            Err(ProjectError::CollaboratorNotFound { uuid }) => assert_eq!(uuid, collaborator_id),
+            other => panic!("Expected CollaboratorNotFound, got: {other:?}"),
+        }
+    }
     #[tokio::test]
     async fn delete_project_fails_when_not_found() {
         let uuid = Uuid::now_v7();
