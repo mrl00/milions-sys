@@ -245,6 +245,17 @@ impl From<ProjectError> for HttpResponse {
                 "not_found",
                 format!("allocation not found: {uuid}"),
             ),
+            AllocationConflict {
+                project_id,
+                collaborator_id,
+                work_date,
+            } => ErrorResponse::response(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!(
+                    "collaborator ({collaborator_id}) is already allocated at ({project_id}) on {work_date}"
+                ),
+            ),
             CollaboratorNotFound { uuid } => ErrorResponse::response(
                 StatusCode::NOT_FOUND,
                 "not_found",
