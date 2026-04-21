@@ -392,3 +392,22 @@ impl FindAllocationsByCollaboratorId for PgProjectRepository {
         .map_err(|e| db_err("list allocations by collaborator", e))
     }
 }
+
+#[async_trait]
+impl FindCollaboratorById for PgProjectRepository {
+    async fn collaborator_exists(&self, collaborator_id: Uuid) -> Result<bool, ProjectError> {
+        let count = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*)
+            FROM collaborators.tb_collaborator
+            WHERE pk_collaborator = $1
+            "#,
+            &collaborator_id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| db_err("find collaborator by id", e))?;
+
+        Ok(count.unwrap_or(0) > 0)
+    }
+}
