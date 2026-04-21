@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use sqlx::types::BigDecimal;
 use sqlx::types::chrono::{NaiveDate, NaiveDateTime};
 use uuid::Uuid;
@@ -122,6 +124,20 @@ impl std::fmt::Display for ProjectStageStatus {
             ProjectStageStatus::InProgress => write!(f, "in_progress"),
             ProjectStageStatus::Completed => write!(f, "completed"),
             ProjectStageStatus::Skipped => write!(f, "skipped"),
+        }
+    }
+}
+
+impl FromStr for ProjectStageStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(ProjectStageStatus::Pending),
+            "in_progress" => Ok(ProjectStageStatus::InProgress),
+            "completed" => Ok(ProjectStageStatus::Completed),
+            "skipped" => Ok(ProjectStageStatus::Skipped),
+            _ => Err(format!("invalid stage status '{s}'")),
         }
     }
 }

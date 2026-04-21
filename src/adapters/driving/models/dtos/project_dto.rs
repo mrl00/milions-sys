@@ -1,32 +1,51 @@
 use crate::domain::models::db;
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{NaiveDate, NaiveDateTime};
 use uuid::Uuid;
 // --- Project ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateProjectRequest {
+    #[garde(length(min = 1, max = 255))]
     pub name: String,
+    #[garde(skip)]
     pub description: Option<String>,
+    #[garde(skip)]
     pub address_id: Uuid,
+    #[garde(skip)]
     pub start_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub estimated_end_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub total_area_m2: Option<String>,
+    #[garde(skip)]
     pub estimated_cost: Option<String>,
+    #[garde(skip)]
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateProjectRequest {
+    #[garde(inner(length(min = 1, max = 255)))]
     pub name: Option<String>,
+    #[garde(skip)]
     pub description: Option<String>,
+    #[garde(skip)]
     pub start_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub estimated_end_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub actual_end_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub total_area_m2: Option<String>,
+    #[garde(skip)]
     pub estimated_cost: Option<String>,
+    #[garde(skip)]
     pub actual_cost: Option<String>,
+    #[garde(skip)]
     pub notes: Option<String>,
+    #[garde(skip)]
     pub active: Option<bool>,
 }
 
@@ -71,29 +90,41 @@ impl From<db::project_rows::ProjectRow> for ProjectResponse {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct ProjectStatusRequest {
+    #[garde(pattern(r"^(in_progress|paused|completed|cancelled)$"))]
     pub status: String,
 }
 
 // --- Stage ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateStageRequest {
+    #[garde(length(min = 1, max = 255))]
     pub name: String,
+    #[garde(skip)]
     pub description: Option<String>,
+    #[garde(range(min = 1))]
     pub order: i32,
+    #[garde(skip)]
     pub start_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub end_date: Option<NaiveDate>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateStageRequest {
+    #[garde(inner(length(min = 1, max = 255)))]
     pub name: Option<String>,
+    #[garde(skip)]
     pub description: Option<String>,
+    #[garde(skip)]
     pub order: Option<i32>,
+    #[garde(inner(pattern(r"^(pending|in_progress|completed|skipped)$")))]
     pub status: Option<String>,
+    #[garde(skip)]
     pub start_date: Option<NaiveDate>,
+    #[garde(skip)]
     pub end_date: Option<NaiveDate>,
 }
 
@@ -130,21 +161,31 @@ impl From<db::project_rows::ProjectStageRow> for StageResponse {
 
 // --- Allocation ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateAllocationRequest {
+    #[garde(skip)]
     pub collaborator_id: Uuid,
+    #[garde(skip)]
     pub work_date: NaiveDate,
+    #[garde(skip)]
     pub hours_worked: Option<String>,
+    #[garde(skip)]
     pub hourly_rate_snapshot: Option<String>,
+    #[garde(skip)]
     pub present: bool,
+    #[garde(skip)]
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateAllocationRequest {
+    #[garde(skip)]
     pub hours_worked: Option<String>,
+    #[garde(skip)]
     pub hourly_rate_snapshot: Option<String>,
+    #[garde(skip)]
     pub present: Option<bool>,
+    #[garde(skip)]
     pub notes: Option<String>,
 }
 

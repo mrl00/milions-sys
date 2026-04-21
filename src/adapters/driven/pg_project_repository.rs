@@ -303,7 +303,21 @@ impl CreateAllocation for PgProjectRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| db_err("create allocation", e))
+        .map_err(|e| {
+            if let sqlx::Error::Database(db_err) = &e {
+                // Postgres retorna constraint name em db_err.constraint()
+                if let Some(constraint) = db_err.constraint()
+                    && constraint == "uq_allocation_collaborator_day"
+                {
+                    return ProjectError::AllocationConflict {
+                        project_id: input.fk_project,
+                        collaborator_id: input.fk_collaborator,
+                        work_date: input.dt_work_date,
+                    };
+                }
+            }
+            db_err("create allocation", e)
+        })
     }
 }
 
@@ -390,5 +404,24 @@ impl FindAllocationsByCollaboratorId for PgProjectRepository {
         .fetch_all(&self.pool)
         .await
         .map_err(|e| db_err("list allocations by collaborator", e))
+    }
+}
+
+#[async_trait]
+impl FindCollaboratorById for PgProjectRepository {
+    async fn collaborator_exists(&self, collaborator_id: Uuid) -> Result<bool, ProjectError> {
+        let count = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*)
+            FROM collaborators.tb_collaborator
+            WHERE pk_collaborator = $1
+            "#,
+            &collaborator_id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| db_err("find collaborator by id", e))?;
+
+        Ok(count.unwrap_or(0) > 0)
     }
 }

@@ -7,15 +7,14 @@ use crate::domain::models::db::collaborator_row::{
     CollaboratorLevel, CollaboratorRow, CollaboratorStatus, CreateCollaboratorRow,
     UpdateCollaboratorRow,
 };
-use crate::domain::ports::repositories::collaborator_repository::{
-    CollaboratorRepository, CreateCollaborator, DeleteCollaborator, FindAllCollaborators,
-    FindCollaboratorByDocument, FindCollaboratorById, UpdateCollaborator,
-};
-use crate::domain::ports::use_cases::collaborator_use_cases::{
-    ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
-    FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
-    RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
-    UpdateCollaboratorUseCase,
+use crate::domain::ports::{
+    repositories::collaborator_repository::CollaboratorRepository,
+    use_cases::collaborator_use_cases::{
+        ActivateCollaboratorUseCase, DeactivateCollaboratorUseCase, DeleteCollaboratorUseCase,
+        FindCollaboratorByDocumentUseCase, FindCollaboratorUseCase, ListCollaboratorsUseCase,
+        RegisterCollaboratorInput, RegisterCollaboratorUseCase, UpdateCollaboratorInput,
+        UpdateCollaboratorUseCase,
+    },
 };
 use crate::domain::value_objects::cpf::Cpf;
 
@@ -25,12 +24,7 @@ pub struct CollaboratorService<R> {
 
 impl<R> CollaboratorService<R>
 where
-    R: FindCollaboratorById
-        + FindCollaboratorByDocument
-        + FindAllCollaborators
-        + CreateCollaborator
-        + UpdateCollaborator
-        + DeleteCollaborator,
+    R: CollaboratorRepository,
 {
     pub fn new(repo: R) -> Self {
         Self { repo }

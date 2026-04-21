@@ -230,6 +230,11 @@ impl From<ProjectError> for HttpResponse {
                 "conflict",
                 format!("project {uuid} is already in status '{status}'"),
             ),
+            InvalidTransition { from, to } => ErrorResponse::response(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!("invalid status transition: '{from}' → '{to}'"),
+            ),
             StageNotFound { uuid } => ErrorResponse::response(
                 StatusCode::NOT_FOUND,
                 "not_found",
@@ -239,6 +244,17 @@ impl From<ProjectError> for HttpResponse {
                 StatusCode::NOT_FOUND,
                 "not_found",
                 format!("allocation not found: {uuid}"),
+            ),
+            AllocationConflict {
+                project_id,
+                collaborator_id,
+                work_date,
+            } => ErrorResponse::response(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!(
+                    "collaborator ({collaborator_id}) is already allocated at ({project_id}) on {work_date}"
+                ),
             ),
             CollaboratorNotFound { uuid } => ErrorResponse::response(
                 StatusCode::NOT_FOUND,

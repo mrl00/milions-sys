@@ -12,8 +12,10 @@ pub struct CreateProjectInput {
     pub description: Option<String>,
     pub start_date: Option<NaiveDate>,
     pub estimated_end_date: Option<NaiveDate>,
-    pub total_area_m2: Option<BigDecimal>,
-    pub estimated_cost: Option<BigDecimal>,
+    /// String decimal vinda do HTTP (ex: "150.5"); o service valida e parseia.
+    pub total_area_m2: Option<String>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub estimated_cost: Option<String>,
     pub notes: Option<String>,
     pub address_id: Uuid,
 }
@@ -24,9 +26,12 @@ pub struct UpdateProjectInput {
     pub start_date: Option<NaiveDate>,
     pub estimated_end_date: Option<NaiveDate>,
     pub actual_end_date: Option<NaiveDate>,
-    pub total_area_m2: Option<BigDecimal>,
-    pub estimated_cost: Option<BigDecimal>,
-    pub actual_cost: Option<BigDecimal>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub total_area_m2: Option<String>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub estimated_cost: Option<String>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub actual_cost: Option<String>,
     pub notes: Option<String>,
     pub active: Option<bool>,
 }
@@ -51,15 +56,19 @@ pub struct UpdateStageInput {
 pub struct CreateAllocationInput {
     pub collaborator_id: Uuid,
     pub work_date: NaiveDate,
-    pub hours_worked: Option<BigDecimal>,
-    pub hourly_rate_snapshot: Option<BigDecimal>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub hours_worked: Option<String>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub hourly_rate_snapshot: Option<String>,
     pub notes: Option<String>,
     pub present: bool,
 }
 
 pub struct UpdateAllocationInput {
-    pub hours_worked: Option<BigDecimal>,
-    pub hourly_rate_snapshot: Option<BigDecimal>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub hours_worked: Option<String>,
+    /// String decimal vinda do HTTP; o service valida e parseia.
+    pub hourly_rate_snapshot: Option<String>,
     pub notes: Option<String>,
     pub present: Option<bool>,
 }
