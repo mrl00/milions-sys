@@ -203,3 +203,51 @@ impl CreateClientWithTx for PgClientRepository {
         .map_err(sqlx_err("create client in transaction"))
     }
 }
+
+#[async_trait]
+impl LinkCreatedLocationToClient for PgClientRepository {
+    async fn link_created_location_to_client(
+        &self,
+        location_id: Uuid,
+        client_id: Uuid,
+    ) -> Result<ClientAddressRow, ClientError> {
+        sqlx::query_as!(
+            ClientAddressRow,
+            r#"
+            INSERT INTO clients.tb_client_address(pk_client_address, fk_client, fk_address)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &client_id,
+            &location_id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("link created location to client"))
+    }
+}
+
+#[async_trait]
+impl LinkCreatedContactToClient for PgClientRepository {
+    async fn link_created_contact_to_client(
+        &self,
+        contact_id: Uuid,
+        client_id: Uuid,
+    ) -> Result<ClientContactRow, ClientError> {
+        sqlx::query_as!(
+            ClientContactRow,
+            r#"
+            INSERT INTO clients.tb_client_contact(pk_client_contact, fk_client, fk_contact)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &client_id,
+            &contact_id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(sqlx_err("link created contact to client"))
+    }
+}

@@ -159,42 +159,21 @@ impl From<ClientError> for HttpResponse {
                 "conflict",
                 format!("client is already inactive: {uuid}"),
             ),
-            ContactNotFound { uuid } => ErrorResponse::response(
-                StatusCode::NOT_FOUND,
-                "not_found",
-                format!("contact not found: {uuid}"),
-            ),
-            LocationNotFound { uuid } => ErrorResponse::response(
-                StatusCode::NOT_FOUND,
-                "not_found",
-                format!("address not found: {uuid}"),
-            ),
             DocumentAlreadyExists { doc } => ErrorResponse::response(
                 StatusCode::CONFLICT,
                 "conflict",
                 format!("document '{doc}' already registered"),
             ),
-            EmailAlreadyExists { email } => ErrorResponse::response(
-                StatusCode::CONFLICT,
-                "conflict",
-                format!("email '{email}' already registered"),
+            InvalidDocument(e) => {
+                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
+            }
+            Location(_location_error) => ErrorResponse::response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal_error",
+                "internal server error",
             ),
-            PhoneAlreadyExists { phone } => ErrorResponse::response(
-                StatusCode::CONFLICT,
-                "conflict",
-                format!("phone '{phone}' already exists"),
-            ),
-            InvalidDoc(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
-            InvalidEmail(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
-            InvalidPhone(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
-            InvalidCep(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
+            Contact(_contact_error) => {
+                ErrorResponse::response(StatusCode::BAD_REQUEST, "bad_request", "contact error")
             }
             ViaCep(_e) => {
                 //log::error!("viacep error: {e}");
@@ -212,6 +191,11 @@ impl From<ClientError> for HttpResponse {
                     "internal server error",
                 )
             }
+            NotImplemented => ErrorResponse::response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal_error",
+                "internal server error",
+            ),
         }
     }
 }

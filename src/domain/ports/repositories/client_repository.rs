@@ -2,6 +2,8 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use crate::domain::errors::client_error::ClientError;
+use crate::domain::models::db::client_address_row::ClientAddressRow;
+use crate::domain::models::db::client_contact_row::ClientContactRow;
 use crate::domain::models::db::client_project_row::{ClientProjectRow, CreateClientProjectRow};
 use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
 
@@ -60,8 +62,35 @@ pub trait FindProjectsByClientId: Send + Sync {
     ) -> Result<Vec<ClientProjectRow>, ClientError>;
 }
 
+#[async_trait]
+pub trait LinkCreatedLocationToClient: Send + Sync {
+    async fn link_created_location_to_client(
+        &self,
+        location_id: Uuid,
+        client_id: Uuid,
+    ) -> Result<ClientAddressRow, ClientError>;
+}
+
+#[async_trait]
+pub trait LinkCreatedContactToClient: Send + Sync {
+    async fn link_created_contact_to_client(
+        &self,
+        contact_id: Uuid,
+        client_id: Uuid,
+    ) -> Result<ClientContactRow, ClientError>;
+}
+
 pub trait ClientRepository:
-    FindById + FindByDocument + FindAll + CreateClient + UpdateClient + DeleteClient + Send + Sync
+    FindById
+    + FindByDocument
+    + FindAll
+    + CreateClient
+    + UpdateClient
+    + DeleteClient
+    + LinkCreatedLocationToClient
+    + LinkCreatedContactToClient
+    + Send
+    + Sync
 {
 }
 impl<T> ClientRepository for T where
@@ -71,6 +100,8 @@ impl<T> ClientRepository for T where
         + CreateClient
         + UpdateClient
         + DeleteClient
+        + LinkCreatedLocationToClient
+        + LinkCreatedContactToClient
         + Send
         + Sync
 {
