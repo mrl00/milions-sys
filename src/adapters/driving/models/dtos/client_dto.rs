@@ -1,37 +1,61 @@
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct RegisterClientRequest {
+    #[garde(length(min = 1, max = 64))]
     pub name: String,
+    #[garde(pattern(r"^\d{11}$|^\d{14}$"))]
     pub document: String,
+    #[garde(dive)]
     pub contact: ContactDto,
+    #[garde(dive)]
     pub address: AddressDto,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateClientRequest {
+    #[garde(inner(length(min = 1, max = 64)))]
     pub name: Option<String>,
+    #[garde(inner(pattern(r"^\d{11}$|^\d{14}$")))]
     pub document: Option<String>,
+    #[garde(skip)]
     pub contact: Option<ContactDto>,
+    #[garde(skip)]
     pub address: Option<AddressDto>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Validate)]
 pub struct ContactDto {
+    #[garde(email, length(max = 256))]
     pub email: String,
-    pub phones: Vec<String>,
+    #[garde(dive, length(min = 1))]
+    pub phones: Vec<PhoneEntry>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Validate)]
+pub struct PhoneEntry {
+    #[garde(pattern(r"^\+\d{8,16}$"))]
+    pub value: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Validate)]
 pub struct AddressDto {
+    #[garde(pattern(r"^\d{8}$"))]
     pub cep: String,
+    #[garde(length(min = 1, max = 128))]
     pub street: String,
+    #[garde(length(min = 1, max = 16))]
     pub number: String,
+    #[garde(inner(length(max = 64)))]
     pub complement: Option<String>,
+    #[garde(length(min = 1, max = 64))]
     pub neighborhood: String,
+    #[garde(length(min = 1, max = 64))]
     pub city: String,
+    #[garde(length(min = 2, max = 2), pattern(r"^[A-Z]{2}$"))]
     pub state: String,
 }
 
@@ -58,7 +82,8 @@ impl From<crate::domain::models::db::client_row::ClientRow> for ClientResponse {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct StatusRequest {
+    #[garde(pattern(r"^(active|inactive)$"))]
     pub status: String,
 }
