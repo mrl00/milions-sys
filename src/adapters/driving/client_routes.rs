@@ -4,12 +4,11 @@ use uuid::Uuid;
 use crate::adapters::driving::models::dtos::client_dto::{
     ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
 };
-use crate::application::client_service::ConcreteClientService;
-use crate::domain::errors::client_error::ClientError;
+use crate::application::client_service::PgClientService;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase, FindClientByIdUseCase,
-    ListClientsUseCase, RegisterClientUseCase, UpdateClientUseCase,
+    ListClientsUseCase, UpdateClientUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -28,9 +27,11 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_client(
-    service: web::Data<ConcreteClientService>,
-    body: web::Json<RegisterClientRequest>,
+    _service: web::Data<PgClientService>,
+    _body: web::Json<RegisterClientRequest>,
 ) -> HttpResponse {
+    todo!()
+    /*
     let input = ports::use_cases::client_use_cases::RegisterClientInput {
         name: body.name.clone(),
         doc: body.document.clone(),
@@ -47,33 +48,31 @@ async fn register_client(
 
     match RegisterClientUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(ClientResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
+    */
 }
 
-async fn list_clients(service: web::Data<ConcreteClientService>) -> HttpResponse {
+async fn list_clients(service: web::Data<PgClientService>) -> HttpResponse {
     match ListClientsUseCase::execute(&**service).await {
         Ok(rows) => {
             let resp: Vec<ClientResponse> = rows.into_iter().map(ClientResponse::from).collect();
             HttpResponse::Ok().json(resp)
         }
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
-async fn get_client(
-    service: web::Data<ConcreteClientService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn get_client(service: web::Data<PgClientService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match FindClientByIdUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_client(
-    service: web::Data<ConcreteClientService>,
+    service: web::Data<PgClientService>,
     path: web::Path<Uuid>,
     body: web::Json<UpdateClientRequest>,
 ) -> HttpResponse {
@@ -85,23 +84,20 @@ async fn update_client(
 
     match UpdateClientUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
-async fn delete_client(
-    service: web::Data<ConcreteClientService>,
-    path: web::Path<Uuid>,
-) -> HttpResponse {
+async fn delete_client(service: web::Data<PgClientService>, path: web::Path<Uuid>) -> HttpResponse {
     let uuid = path.into_inner();
     match DeleteClientUseCase::execute(&**service, uuid).await {
         Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
-        Err(e) => error_to_response(e),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 async fn update_client_status(
-    service: web::Data<ConcreteClientService>,
+    service: web::Data<PgClientService>,
     path: web::Path<Uuid>,
     body: web::Json<StatusRequest>,
 ) -> HttpResponse {
@@ -118,41 +114,14 @@ async fn update_client_status(
 
     match result {
         Ok(resp) => HttpResponse::Ok().json(resp),
-        Err(e) => error_to_response(e),
-    }
-}
-
-fn error_to_response(err: ClientError) -> HttpResponse {
-    use ClientError::*;
-    match &err {
-        NotFound { .. } => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "not_found",
-            "message": err.to_string(),
-        })),
-        AlreadyExists { .. }
-        | DocumentAlreadyExists { .. }
-        | EmailAlreadyExists { .. }
-        | PhoneAlreadyExists { .. } => HttpResponse::Conflict().json(serde_json::json!({
-            "error": "conflict",
-            "message": err.to_string(),
-        })),
-        AlreadyActive { .. } | AlreadyInactive { .. } => HttpResponse::BadRequest()
-            .json(serde_json::json!({"error": "bad_request", "message": err.to_string()})),
-        InvalidDoc(_) | InvalidEmail(_) | InvalidPhone(_) | InvalidCep(_) => {
-            HttpResponse::UnprocessableEntity().json(serde_json::json!({
-                "error": "validation_error",
-                "message": err.to_string(),
-            }))
-        }
-        _ => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": "internal_error",
-            "message": "internal server error",
-        })),
+        Err(e) => HttpResponse::from(e),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::errors::client_error::ClientError;
+
     use super::*;
     use actix_web::{App, test, web};
     use uuid::Uuid;
@@ -244,7 +213,7 @@ mod tests {
         let err = ClientError::NotFound {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 404);
     }
 
@@ -253,7 +222,7 @@ mod tests {
         let err = ClientError::DocumentAlreadyExists {
             doc: "123".to_string(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 409);
     }
 
@@ -262,7 +231,7 @@ mod tests {
         let err = ClientError::AlreadyActive {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 400);
     }
 
@@ -271,15 +240,16 @@ mod tests {
         let err = ClientError::AlreadyInactive {
             uuid: Uuid::now_v7(),
         };
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 400);
     }
 
     #[actix_web::test]
     async fn error_to_response_validation_error() {
-        let err =
-            ClientError::InvalidDoc(crate::domain::value_objects::doc::DocError::InvalidDocument);
-        let resp = error_to_response(err);
+        let err = ClientError::InvalidDocument(
+            crate::domain::value_objects::doc::DocError::InvalidDocument,
+        );
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 422);
     }
 
@@ -288,7 +258,7 @@ mod tests {
         let err = ClientError::ViaCep(viacep::domain::ports::viacep_port::ViaCepError::Service(
             "err".to_string(),
         ));
-        let resp = error_to_response(err);
+        let resp = HttpResponse::from(err);
         assert_eq!(resp.status(), 500);
     }
 }

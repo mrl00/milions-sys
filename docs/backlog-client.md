@@ -1,38 +1,104 @@
 # milions-sys — Backlog Client
 
-## Estado Atual (2026-04-23)
+## Estado Atual (2026-04-25)
 
-O contexto **client** possui código compilando (models, DTOs, ports, service, repository, routes, 16 unit tests passando), porém está **desconectado em runtime** — o service não está registrado no `startup.rs`, as rotas não estão no scope `/api`, e não existe builder function em `application/mod.rs`.
+O contexto **client** foi significativamente refatorado. O service está wired no runtime (`startup.rs`), a `error_to_response` manual foi removida, e a arquitetura foi separada em `PgClientService` (concreto, injetado com location/contact services) + `ClientService<R>` (genérico, para testes unitários).
 
-O `RegisterClientUseCase` é o mais complexo do sistema: ele orquestra uma transação que cria location, contact, phones, client, client_contact e client_address em sequência. Os demais use cases (CRUD, activate/deactivate) seguem o padrão padrão do projeto.
+O `register_client` handler está marcado como `todo!()` — o input foi reestruturado (separando `RegisterClientLocationInput` e `RegisterClientContactInput`) mas o handler ainda não foi atualizado para usar a nova assinatura.
 
-### Problemas por Camada
+### Estado por Camada
 
-| Camada | Status | Problema |
+| Camada | Status | Situação |
 |--------|--------|----------|
 | DB models / rows | ✅ | — |
-| Repository (PG) | ✅ | — |
-| Use case ports | ✅ | — |
-| Service impl | ⚠️ | `ConcreteClientService` usa `PgPool` direto + repos concretos na transação (viola hexagonal); `ClientService<R>` genérico nunca usado em runtime; status transition sem state machine |
-| DTOs | 🔴 | Zero anotações `garde`, sem `#[derive(Validate)]`; usa `ContactDto`/`AddressDto` próprios em vez de reusar os do collaborator |
-| Routes | 🔴 | Usa `web::Json` em vez de `ValidatedJson`; `error_to_response` fn manual (existe `From<ClientError> for HttpResponse` em `error_response.rs` mas não é usado); `AlreadyActive`/`AlreadyInactive` mapeados para `400` no handler manual mas para `409` no `From` (inconsistência) |
-| Wired in startup | 🔴 | Comentado — `// let client_service = web::Data::new(client::build(pool.clone()));` — builder fn `client::build` não existe |
+| Repository (PG) | ✅ | Adicionados `LinkCreatedLocationToClient` + `LinkCreatedContactToClient` |
+| Use case ports | ⚠️ | Expandidos: novos `UpdateClientEmailUseCase`, `UpdateClientPhoneUseCase`, `AddClientPhoneUseCase`, `UpdateClientLocationUseCase` — nenhum implementado no service ainda |
+| Service impl | ⚠️ | `PgClientService` wired corretamente; `RegisterClientUseCase` refatorado mas handler está `todo!()`; genérico `ClientService<R>` mantido (duplicação parcial) |
+| DTOs | 🔴 | Zero anotações `garde`, sem `#[derive(Validate)]` |
+| Routes | ⚠️ | `error_to_response` removida ✅; usa `HttpResponse::from(e)` ✅; `register_client` é `todo!()` 🔴; demais handlers ainda usam `web::Json` sem `ValidatedJson` 🔴 |
+| Wired in startup | ✅ | `pg_client_serv_build` criado e registrado com `location_service` e `contact_service` injetados |
 | Hurl tests | 🔴 | Arquivo não existe |
+
+### O que mudou no diff
+
+| Arquivo | Mudança principal |
+|---------|-------------------|
+| `startup.rs` | `pg_client_serv_build` registrado; `client_routes::configure` adicionado ao scope `/api` |
+| `application/mod.rs` | `pg_client_serv_build(pool, location_service, contact_service)` criado |
+| `client_service.rs` | `ConcreteClientService` renomeado para `PgClientService`; injeção de `PgLocationService` e `PgContactService` via composição; `RegisterClientUseCase` refatorado com novo input estruturado |
+| `client_error.rs` | Simplificado: removidos `ContactNotFound`, `LocationNotFound`, `EmailAlreadyExists`, `PhoneAlreadyExists`, `InvalidDoc`, `InvalidEmail`, `InvalidPhone`, `InvalidCep`; adicionados `NotImplemented`, `Location(LocationError)`, `Contact(ContactError)`, `InvalidDocument(DocError)` |
+| `client_routes.rs` | `error_to_response` removida; todos os handlers usam `HttpResponse::from(e)`; `register_client` marcado como `todo!()` |
+| `error_response.rs` | `From<ClientError>` atualizado para refletir o novo `ClientError` |
+| `client_repository.rs` | Novos ports: `LinkCreatedLocationToClient`, `LinkCreatedContactToClient` |
+| `pg_client_repository.rs` | Implementações dos 2 novos ports |
+| `client_use_cases.rs` | `RegisterClientInput` reestruturado; novos inputs `RegisterClientLocationInput`, `RegisterClientContactInput`; novos use cases: `UpdateClientEmailUseCase`, `UpdateClientPhoneUseCase`, `AddClientPhoneUseCase`, `UpdateClientLocationUseCase` |
 
 ---
 
-## 🔴 P0 — Bloqueia execução
+## ✅ Concluído
 
-### T01 — Registrar client service no runtime
+### T01 — Registrar client service no runtime ✅ 2026-04-25
+- `pg_client_serv_build(pool, location_service, contact_service)` criado em `application/mod.rs`
+- `PgClientService` registrado em `startup.rs` com `app_data`
+- `client_routes::configure` adicionado ao scope `/api`
 
-- [ ] Criar `pg_client_serv_build(pool)` em `src/application/mod.rs`
-  - Seguir o padrão de `pg_collaborator_serv_build`
-  - `ConcreteClientService::new(PgClientRepository::new(pool.clone()), pool)`
-- [ ] Em `src/startup.rs`:
-  - Substituir `// let client_service = web::Data::new(client::build(pool.clone()));` por `let client_service = web::Data::new(pg_client_serv_build(pool.clone()));`
-  - Descomentar `.app_data(client_service.clone())`
-  - Adicionar `.configure(crate::adapters::driving::client_routes::configure)` no scope `/api`
-- [ ] Verificar que os 6 endpoints respondem (status ≠ 404)
+### T04 — Remover `error_to_response` e usar `From<ClientError> for HttpResponse` ✅ 2026-04-25
+- `error_to_response` fn removida de `client_routes.rs`
+- Todos os handlers usam `HttpResponse::from(e)`
+- Testes unitários de rota atualizados para usar `HttpResponse::from(err)`
+
+### T08 — Refactor arquitetura service (parcial) ✅ 2026-04-25
+- `ConcreteClientService` → `PgClientService`
+- Injeção de `PgLocationService` e `PgContactService` via composição (não mais hardcoded internamente)
+- `PgClientService` usa `client_repo.link_created_location_to_client` e `client_repo.link_created_contact_to_client` em vez de chamar repos concretos diretamente
+
+### T09 — `AlreadyActive`/`AlreadyInactive` → `409` ✅ 2026-04-25
+- Resolvido automaticamente com T04 — `From<ClientError>` já mapeia para `409`
+- ⚠️ Os testes unitários de rota ainda verificam `400` (não foram atualizados) — ver T04b abaixo
+
+---
+
+## 🔴 P0 — Bloqueia o `POST /api/clients`
+
+### T01b — Implementar o handler `register_client` (atualmente `todo!()`)
+
+**Arquivo:** `src/adapters/driving/client_routes.rs`
+
+O handler está marcado com `todo!()` desde a refatoração do `RegisterClientInput`. O `RegisterClientUseCase` mudou: o input agora recebe `location: Option<RegisterClientLocationInput>` e `contact: Option<RegisterClientContactInput>` — o handler precisa ser atualizado para construir esses tipos a partir do body DTO.
+
+```rust
+// Novo input esperado pelo use case:
+RegisterClientInput {
+    name: body.name.clone(),
+    doc: body.document.clone(),
+    status: ClientStatus::Active,
+    location: body.address.as_ref().map(|a| RegisterClientLocationInput {
+        street: a.street.clone(),
+        number: a.number.clone(),
+        city: a.city.clone(),
+        state: a.state.clone(),
+        zipcode: a.cep.clone(),
+        complement: a.complement.clone().unwrap_or_default(),
+        public_space: String::new(),
+        unit: String::new(),
+        neighborhood: a.neighborhood.clone(),
+        locality: a.city.clone(),
+        region: a.state.clone(),
+        ibge: None, gia: None,
+        ddd: String::new(), siafi: None,
+    }),
+    contact: body.contact.as_ref().map(|c| RegisterClientContactInput {
+        email: c.email.clone(),
+        phones: c.phones.clone(), // ou c.phones.iter().map(|p| p.value.clone()).collect() se PhoneEntry
+    }),
+}
+```
+
+- [ ] Remover `todo!()` e o bloco comentado
+- [ ] Construir `RegisterClientInput` a partir do body DTO
+- [ ] Usar `RegisterClientUseCase::execute(&**service, input).await`
+- [ ] Verificar: o `RegisterClientRequest` DTO precisa atualizar `address` e `contact` para `Option` — atualmente são obrigatórios
+- [ ] Adicionar teste de integração (hurl) após implementado
 
 ---
 
@@ -48,17 +114,16 @@ Todos os outros contextos (collaborator, contact, location, project) usam `#[der
 - [ ] `RegisterClientRequest` → `#[derive(Debug, Deserialize, Validate)]`
   - `name`: `#[garde(length(min = 1, max = 64))]` (DB: `VARCHAR(64) NOT NULL`)
   - `document`: `#[garde(pattern(r"^\d{11}$|^\d{14}$"))]` (CPF 11 dígitos ou CNPJ 14 dígitos)
-  - `contact`: `#[garde(dive)]` (requer `ContactDto` implementar `Validate`)
-  - `address`: `#[garde(dive)]` (requer `AddressDto` implementar `Validate`)
+  - `contact`: `#[garde(dive)]` ou `#[garde(inner(dive))]` se `Option`
+  - `address`: `#[garde(dive)]` ou `#[garde(inner(dive))]` se `Option`
 - [ ] `UpdateClientRequest` → `#[derive(Debug, Deserialize, Validate)]`
   - `name`: `#[garde(inner(length(min = 1, max = 64)))]`
   - `document`: `#[garde(inner(pattern(r"^\d{11}$|^\d{14}$")))]`
-  - `contact`: `#[garde(skip)]` (não usado no UpdateUseCase atualmente)
-  - `address`: `#[garde(skip)]` (não usado no UpdateUseCase atualmente)
+  - `contact`: `#[garde(skip)]`
+  - `address`: `#[garde(skip)]`
 - [ ] `ContactDto` → `#[derive(Debug, Deserialize, Serialize, Clone, Validate)]`
   - `email`: `#[garde(email, length(max = 256))]`
-  - `phones`: `#[garde(dive, length(min = 1))]` (requer wrapper `PhoneEntry` como no collaborator)
-  - ⚠️ **Decisão:** reusar `ContactDto`/`AddressDto`/`PhoneEntry` do collaborator_dto OU manter cópia local com `Validate`. Recomendação: extrair para módulo compartilhado (ex: `shared_dto.rs`) para evitar duplicação.
+  - `phones`: `#[garde(dive, length(min = 1))]` com wrapper `PhoneEntry { #[garde(pattern(r"^\+\d{8,16}$"))] value: String }`
 - [ ] `AddressDto` → `#[derive(Debug, Deserialize, Serialize, Clone, Validate)]`
   - `cep`: `#[garde(pattern(r"^\d{8}$"))]`
   - `street`: `#[garde(length(min = 1, max = 128))]`
@@ -74,53 +139,63 @@ Todos os outros contextos (collaborator, contact, location, project) usam `#[der
 
 **Arquivo:** `src/adapters/driving/client_routes.rs`
 
+Após T01b estar implementado, todos os handlers que recebem body devem usar `ValidatedJson`.
+
 - [ ] `use crate::adapters::driving::utils::ValidatedJson;`
-- [ ] Trocar em todos os handlers:
-  - `register_client`: `body: web::Json<RegisterClientRequest>` → `ValidatedJson(body): ValidatedJson<RegisterClientRequest>`
-  - `update_client`: idem para `UpdateClientRequest`
-  - `update_client_status`: idem para `StatusRequest`
-- [ ] Remover tratamento manual de status inválido no handler `update_client_status` (match `_ =>` — garde já rejeita via pattern)
-- [ ] Adaptar acesso ao body: destructuring `ValidatedJson(body)` em todos os handlers
+- [ ] Trocar em todos os handlers (após T01b):
+  - `register_client`: `ValidatedJson(body): ValidatedJson<RegisterClientRequest>`
+  - `update_client`: `ValidatedJson(body): ValidatedJson<UpdateClientRequest>`
+  - `update_client_status`: `ValidatedJson(body): ValidatedJson<StatusRequest>`
+- [ ] Remover o match manual `_ => return HttpResponse::BadRequest(...)` em `update_client_status` (garde já rejeita via pattern)
 
-### T04 — Remover `error_to_response` e usar `From<ClientError> for HttpResponse`
+### T04b — Corrigir testes unitários de rota: `AlreadyActive`/`AlreadyInactive` → `409`
 
-A convenção do projeto é que cada domain error implemente `From<Error> for HttpResponse`. O contexto client já tem o `impl From<ClientError> for HttpResponse` em `error_response.rs`, porém os routes usam uma função manual `error_to_response` que tem mapeamentos inconsistentes.
+**Arquivo:** `src/adapters/driving/client_routes.rs` — módulo `#[cfg(test)]`
 
-**Inconsistências atuais:**
-- `error_to_response`: `AlreadyActive`/`AlreadyInactive` → `400 Bad Request`
-- `From<ClientError>`: `AlreadyActive`/`AlreadyInactive` → `409 Conflict`
-- O padrão do projeto (ver collaborator) é `409 Conflict` para "already in status"
+Os testes ainda verificam `400` para `AlreadyActive`/`AlreadyInactive`, porém o `From<ClientError>` já mapeia para `409 Conflict`.
 
-- [ ] Em `src/adapters/driving/client_routes.rs`:
-  - Remover função `error_to_response`
-  - Todos os handlers usam `Err(e) => HttpResponse::from(e)`
-- [ ] Testes unitários de rota atualizados para refletir `409` em vez de `400` para `AlreadyActive`/`AlreadyInactive`
-- [ ] Testes unitários existentes de `error_to_response` convertidos para testar `HttpResponse::from(err)`
-
-### T05 — Converter phones de `Vec<String>` para `Vec<PhoneEntry>` no DTO
-
-**Arquivo:** `src/adapters/driving/models/dtos/client_dto.rs`
-
-O `ContactDto` do client usa `phones: Vec<String>`, sem validação garde. O collaborator usa `phones: Vec<PhoneEntry>` com wrapper validado.
-
-- [ ] Opção A (recomendada): reusar `PhoneEntry` do collaborator_dto dentro do `ContactDto` do client
-- [ ] Opção B: duplicar `PhoneEntry` no client_dto
-- [ ] Atualizar extractor no `register_client` handler: `body.contact.phones.iter().map(|p| p.value.clone()).collect()`
-- [ ] Garantir que o service recebe `Vec<String>` (valores puros) — a conversão `PhoneEntry → String` acontece no handler
+- [ ] `error_to_response_already_active`: `assert_eq!(resp.status(), 400)` → `assert_eq!(resp.status(), 409)`
+- [ ] `error_to_response_already_inactive`: idem
 
 ---
 
 ## 🟡 P2 — Lógica de negócio incompleta
 
-### T06 — Update não atualiza contact nem address
+### T05 — Implementar use cases de contact e location para o client
 
-**Arquivo:** `src/application/client_service.rs` — `UpdateClientUseCase`
+**Arquivo:** `src/application/client_service.rs` + `src/adapters/driving/client_routes.rs`
 
-O DTO `UpdateClientRequest` aceita `contact: Option<ContactDto>` e `address: Option<AddressDto>`, mas o `UpdateClientInput` só tem `name` e `doc`. Os campos contact e address são ignorados silenciosamente.
+Os seguintes use cases foram declarados em `client_use_cases.rs` mas **não possuem implementação no service**:
 
-- [ ] Opção A (recomendada): Remover `contact` e `address` do `UpdateClientRequest` por enquanto — update do client só altera `name` e `doc`. Contact e address seriam atualizados via seus próprios endpoints.
-- [ ] Opção B: Expandir `UpdateClientInput` para incluir email, phones (via contact_service), street, city, etc. (via location_service). Requer transação cross-context.
-- [ ] Documentar decisão no backlog
+| Use Case | Trait | Status |
+|----------|-------|--------|
+| `UpdateClientEmailUseCase` | `execute(uuid, email)` | 🔴 Não implementado |
+| `UpdateClientPhoneUseCase` | `execute(uuid, phone, new_phone)` | 🔴 Não implementado |
+| `AddClientPhoneUseCase` | `execute(uuid, phone)` | 🔴 Não implementado |
+| `UpdateClientLocationUseCase` | `execute(uuid, input)` | 🔴 Não implementado |
+
+- [ ] Implementar cada use case no `PgClientService` (delegando para `self.contact_service` e `self.location_service`)
+- [ ] Criar handlers e rotas correspondentes:
+  - `PATCH /api/clients/{uuid}/contact/email` → `UpdateClientEmailUseCase`
+  - `PATCH /api/clients/{uuid}/contact/phones` → `AddClientPhoneUseCase`
+  - `PUT /api/clients/{uuid}/contact/phones/{phone}` → `UpdateClientPhoneUseCase`
+  - `PUT /api/clients/{uuid}/address` → `UpdateClientLocationUseCase`
+- [ ] Adicionar testes unitários em `client_service.rs`
+- [ ] Cobrir no hurl (T11)
+
+### T06 — `Contact(ContactError)` e `Location(LocationError)` mapeados como `500`/`400` genéricos
+
+**Arquivo:** `src/adapters/driving/errors/error_response.rs`
+
+Os novos variants `Contact(_)` e `Location(_)` no `ClientError` são mapeados com mensagens genéricas:
+- `Location(_)` → `500 internal_error`
+- `Contact(_)` → `400 bad_request "contact error"` (mensagem opaca)
+
+Isso precisa propagar os erros corretamente ao cliente.
+
+- [ ] `Location(e)` → re-propagar com `HttpResponse::from(e)` (delegando para `From<LocationError>`)
+- [ ] `Contact(e)` → re-propagar com `HttpResponse::from(e)` (delegando para `From<ContactError>`)
+- [ ] Garantir que `DocumentAlreadyExists` por violação de unique no update também retorna `409`
 
 ### T07 — Client/Project association não implementada no service
 
@@ -129,39 +204,27 @@ O DTO `UpdateClientRequest` aceita `contact: Option<ContactDto>` e `address: Opt
 Existem os port traits `CreateClientProject` e `FindProjectsByClientId` no repository, mas:
 - Nenhum use case trait correspondente em `client_use_cases.rs`
 - Nenhum handler/rota expondo esses endpoints
-- Nenhum endpoint para associar/desassociar projetos a clientes
 
-- [ ] Criar use case traits: `AssociateProjectUseCase`, `ListClientProjectsUseCase`, `DissociateProjectUseCase`
-- [ ] Implementar no `ConcreteClientService` (e no genérico `ClientService<R>`)
+- [ ] Criar use case traits: `AssociateClientProjectUseCase`, `ListClientProjectsUseCase`, `DissociateClientProjectUseCase`
+- [ ] Implementar no `PgClientService`
 - [ ] Criar rotas:
   - `POST /api/clients/{uuid}/projects` — associar projeto
   - `GET /api/clients/{uuid}/projects` — listar projetos do cliente
   - `DELETE /api/clients/{uuid}/projects/{project_uuid}` — desassociar projeto
 - [ ] Validar existência do client e do project antes de criar a associação
 - [ ] Tratar constraint `uq_fk_client_project` como `409 Conflict`
-- [ ] Adicionar testes unitários
+- [ ] Adicionar variante `ProjectAlreadyAssociated` no `ClientError`
 
-### T08 — `ConcreteClientService` viola padrão hexagonal
+### T08b — Remover duplicação `ClientService<R>` vs `PgClientService`
 
 **Arquivo:** `src/application/client_service.rs`
 
-O `ConcreteClientService` referencia diretamente `PgClientRepository`, `PgContactRepository`, `PgLocationRepository` e `PgPhoneRepository` dentro do `RegisterClientUseCase`. Isso acopla a camada de aplicação a implementações concretas.
+Os 6 use cases básicos (Find, List, Update, Activate, Deactivate, Delete) ainda estão implementados **2×**: uma vez no `PgClientService` concreto e outra no genérico `ClientService<R>`.
 
-Os demais use cases (Find, Update, Delete, Activate, Deactivate) estão duplicados: implementados **tanto** no `ConcreteClientService` quanto no genérico `ClientService<R>`.
+- [ ] Remover duplicação: o `ClientService<R>` genérico pode ser mantido apenas para testes unitários e os impls do `PgClientService` devem delegar para ele, OU eliminar o genérico e manter apenas o concreto (que já é testado via mock no módulo de testes)
+- [ ] Garantir que `MockRepo` no módulo de testes continua implementando os novos ports `LinkCreatedLocationToClient` e `LinkCreatedContactToClient` ✅ (já implementado no diff)
 
-- [ ] Opção A (pragmática): manter `ConcreteClientService` para o `RegisterClientUseCase` (que precisa de transação multi-repo) e usar `ClientService<R>` para os demais. Remover duplicação.
-- [ ] Opção B (ideal): introduzir ports de transação (`UnitOfWork` ou `TransactionManager`) para permitir transação via traits genéricos
-- [ ] Remover código duplicado — os 6 use cases estão implementados 2× cada
-
-### T09 — `AlreadyActive`/`AlreadyInactive` deveria ser `409` (não `400`)
-
-**Arquivo:** `src/adapters/driving/client_routes.rs` — `error_to_response`
-
-O padrão do projeto (collaborator: `AlreadyActive`/`AlreadyInactive` → `409`) difere do client (→ `400`). O `From<ClientError> for HttpResponse` em `error_response.rs` já mapeia para `409` corretamente.
-
-- [ ] Resolvido automaticamente ao implementar T04 (remover `error_to_response` e usar `From`)
-
-### T10 — `tx_doc` constraint UNIQUE `uq_tx_doc` — update pode violar unicidade
+### T10 — `tx_doc` constraint UNIQUE — update pode violar unicidade
 
 **Arquivo:** `src/application/client_service.rs` — `UpdateClientUseCase`
 
@@ -177,113 +240,115 @@ Se o usuário passa um `doc` que já está registrado para outro client, o DB re
 
 ### T11 — Criar e salvar `hurl/clients.hurl`
 
-Os testes hurl devem depender dos contextos **location** e **contact** (que já estão wired e funcionando). O client context depende dessas entidades para o `RegisterClient` (que cria location e contact na transação).
-
 #### Pré-requisitos
 
-- T01 (wire startup) deve estar implementado — caso contrário, todos os endpoints retornam 404
-- T02 + T03 (garde/ValidatedJson) implementados — caso contrário, os status codes de validação serão diferentes (o body inválido pode não ser rejeitado)
-- T04 implementado — caso contrário, `AlreadyActive`/`AlreadyInactive` retornam `400` em vez de `409`
+| Task | Impacto no hurl |
+|------|-----------------|
+| T01b (handler `register_client`) | **Bloqueante** — sem isso, `POST /api/clients` retorna panic |
+| T02 + T03 (garde/ValidatedJson) | Status codes de validação (garde → `400`, value object → `422`) |
+| T04b (testes de rota) | Sem impacto no hurl, apenas nos testes unitários |
+| T06 (re-propagar Location/Contact errors) | Status codes dos erros de location/contact |
 
-#### Endpoints a testar (6 rotas)
+#### Endpoints a testar (6 rotas base + 4 de T05)
 
 | # | Método | Rota | Descrição |
 |---|--------|------|-----------|
 | 1 | `POST` | `/api/clients` | Registrar client |
 | 2 | `GET` | `/api/clients` | Listar clients |
 | 3 | `GET` | `/api/clients/{uuid}` | Buscar client por ID |
-| 4 | `PUT` | `/api/clients/{uuid}` | Atualizar client |
+| 4 | `PUT` | `/api/clients/{uuid}` | Atualizar name/doc |
 | 5 | `DELETE` | `/api/clients/{uuid}` | Remover client |
-| 6 | `PUT` | `/api/clients/{uuid}/status` | Alterar status (activate/deactivate) |
+| 6 | `PUT` | `/api/clients/{uuid}/status` | Alterar status |
+| 7* | `PATCH` | `/api/clients/{uuid}/contact/email` | Atualizar email (T05) |
+| 8* | `PATCH` | `/api/clients/{uuid}/contact/phones` | Adicionar phone (T05) |
+| 9* | `PUT` | `/api/clients/{uuid}/address` | Atualizar endereço (T05) |
+
+> \* Dependem de T05 estar implementado.
 
 #### Fluxo do arquivo hurl
-
-Seguir o padrão do `hurl/collaborators.hurl`: happy path primeiro, depois testes de erro de cada endpoint, e cleanup ao final.
 
 ```
 # ═══════════════════════════════════════════════════════════════════
 # SETUP: Nenhum — RegisterClient cria location, contact e client
-#        na mesma transação
+#        via composição (PgLocationService + PgContactService)
 # ═══════════════════════════════════════════════════════════════════
 
 # ─── HAPPY PATH ────────────────────────────────────────────────────
 
 # 1. POST /api/clients — 201 Created (PF com CPF)
+#    Body: { name, document, contact: { email, phones }, address: { cep, street, number, ... } }
 #    Capture: client_id
-#    Assert: id isString, name, status="active", document, created_at, updated_at
+#    Assert: id isString, name, status=="active", document, created_at, updated_at
 
-# 2. GET /api/clients — 200 OK (lista)
-#    Assert: collection, pelo menos 1 item com os campos esperados
+# 2. GET /api/clients — 200 OK
+#    Assert: isCollection, $[0].id isString, $[0].name isString, $[0].status isString
 
 # 3. GET /api/clients/{client_id} — 200 OK
-#    Assert: id == client_id, name, status, document
+#    Assert: id == client_id, name, status == "active", document
 
-# 4. PUT /api/clients/{client_id} — 200 OK (atualizar nome)
-#    Body: { "name": "Updated Name", "document": null }
-#    Assert: name == "Updated Name"
+# 4. PUT /api/clients/{client_id} — 200 OK
+#    Body: { "name": "Nome Atualizado", "document": null }
+#    Assert: id == client_id, name == "Nome Atualizado"
 
-# 5. PUT /api/clients/{client_id}/status — 200 OK (deactivate)
+# 5. PUT /api/clients/{client_id}/status — 200 (deactivate)
 #    Body: { "status": "inactive" }
 #    Assert: status == "inactive"
 
-# 6. PUT /api/clients/{client_id}/status — 200 OK (activate)
+# 6. PUT /api/clients/{client_id}/status — 200 (activate)
 #    Body: { "status": "active" }
 #    Assert: status == "active"
 
-# ─── CASOS DE ERRO ─────────────────────────────────────────────────
+# ─── ERROS: POST /api/clients ──────────────────────────────────────
 
-# 7. POST /api/clients — 400 (name vazio, garde validation)
-#    Body: { "name": "", "document": "52998224725", "contact": {...}, "address": {...} }
-#    Assert: error == "validation_error", message isString
+# 7. POST — 400 name vazio (garde)
+#    Assert: error == "validation_error"
 
-# 8. POST /api/clients — 400 (document formato inválido, garde)
-#    Body: { "name": "X", "document": "123", "contact": {...}, "address": {...} }
-#    Assert: error == "validation_error", message isString
+# 8. POST — 400 document formato inválido "123" (garde — fora do padrão \d{11}|\d{14})
+#    Assert: error == "validation_error"
 
-# 9. POST /api/clients — 422 (CPF dígitos verificadores inválidos, value object)
-#    Body: { "name": "X", "document": "12345678900", "contact": {...}, "address": {...} }
-#    Assert: error == "validation_error", message isString
+# 9. POST — 422 CPF com dígitos verificadores inválidos "12345678900" (value object)
+#    Assert: error == "validation_error"
 
-# 10. POST /api/clients — 400 (email inválido, garde)
-#     Body: { "name": "X", "document": "52998224725", "contact": {"email":"nao-eh-email","phones":[...]}, "address": {...} }
-#     Assert: error == "validation_error", message isString
+# 10. POST — 400 email inválido (garde)
+#     Assert: error == "validation_error"
 
-# 11. POST /api/clients — 400 (cep inválido, garde)
-#     Body: { "name": "X", "document": "52998224725", "contact": {...}, "address": {"cep":"123",...} }
-#     Assert: error == "validation_error", message isString
+# 11. POST — 400 cep inválido formato (garde — não é \d{8})
+#     Assert: error == "validation_error"
 
-# 12. POST /api/clients — 409 (document já existe, conflict)
-#     Body: mesmos dados do registro #1 (mesmo doc)
-#     Assert: error == "conflict", message isString
+# 12. POST — 409 document já existe (conflict)
+#     Body: mesmos dados do #1
+#     Assert: error == "conflict"
 
-# 13. GET /api/clients/{uuid_inexistente} — 404
-#     Assert: error == "not_found", message isString
+# ─── ERROS: GET/PUT/DELETE ─────────────────────────────────────────
 
-# 14. PUT /api/clients/{uuid_inexistente} — 404
+# 13. GET /api/clients/00000000-0000-7000-0000-000000000000 — 404
+#     Assert: error == "not_found"
+
+# 14. PUT /api/clients/00000000-0000-7000-0000-000000000000 — 404
 #     Body: { "name": "Ghost" }
-#     Assert: error == "not_found", message isString
+#     Assert: error == "not_found"
 
-# 15. PUT /api/clients/{client_id}/status — 409 (já ativo)
+# 15. PUT /api/clients/{client_id}/status — 409 (já active)
 #     Body: { "status": "active" }   (client está active após #6)
-#     Assert: error == "conflict", message isString
+#     Assert: error == "conflict"
 
-# 16. PUT /api/clients/{client_id}/status — 400 (status inválido, garde)
+# 16. PUT /api/clients/{client_id}/status — 400 status inválido (garde)
 #     Body: { "status": "suspended" }
-#     Assert: error == "validation_error", message isString
+#     Assert: error == "validation_error"
 
-# 17. PUT /api/clients/{client_id}/status — 404 (uuid inexistente)
+# 17. PUT /api/clients/00000000-0000-7000-0000-000000000000/status — 404
 #     Body: { "status": "active" }
-#     Assert: error == "not_found", message isString
+#     Assert: error == "not_found"
 
-# 18. DELETE /api/clients/{uuid_inexistente} — 404
-#     Assert: error == "not_found", message isString
+# 18. DELETE /api/clients/00000000-0000-7000-0000-000000000000 — 404
+#     Assert: error == "not_found"
 
 # ─── CLEANUP ───────────────────────────────────────────────────────
 
-# 19. DELETE /api/clients/{client_id} — 200 OK
+# 19. DELETE /api/clients/{client_id} — 200
 #     Assert: id == client_id
 
-# 20. DELETE /api/clients/{client_id} — 404 (já deletado)
+# 20. DELETE /api/clients/{client_id} — 404 (idempotência)
 #     Assert: error == "not_found"
 ```
 
@@ -295,7 +360,7 @@ Seguir o padrão do `hurl/collaborators.hurl`: happy path primeiro, depois teste
   "document": "52998224725",
   "contact": {
     "email": "maria.silva@example.com",
-    "phones": ["+5561999990101"]
+    "phones": ["55619999901011"]
   },
   "address": {
     "cep": "70040010",
@@ -309,7 +374,9 @@ Seguir o padrão do `hurl/collaborators.hurl`: happy path primeiro, depois teste
 }
 ```
 
-> **Nota:** O campo `phones` pode precisar ser `[{ "value": "+5561999990101" }]` se T05 for implementado (wrapper `PhoneEntry`). Caso contrário, permanece `["+5561999990101"]`.
+> **Nota:** O campo `phones` pode precisar ser `[{ "value": "+5561999990101" }]` se T02 for implementado com wrapper `PhoneEntry`. Ajustar conforme o formato final do DTO.
+
+> **Nota:** O status de erro `422` nos cenários #9 depende da validação do value object `Doc` (dígitos verificadores). Se o garde rejeitar primeiro (antes do value object ser instanciado), o status pode ser `400`. Verificar no teste.
 
 #### Comando de execução
 
@@ -317,28 +384,28 @@ Seguir o padrão do `hurl/collaborators.hurl`: happy path primeiro, depois teste
 hurl --test hurl/clients.hurl
 ```
 
-> **Nota:** T11 deve ser a última task pois os testes hurl validam o comportamento final de todos os endpoints. Se features como `From<ClientError>` (T04) ou garde (T02) forem implementadas depois, os status codes esperados no hurl mudarão.
-
 ---
 
 ## Ordem de execução recomendada
 
 ```
-T01 (wire startup)
+T01b (handler register_client — desbloqueia POST /api/clients)
  ↓
-T02 (garde DTOs) + T03 (ValidatedJson) + T05 (PhoneEntry) ← podem ser feitas juntas
+T04b (corrigir assert 400→409 nos testes unitários)
  ↓
-T04 (remover error_to_response, usar From)  →  T09 (resolvido automaticamente)
+T02 (garde DTOs) + T03 (ValidatedJson) — podem ser feitas juntas
  ↓
-T06 (update contact/address → decisão)
+T06 (re-propagar Location/Contact errors no From<ClientError>)
  ↓
-T08 (refactor duplicação ConcreteClientService vs ClientService<R>)
+T08b (remover duplicação ClientService<R>)
  ↓
 T10 (unique doc no update)
  ↓
+T05 (implementar UpdateClientEmail/Phone/Location use cases + rotas)
+ ↓
 T07 (client/project association endpoints)
  ↓
-T11 (hurl tests) ← só depois que tudo acima estiver implementado
+T11 (hurl tests) ← só depois que T01b estiver implementado (mínimo)
 ```
 
 ---
@@ -347,20 +414,19 @@ T11 (hurl tests) ← só depois que tudo acima estiver implementado
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `src/adapters/driven/pg_client_repository.rs` | Repository PostgreSQL (6 port impls + `create_contact`/`create_address` estáticos) |
-| `src/adapters/driving/client_routes.rs` | Handlers HTTP (6 endpoints) + `error_to_response` manual |
-| `src/adapters/driving/models/dtos/client_dto.rs` | Request/Response DTOs (sem garde) |
-| `src/application/client_service.rs` | `ConcreteClientService` (7 use cases) + `ClientService<R>` genérico (6 use cases duplicados) |
-| `src/domain/errors/client_error.rs` | Error enum (14 variantes incluindo VO errors) |
-| `src/domain/models/db/client_row.rs` | DB row struct + `ClientStatus` enum |
+| `src/adapters/driven/pg_client_repository.rs` | Repository PG (6 port impls + `LinkCreatedLocationToClient` + `LinkCreatedContactToClient`) |
+| `src/adapters/driving/client_routes.rs` | 6 endpoints; `register_client` está `todo!()`; todos usam `HttpResponse::from(e)` |
+| `src/adapters/driving/models/dtos/client_dto.rs` | DTOs (sem garde) |
+| `src/adapters/driving/errors/error_response.rs` | `From<ClientError>` atualizado; `Contact`/`Location` mapeados genericamente |
+| `src/application/client_service.rs` | `PgClientService` + `ClientService<R>` genérico (parcialmente duplicado) |
+| `src/application/mod.rs` | `pg_client_serv_build(pool, location_service, contact_service)` |
+| `src/domain/errors/client_error.rs` | 9 variantes: `NotImplemented`, `AlreadyExists`, `NotFound`, `AlreadyActive`, `AlreadyInactive`, `DocumentAlreadyExists`, `InvalidDocument`, `Location`, `Contact`, `ViaCep`, `Infra` |
+| `src/domain/models/db/client_row.rs` | `ClientRow`, `CreateClientRow`, `ClientStatus` |
 | `src/domain/models/db/client_contact_row.rs` | Associação client ↔ contact |
 | `src/domain/models/db/client_address_row.rs` | Associação client ↔ location |
 | `src/domain/models/db/client_project_row.rs` | Associação client ↔ project |
-| `src/domain/models/db/client_projects_row.rs` | Models do contexto project (vivem no namespace errado — são models de project, não de client) |
-| `src/domain/ports/use_cases/client_use_cases.rs` | 8 use case traits |
-| `src/domain/ports/repositories/client_repository.rs` | Repository traits (6 base + 2 cross-context: `CreateClientProject`, `FindProjectsByClientId`) |
+| `src/domain/ports/use_cases/client_use_cases.rs` | 12 use case traits (8 existentes + 4 novos de contact/location) |
+| `src/domain/ports/repositories/client_repository.rs` | 8 ports: 6 base + `LinkCreatedLocationToClient` + `LinkCreatedContactToClient` |
 | `src/domain/value_objects/doc.rs` | Value object CPF/CNPJ |
-| `src/adapters/driving/errors/error_response.rs` | `impl From<ClientError> for HttpResponse` (já existe, não está sendo usado) |
+| `src/startup.rs` | `PgClientService` wired com `pg_client_serv_build` |
 | `migrations/20260222180343_create_clients_schema.sql` | 4 tabelas: `tb_client`, `tb_client_contact`, `tb_client_address`, `tb_client_project` |
-| `src/application/mod.rs` | Builder functions (falta `pg_client_serv_build`) |
-| `src/startup.rs` | Wiring (client comentado) |
