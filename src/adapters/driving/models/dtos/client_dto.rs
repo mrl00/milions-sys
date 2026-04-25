@@ -10,9 +10,9 @@ pub struct RegisterClientRequest {
     #[garde(pattern(r"^\d{11}$|^\d{14}$"))]
     pub document: String,
     #[garde(dive)]
-    pub contact: ContactDto,
+    pub contact: Option<ContactDto>,
     #[garde(dive)]
-    pub address: AddressDto,
+    pub address: Option<AddressDto>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -83,7 +83,15 @@ impl From<crate::domain::models::db::client_row::ClientRow> for ClientResponse {
 }
 
 #[derive(Debug, Deserialize, Validate)]
-pub struct StatusRequest {
+pub struct ClientStatusRequest {
     #[garde(pattern(r"^(active|inactive)$"))]
     pub status: String,
+}
+
+impl Default for ClientStatusRequest {
+    fn default() -> Self {
+        Self {
+            status: "active".to_string(),
+        }
+    }
 }

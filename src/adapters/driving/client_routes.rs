@@ -4,13 +4,13 @@ use uuid::Uuid;
 use crate::adapters::driving::utils::ValidatedJson;
 
 use crate::adapters::driving::models::dtos::client_dto::{
-    ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
+    ClientResponse, ClientStatusRequest, RegisterClientRequest, UpdateClientRequest,
 };
 use crate::application::client_service::PgClientService;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase, FindClientByIdUseCase,
-    ListClientsUseCase, UpdateClientUseCase,
+    ListClientsUseCase, RegisterClientUseCase, UpdateClientUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -29,30 +29,44 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn register_client(
-    _service: web::Data<PgClientService>,
+    service: web::Data<PgClientService>,
     ValidatedJson(body): ValidatedJson<RegisterClientRequest>,
 ) -> HttpResponse {
-    todo!()
-    /*
     let input = ports::use_cases::client_use_cases::RegisterClientInput {
         name: body.name.clone(),
         doc: body.document.clone(),
-        email: body.contact.email.clone(),
-        phones: body.contact.phones.clone(),
-        cep: body.address.cep.clone(),
-        street: body.address.street.clone(),
-        number: body.address.number.clone(),
-        complement: body.address.complement.clone().unwrap_or_default(),
-        neighborhood: body.address.neighborhood.clone(),
-        city: body.address.city.clone(),
-        state: body.address.state.clone(),
+        status: crate::domain::models::db::client_row::ClientStatus::Active,
+        location: body.address.as_ref().map(|a| {
+            ports::use_cases::client_use_cases::RegisterClientLocationInput {
+                street: a.street.clone(),
+                number: a.number.clone(),
+                city: a.city.clone(),
+                state: a.state.clone(),
+                zipcode: a.cep.clone(),
+                complement: a.complement.clone().unwrap_or_default(),
+                public_space: String::new(),
+                unit: String::new(),
+                neighborhood: a.neighborhood.clone(),
+                locality: a.city.clone(),
+                region: a.state.clone(),
+                ibge: None,
+                gia: None,
+                ddd: String::new(),
+                siafi: None,
+            }
+        }),
+        contact: body.contact.as_ref().map(|c| {
+            ports::use_cases::client_use_cases::RegisterClientContactInput {
+                email: c.email.clone(),
+                phones: c.phones.iter().map(|p| p.value.clone()).collect(),
+            }
+        }),
     };
 
     match RegisterClientUseCase::execute(&**service, input).await {
         Ok(row) => HttpResponse::Created().json(ClientResponse::from(row)),
         Err(e) => HttpResponse::from(e),
     }
-    */
 }
 
 async fn list_clients(service: web::Data<PgClientService>) -> HttpResponse {
@@ -101,7 +115,7 @@ async fn delete_client(service: web::Data<PgClientService>, path: web::Path<Uuid
 async fn update_client_status(
     service: web::Data<PgClientService>,
     path: web::Path<Uuid>,
-    ValidatedJson(body): ValidatedJson<StatusRequest>,
+    ValidatedJson(body): ValidatedJson<ClientStatusRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
