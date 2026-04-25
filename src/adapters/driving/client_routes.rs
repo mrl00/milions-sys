@@ -1,6 +1,8 @@
 use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
+use crate::adapters::driving::utils::ValidatedJson;
+
 use crate::adapters::driving::models::dtos::client_dto::{
     ClientResponse, RegisterClientRequest, StatusRequest, UpdateClientRequest,
 };
@@ -28,7 +30,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 
 async fn register_client(
     _service: web::Data<PgClientService>,
-    _body: web::Json<RegisterClientRequest>,
+    ValidatedJson(body): ValidatedJson<RegisterClientRequest>,
 ) -> HttpResponse {
     todo!()
     /*
@@ -74,7 +76,7 @@ async fn get_client(service: web::Data<PgClientService>, path: web::Path<Uuid>) 
 async fn update_client(
     service: web::Data<PgClientService>,
     path: web::Path<Uuid>,
-    body: web::Json<UpdateClientRequest>,
+    ValidatedJson(body): ValidatedJson<UpdateClientRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let input = ports::use_cases::client_use_cases::UpdateClientInput {
@@ -99,7 +101,7 @@ async fn delete_client(service: web::Data<PgClientService>, path: web::Path<Uuid
 async fn update_client_status(
     service: web::Data<PgClientService>,
     path: web::Path<Uuid>,
-    body: web::Json<StatusRequest>,
+    ValidatedJson(body): ValidatedJson<StatusRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
     let result = match body.status.as_str() {
@@ -109,7 +111,7 @@ async fn update_client_status(
         "inactive" => DeactivateClientUseCase::execute(&**service, uuid)
             .await
             .map(ClientResponse::from),
-        _ => return HttpResponse::BadRequest().body("invalid status: use 'active' or 'inactive'"),
+        _ => unreachable!("Status is validated to be 'active' or 'inactive'"),
     };
 
     match result {
