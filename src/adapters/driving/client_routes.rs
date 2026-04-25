@@ -248,7 +248,7 @@ mod tests {
             uuid: Uuid::now_v7(),
         };
         let resp = HttpResponse::from(err);
-        assert_eq!(resp.status(), 400);
+        assert_eq!(resp.status(), 409);
     }
 
     #[actix_web::test]
@@ -257,7 +257,7 @@ mod tests {
             uuid: Uuid::now_v7(),
         };
         let resp = HttpResponse::from(err);
-        assert_eq!(resp.status(), 400);
+        assert_eq!(resp.status(), 409);
     }
 
     #[actix_web::test]
@@ -275,6 +275,6 @@ mod tests {
             "err".to_string(),
         ));
         let resp = HttpResponse::from(err);
-        assert_eq!(resp.status(), 500);
+        assert_eq!(resp.status(), 502);
     }
 }
