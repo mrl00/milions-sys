@@ -185,9 +185,9 @@ Atualmente retorna `String::new()`.
 
 ### T11 — Criar e salvar `hurl/projects.hurl`
 
-- [ ] Criar o arquivo com cenários de happy path e erros para todos os 14 endpoints (ver análise completa em `analysis_results.md` da conversa `b5ccad4d`)
-- [ ] O arquivo depende de setup (criar location + collaborator antes) e cleanup (DELETE ao final)
-- [ ] Cenários obrigatórios:
+- [x] Criar o arquivo com cenários de happy path e erros para todos os 14 endpoints (ver análise completa em `analysis_results.md` da conversa `b5ccad4d`)
+- [x] O arquivo depende de setup (criar location + collaborator antes) e cleanup (DELETE ao final)
+- [x] Cenários obrigatórios:
   - Project CRUD (POST 201, GET 200, PUT 200, DELETE 200)
   - Project not found (GET/PUT/DELETE 404)
   - Missing required fields (POST 400)
@@ -199,7 +199,7 @@ Atualmente retorna `String::new()`.
   - Duplicate allocation (500 → idealmente 409 após T08)
   - Reports: cost, progress, history (200 + not found 404)
   - Cleanup de todos os recursos criados
-- [ ] Executar `hurl --test hurl/projects.hurl` e garantir que todos passam
+- [x] Executar `hurl --test hurl/projects.hurl` e garantir que todos passam
 
 ---
 
