@@ -10,11 +10,7 @@ use crate::domain::models::db::client_row::{
 };
 use crate::domain::models::db::location_row::LocationRow;
 use crate::domain::models::db::phone_row::PhoneRow;
-use crate::domain::ports::repositories::client_repository::{
-    ClientRepository, CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
-    FindContactByClientId, FindLocationByClientId, LinkCreatedContactToClient,
-    LinkCreatedLocationToClient, UpdateClient as UpdateClientRepo,
-};
+use crate::domain::ports::repositories::client_repository::ClientRepository;
 use crate::domain::ports::use_cases::client_use_cases::{
     ActivateClientUseCase, AddClientPhonesUseCase, DeactivateClientUseCase, DeleteClientUseCase,
     FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
@@ -29,45 +25,208 @@ use crate::domain::ports::use_cases::location_use_cases::{
 };
 use crate::domain::value_objects::doc::Doc;
 
-#[derive(Clone)]
-pub struct ClientService<R> {
+// =============================================================================
+// ClientService<R, L, C> — Generic service parametrizado por repositório,
+// location service e contact service.
+// =============================================================================
+
+pub struct ClientService<R, L, C> {
     repo: R,
+    location_service: L,
+    contact_service: C,
 }
 
-impl<R> ClientService<R>
+impl<R, L, C> ClientService<R, L, C>
 where
     R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
 {
-    pub fn new(repo: R) -> Self {
-        Self { repo }
-    }
-}
-
-pub struct PgClientService {
-    client_repo: PgClientRepository,
-    location_service: PgLocationService,
-    contact_service: PgContactService,
-}
-
-impl PgClientService {
-    pub fn new(
-        client_repo: PgClientRepository,
-        location_service: PgLocationService,
-        contact_service: PgContactService,
-    ) -> Self {
+    pub fn new(repo: R, location_service: L, contact_service: C) -> Self {
         Self {
-            client_repo,
+            repo,
             location_service,
             contact_service,
         }
     }
 }
 
+/// Type alias para produção — evita propagar os 3 type params nas rotas e no startup.
+pub type PgClientService = ClientService<PgClientRepository, PgLocationService, PgContactService>;
+
+// =============================================================================
+// CRUD — dependem apenas de R: ClientRepository
+// =============================================================================
+
 #[async_trait]
-impl RegisterClientUseCase for PgClientService {
+impl<R, L, C> FindClientByIdUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })
+    }
+}
+
+#[async_trait]
+impl<R, L, C> FindClientByDocumentUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
+        self.repo.find_by_document(doc).await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> ListClientsUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
+        self.repo.find_all().await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> UpdateClientUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(
+        &self,
+        uuid: Uuid,
+        input: UpdateClientInput,
+    ) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if let Some(ref doc) = input.doc {
+            if self.repo.find_by_document(doc).await?.is_some() {
+                return Err(ClientError::DocumentAlreadyExists { doc: doc.clone() });
+            }
+            let _validated: Doc = doc.clone().try_into()?;
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: input.name,
+                    tx_status: None,
+                    tx_doc: input.doc,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> ActivateClientUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if current.tx_status == ClientStatus::Active.to_string() {
+            return Err(ClientError::AlreadyActive { uuid });
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Active),
+                    tx_doc: None,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> DeactivateClientUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        let current = self
+            .repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        if current.tx_status == ClientStatus::Inactive.to_string() {
+            return Err(ClientError::AlreadyInactive { uuid });
+        }
+
+        self.repo
+            .update(
+                uuid,
+                UpdateClientRow {
+                    tx_name: None,
+                    tx_status: Some(ClientStatus::Inactive),
+                    tx_doc: None,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> DeleteClientUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
+        self.repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        self.repo.delete(uuid).await
+    }
+}
+
+// =============================================================================
+// Use cases compostos — dependem de R + L + C
+// =============================================================================
+
+#[async_trait]
+impl<R, L, C> RegisterClientUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: CreateLocationUseCase,
+    C: RegisterContactUseCase + AddPhonesUseCase,
+{
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
         if self
-            .client_repo
+            .repo
             .find_by_document(&input.doc)
             .await?
             .is_some()
@@ -105,18 +264,18 @@ impl RegisterClientUseCase for PgClientService {
         };
 
         let created_client = self
-            .client_repo
+            .repo
             .create(CreateClientRow::from(input.clone()))
             .await?;
 
         if let Some(location_uuid) = location_uuid {
-            self.client_repo
+            self.repo
                 .link_created_location_to_client(location_uuid, created_client.pk_client)
                 .await?;
         }
 
         if let Some(contact_uuid) = contact_uuid {
-            self.client_repo
+            self.repo
                 .link_created_contact_to_client(contact_uuid, created_client.pk_client)
                 .await?;
         }
@@ -126,133 +285,21 @@ impl RegisterClientUseCase for PgClientService {
 }
 
 #[async_trait]
-impl FindClientByIdUseCase for PgClientService {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        self.client_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })
-    }
-}
-
-#[async_trait]
-impl FindClientByDocumentUseCase for PgClientService {
-    async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
-        self.client_repo.find_by_document(doc).await
-    }
-}
-
-#[async_trait]
-impl ListClientsUseCase for PgClientService {
-    async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
-        self.client_repo.find_all().await
-    }
-}
-
-#[async_trait]
-impl UpdateClientUseCase for PgClientService {
-    async fn execute(
-        &self,
-        uuid: Uuid,
-        input: UpdateClientInput,
-    ) -> Result<ClientRow, ClientError> {
-        self.client_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if let Some(ref doc) = input.doc {
-            let _validated: Doc = doc.clone().try_into()?;
-        }
-
-        self.client_repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: input.name,
-                    tx_status: None,
-                    tx_doc: input.doc,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl ActivateClientUseCase for PgClientService {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        let current = self
-            .client_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if current.tx_status == ClientStatus::Active.to_string() {
-            return Err(ClientError::AlreadyActive { uuid });
-        }
-
-        self.client_repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: None,
-                    tx_status: Some(ClientStatus::Active),
-                    tx_doc: None,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl DeactivateClientUseCase for PgClientService {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        let current = self
-            .client_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if current.tx_status == ClientStatus::Inactive.to_string() {
-            return Err(ClientError::AlreadyInactive { uuid });
-        }
-
-        self.client_repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: None,
-                    tx_status: Some(ClientStatus::Inactive),
-                    tx_doc: None,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl DeleteClientUseCase for PgClientService {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        self.client_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        self.client_repo.delete(uuid).await
-    }
-}
-
-#[async_trait]
-impl UpdateClientEmailUseCase for PgClientService {
+impl<R, L, C> UpdateClientEmailUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: UpdateContactEmailUseCase,
+{
     async fn execute(&self, client_uuid: Uuid, email: String) -> Result<ClientRow, ClientError> {
         let client = self
-            .client_repo
+            .repo
             .find_by_id(client_uuid)
             .await?
             .ok_or(ClientError::NotFound { uuid: client_uuid })?;
 
         let client_contact = self
-            .client_repo
+            .repo
             .find_contact_by_client_id(client_uuid)
             .await?
             .ok_or(ClientError::ContactNotFound { client_uuid })?;
@@ -265,7 +312,12 @@ impl UpdateClientEmailUseCase for PgClientService {
 }
 
 #[async_trait]
-impl UpdateClientPhoneUseCase for PgClientService {
+impl<R, L, C> UpdateClientPhoneUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: UpdatePhoneUseCase,
+{
     async fn execute(
         &self,
         uuid: Uuid,
@@ -273,13 +325,13 @@ impl UpdateClientPhoneUseCase for PgClientService {
         new_phone: String,
     ) -> Result<PhoneRow, ClientError> {
         let _ = self
-            .client_repo
+            .repo
             .find_by_id(uuid)
             .await?
             .ok_or(ClientError::NotFound { uuid })?;
 
         let client_contact = self
-            .client_repo
+            .repo
             .find_contact_by_client_id(uuid)
             .await?
             .ok_or(ClientError::ContactNotFound { client_uuid: uuid })?;
@@ -296,16 +348,21 @@ impl UpdateClientPhoneUseCase for PgClientService {
 }
 
 #[async_trait]
-impl AddClientPhonesUseCase for PgClientService {
+impl<R, L, C> AddClientPhonesUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: AddPhonesUseCase,
+{
     async fn execute(&self, uuid: Uuid, phones: Vec<String>) -> Result<ClientRow, ClientError> {
         let client = self
-            .client_repo
+            .repo
             .find_by_id(uuid)
             .await?
             .ok_or(ClientError::NotFound { uuid })?;
 
         let client_contact = self
-            .client_repo
+            .repo
             .find_contact_by_client_id(uuid)
             .await?
             .ok_or(ClientError::ContactNotFound { client_uuid: uuid })?;
@@ -317,20 +374,25 @@ impl AddClientPhonesUseCase for PgClientService {
 }
 
 #[async_trait]
-impl UpdateClientLocationUseCase for PgClientService {
+impl<R, L, C> UpdateClientLocationUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: UpdateLocationUseCase,
+    C: Send + Sync,
+{
     async fn execute(
         &self,
         uuid: Uuid,
         input: RegisterClientLocationInput,
     ) -> Result<LocationRow, ClientError> {
         let _ = self
-            .client_repo
+            .repo
             .find_by_id(uuid)
             .await?
             .ok_or(ClientError::NotFound { uuid })?;
 
         let client_address = self
-            .client_repo
+            .repo
             .find_location_by_client_id(uuid)
             .await?
             .ok_or(ClientError::LocationNotFound { client_uuid: uuid })?;
@@ -346,122 +408,9 @@ impl UpdateClientLocationUseCase for PgClientService {
     }
 }
 
-#[async_trait]
-impl<R: ClientRepository> FindClientByIdUseCase for ClientService<R> {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        self.repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> FindClientByDocumentUseCase for ClientService<R> {
-    async fn execute(&self, doc: &str) -> Result<Option<ClientRow>, ClientError> {
-        self.repo.find_by_document(doc).await
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> ListClientsUseCase for ClientService<R> {
-    async fn execute(&self) -> Result<Vec<ClientRow>, ClientError> {
-        self.repo.find_all().await
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> UpdateClientUseCase for ClientService<R> {
-    async fn execute(
-        &self,
-        uuid: Uuid,
-        input: UpdateClientInput,
-    ) -> Result<ClientRow, ClientError> {
-        self.repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if let Some(ref doc) = input.doc {
-            let _validated: Doc = doc.clone().try_into()?;
-        }
-
-        self.repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: input.name,
-                    tx_status: None,
-                    tx_doc: input.doc,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> ActivateClientUseCase for ClientService<R> {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        let current = self
-            .repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if current.tx_status == ClientStatus::Active.to_string() {
-            return Err(ClientError::AlreadyActive { uuid });
-        }
-
-        self.repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: None,
-                    tx_status: Some(ClientStatus::Active),
-                    tx_doc: None,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> DeactivateClientUseCase for ClientService<R> {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        let current = self
-            .repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        if current.tx_status == ClientStatus::Inactive.to_string() {
-            return Err(ClientError::AlreadyInactive { uuid });
-        }
-
-        self.repo
-            .update(
-                uuid,
-                UpdateClientRow {
-                    tx_name: None,
-                    tx_status: Some(ClientStatus::Inactive),
-                    tx_doc: None,
-                },
-            )
-            .await
-    }
-}
-
-#[async_trait]
-impl<R: ClientRepository> DeleteClientUseCase for ClientService<R> {
-    async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError> {
-        self.repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ClientError::NotFound { uuid })?;
-
-        self.repo.delete(uuid).await
-    }
-}
+// =============================================================================
+// Tests
+// =============================================================================
 
 #[cfg(test)]
 mod tests {
@@ -470,7 +419,8 @@ mod tests {
     use crate::domain::models::db::client_contact_row::ClientContactRow;
     use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
     use crate::domain::ports::repositories::client_repository::{
-        CreateClient, DeleteClient, FindAll, FindByDocument, FindById, LinkCreatedContactToClient,
+        CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
+        FindContactByClientId, FindLocationByClientId, LinkCreatedContactToClient,
         LinkCreatedLocationToClient, UpdateClient as UpdateClientRepo,
     };
     use crate::domain::ports::use_cases::client_use_cases::{
@@ -478,19 +428,6 @@ mod tests {
         FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, UpdateClientInput,
         UpdateClientUseCase,
     };
-
-    #[derive(Default)]
-    struct MockRepo {
-        find_by_id_result: Option<ClientRow>,
-        find_by_document_result: Option<ClientRow>,
-        find_all_result: Vec<ClientRow>,
-    }
-
-    impl MockRepo {
-        fn new() -> Self {
-            Self::default()
-        }
-    }
 
     use sqlx::types::chrono::NaiveDateTime;
 
@@ -507,6 +444,21 @@ mod tests {
             tx_doc: "12345678909".to_string(),
             ts_client_created_at: now(),
             ts_client_updated_at: now(),
+        }
+    }
+
+    // --- Mock repo ---
+
+    #[derive(Default)]
+    struct MockRepo {
+        find_by_id_result: Option<ClientRow>,
+        find_by_document_result: Option<ClientRow>,
+        find_all_result: Vec<ClientRow>,
+    }
+
+    impl MockRepo {
+        fn new() -> Self {
+            Self::default()
         }
     }
 
@@ -650,13 +602,25 @@ mod tests {
         }
     }
 
+    // --- Stub para L e C nos testes que não precisam deles ---
+
+    struct NoOp;
+
+    // --- Helper para construir service de teste ---
+
+    fn make_service(repo: MockRepo) -> ClientService<MockRepo, NoOp, NoOp> {
+        ClientService::new(repo, NoOp, NoOp)
+    }
+
+    // --- Tests ---
+
     #[tokio::test]
     async fn find_client_returns_row_when_exists() {
         let row = make_row();
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = FindClientByIdUseCase::execute(&service, uuid)
             .await
             .unwrap();
@@ -668,7 +632,7 @@ mod tests {
     async fn find_client_returns_not_found_when_missing() {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = FindClientByIdUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
@@ -678,7 +642,7 @@ mod tests {
         let row = make_row();
         let mut repo = MockRepo::new();
         repo.find_by_document_result = Some(row.clone());
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = FindClientByDocumentUseCase::execute(&service, "12345678909")
             .await
             .unwrap();
@@ -692,7 +656,7 @@ mod tests {
         let r2 = make_row();
         let mut repo = MockRepo::new();
         repo.find_all_result = vec![r1, r2];
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert_eq!(result.len(), 2);
     }
@@ -700,7 +664,7 @@ mod tests {
     #[tokio::test]
     async fn list_clients_returns_empty() {
         let repo = MockRepo::new();
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = ListClientsUseCase::execute(&service).await.unwrap();
         assert!(result.is_empty());
     }
@@ -709,7 +673,7 @@ mod tests {
     async fn update_client_returns_not_found_when_missing() {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let input = UpdateClientInput {
             name: Some("Updated".to_string()),
             doc: None,
@@ -725,7 +689,7 @@ mod tests {
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = ActivateClientUseCase::execute(&service, uuid)
             .await
             .unwrap();
@@ -738,7 +702,7 @@ mod tests {
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = ActivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyActive { .. })));
     }
@@ -749,7 +713,7 @@ mod tests {
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = DeactivateClientUseCase::execute(&service, uuid)
             .await
             .unwrap();
@@ -763,7 +727,7 @@ mod tests {
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = DeactivateClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::AlreadyInactive { .. })));
     }
@@ -774,7 +738,7 @@ mod tests {
         let uuid = row.pk_client;
         let mut repo = MockRepo::new();
         repo.find_by_id_result = Some(row);
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = DeleteClientUseCase::execute(&service, uuid).await.unwrap();
         assert_eq!(result.pk_client, uuid);
     }
@@ -783,7 +747,7 @@ mod tests {
     async fn delete_client_fails_when_not_found() {
         let uuid = Uuid::now_v7();
         let repo = MockRepo::new();
-        let service = ClientService::new(repo);
+        let service = make_service(repo);
         let result = DeleteClientUseCase::execute(&service, uuid).await;
         assert!(matches!(result, Err(ClientError::NotFound { .. })));
     }
