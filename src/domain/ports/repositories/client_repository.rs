@@ -80,6 +80,22 @@ pub trait LinkCreatedContactToClient: Send + Sync {
     ) -> Result<ClientContactRow, ClientError>;
 }
 
+#[async_trait]
+pub trait FindContactByClientId: Send + Sync {
+    async fn find_contact_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientContactRow>, ClientError>;
+}
+
+#[async_trait]
+pub trait FindLocationByClientId: Send + Sync {
+    async fn find_location_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientAddressRow>, ClientError>;
+}
+
 pub trait ClientRepository:
     FindById
     + FindByDocument
@@ -89,6 +105,8 @@ pub trait ClientRepository:
     + DeleteClient
     + LinkCreatedLocationToClient
     + LinkCreatedContactToClient
+    + FindContactByClientId
+    + FindLocationByClientId
     + Send
     + Sync
 {
@@ -102,6 +120,8 @@ impl<T> ClientRepository for T where
         + DeleteClient
         + LinkCreatedLocationToClient
         + LinkCreatedContactToClient
+        + FindContactByClientId
+        + FindLocationByClientId
         + Send
         + Sync
 {
