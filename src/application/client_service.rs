@@ -8,6 +8,7 @@ use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_row::{
     ClientRow, ClientStatus, CreateClientRow, UpdateClientRow,
 };
+use crate::domain::models::db::location_row::LocationRow;
 use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::repositories::client_repository::{
     ClientRepository, CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
@@ -24,7 +25,7 @@ use crate::domain::ports::use_cases::contact_use_cases::{
     AddPhonesUseCase, RegisterContactUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
 use crate::domain::ports::use_cases::location_use_cases::{
-    CreateLocationUseCase, UpdateLocationInput, UpdateLocationUseCase,
+    CreateLocationUseCase, UpdateLocationUseCase,
 };
 use crate::domain::value_objects::doc::Doc;
 
@@ -65,7 +66,15 @@ impl PgClientService {
 #[async_trait]
 impl RegisterClientUseCase for PgClientService {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
-        // try to register a new client address location
+        if self
+            .client_repo
+            .find_by_document(&input.doc)
+            .await?
+            .is_some()
+        {
+            return Err(ClientError::DocumentAlreadyExists { doc: input.doc });
+        };
+
         let location_uuid = if let Some(location) = &input.location {
             let pk_location =
                 CreateLocationUseCase::execute(&self.location_service, location.clone().into())
@@ -76,7 +85,6 @@ impl RegisterClientUseCase for PgClientService {
             None
         };
 
-        //try to register a new client contact
         let contact_uuid = if let Some(contact) = &input.contact {
             let pk_contact =
                 RegisterContactUseCase::execute(&self.contact_service, contact.clone().into())
@@ -96,20 +104,17 @@ impl RegisterClientUseCase for PgClientService {
             None
         };
 
-        // register a new client
         let created_client = self
             .client_repo
             .create(CreateClientRow::from(input.clone()))
             .await?;
 
-        // link the created client location
         if let Some(location_uuid) = location_uuid {
             self.client_repo
                 .link_created_location_to_client(location_uuid, created_client.pk_client)
                 .await?;
         }
 
-        // link the created client contact
         if let Some(contact_uuid) = contact_uuid {
             self.client_repo
                 .link_created_contact_to_client(contact_uuid, created_client.pk_client)
@@ -317,8 +322,8 @@ impl UpdateClientLocationUseCase for PgClientService {
         &self,
         uuid: Uuid,
         input: RegisterClientLocationInput,
-    ) -> Result<ClientRow, ClientError> {
-        let client = self
+    ) -> Result<LocationRow, ClientError> {
+        let _ = self
             .client_repo
             .find_by_id(uuid)
             .await?
@@ -330,32 +335,14 @@ impl UpdateClientLocationUseCase for PgClientService {
             .await?
             .ok_or(ClientError::LocationNotFound { client_uuid: uuid })?;
 
-        let update_input: UpdateLocationInput = UpdateLocationInput {
-            street: Some(input.street),
-            number: Some(input.number),
-            city: Some(input.city),
-            state: Some(input.state),
-            zipcode: Some(input.zipcode),
-            complement: Some(input.complement),
-            public_space: Some(input.public_space),
-            unit: Some(input.unit),
-            neighborhood: Some(input.neighborhood),
-            locality: Some(input.locality),
-            region: Some(input.region),
-            ibge: input.ibge,
-            gia: input.gia,
-            ddd: Some(input.ddd),
-            siafi: input.siafi,
-        };
-
-        UpdateLocationUseCase::execute(
+        let updated_client_address = UpdateLocationUseCase::execute(
             &self.location_service,
             client_address.fk_address,
-            update_input,
+            input.into(),
         )
         .await?;
 
-        Ok(client)
+        Ok(updated_client_address)
     }
 }
 

@@ -2,6 +2,7 @@ use actix_web::{HttpResponse, web};
 use uuid::Uuid;
 
 use crate::adapters::driving::models::dtos::contact_dto::PhoneResponse;
+use crate::adapters::driving::models::dtos::location_dto::LocationResponse;
 use crate::adapters::driving::utils::ValidatedJson;
 
 use crate::adapters::driving::models::dtos::client_dto::{
@@ -214,7 +215,7 @@ async fn update_client_address(
         siafi: None,
     };
     match UpdateClientLocationUseCase::execute(&**service, uuid, input).await {
-        Ok(row) => HttpResponse::Ok().json(ClientResponse::from(row)),
+        Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
         Err(e) => HttpResponse::from(e),
     }
 }
