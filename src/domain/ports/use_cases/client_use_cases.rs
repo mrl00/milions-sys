@@ -3,9 +3,12 @@ use uuid::Uuid;
 
 use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
+use crate::domain::models::db::location_row::LocationRow;
 use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::use_cases::contact_use_cases::RegisterContactInput;
-use crate::domain::ports::use_cases::location_use_cases::CreateLocationInput;
+use crate::domain::ports::use_cases::location_use_cases::{
+    CreateLocationInput, UpdateLocationInput,
+};
 
 #[derive(Debug, Clone)]
 pub struct RegisterClientLocationInput {
@@ -43,6 +46,28 @@ impl From<RegisterClientLocationInput> for CreateLocationInput {
             ibge: input.ibge,
             gia: input.gia,
             ddd: input.ddd,
+            siafi: input.siafi,
+        }
+    }
+}
+
+impl From<RegisterClientLocationInput> for UpdateLocationInput {
+    fn from(input: RegisterClientLocationInput) -> Self {
+        Self {
+            street: Some(input.street),
+            number: Some(input.number),
+            city: Some(input.city),
+            state: Some(input.state),
+            zipcode: Some(input.zipcode),
+            complement: Some(input.complement),
+            public_space: Some(input.public_space),
+            unit: Some(input.unit),
+            neighborhood: Some(input.neighborhood),
+            locality: Some(input.locality),
+            region: Some(input.region),
+            ibge: input.ibge,
+            gia: input.gia,
+            ddd: Some(input.ddd),
             siafi: input.siafi,
         }
     }
@@ -139,7 +164,7 @@ pub trait UpdateClientLocationUseCase: Send + Sync {
         &self,
         uuid: Uuid,
         input: RegisterClientLocationInput,
-    ) -> Result<ClientRow, ClientError>;
+    ) -> Result<LocationRow, ClientError>;
 }
 
 #[async_trait]
