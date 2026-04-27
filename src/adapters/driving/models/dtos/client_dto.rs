@@ -95,3 +95,45 @@ impl Default for ClientStatusRequest {
         }
     }
 }
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdateEmailRequest {
+    #[garde(email, length(max = 256))]
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct AddPhoneRequest {
+    #[garde(pattern(r"^\+\d{8,16}$"))]
+    pub phone: String,
+}
+
+#[derive(Debug, Deserialize, Validate, Default)]
+pub struct AddPhonesRequest {
+    #[garde(dive)]
+    pub phones: Vec<AddPhoneRequest>,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdatePhoneRequest {
+    #[garde(pattern(r"^\+\d{8,16}$"))]
+    pub new_phone: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdateClientLocationRequest {
+    #[garde(inner(pattern(r"^\d{8}$")))]
+    pub cep: Option<String>,
+    #[garde(inner(length(min = 1, max = 128)))]
+    pub street: Option<String>,
+    #[garde(inner(length(min = 1, max = 16)))]
+    pub number: Option<String>,
+    #[garde(inner(length(max = 64)))]
+    pub complement: Option<String>,
+    #[garde(inner(length(min = 1, max = 64)))]
+    pub neighborhood: Option<String>,
+    #[garde(inner(length(min = 1, max = 64)))]
+    pub city: Option<String>,
+    #[garde(inner(length(min = 2, max = 2)))]
+    pub state: Option<String>,
+}
