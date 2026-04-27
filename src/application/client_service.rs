@@ -225,12 +225,7 @@ where
     C: RegisterContactUseCase + AddPhonesUseCase,
 {
     async fn execute(&self, input: RegisterClientInput) -> Result<ClientRow, ClientError> {
-        if self
-            .repo
-            .find_by_document(&input.doc)
-            .await?
-            .is_some()
-        {
+        if self.repo.find_by_document(&input.doc).await?.is_some() {
             return Err(ClientError::DocumentAlreadyExists { doc: input.doc });
         };
 
@@ -419,9 +414,9 @@ mod tests {
     use crate::domain::models::db::client_contact_row::ClientContactRow;
     use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
     use crate::domain::ports::repositories::client_repository::{
-        CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
-        FindContactByClientId, FindLocationByClientId, LinkCreatedContactToClient,
-        LinkCreatedLocationToClient, UpdateClient as UpdateClientRepo,
+        CreateClient, DeleteClient, FindAll, FindByDocument, FindById, FindContactByClientId,
+        FindLocationByClientId, LinkCreatedContactToClient, LinkCreatedLocationToClient,
+        UpdateClient as UpdateClientRepo,
     };
     use crate::domain::ports::use_cases::client_use_cases::{
         ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
