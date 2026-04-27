@@ -61,6 +61,9 @@ pub struct PhoneEntry {
 pub struct UpdatePhoneRequest {
     #[garde(pattern(r"^\+\d{8,16}$"))]
     pub phone: String,
+
+    #[garde(pattern(r"^\+\d{8,16}$"))]
+    pub new_phone: String,
 }
 
 #[derive(Debug, Serialize)]

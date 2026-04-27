@@ -1,8 +1,7 @@
+use crate::domain::errors::contact_error::ContactError;
 use crate::domain::errors::infra_error::InfraError;
-use crate::domain::value_objects::cep::CepError;
+use crate::domain::errors::location_error::LocationError;
 use crate::domain::value_objects::doc::DocError;
-use crate::domain::value_objects::email::EmailError;
-use crate::domain::value_objects::phone::PhoneError;
 use uuid::Uuid;
 use viacep::domain::ports::viacep_port::ViaCepError;
 
@@ -20,32 +19,38 @@ pub enum ClientError {
     #[error("client is already inactive: {uuid}")]
     AlreadyInactive { uuid: Uuid },
 
-    #[error("contact not found: {uuid}")]
-    ContactNotFound { uuid: Uuid },
-
-    #[error("address not found: {uuid}")]
-    LocationNotFound { uuid: Uuid },
-
     #[error("document already registered")]
     DocumentAlreadyExists { doc: String },
 
-    #[error("email already registered")]
-    EmailAlreadyExists { email: String },
+    #[error("project {project_uuid} already associated with client {client_uuid}")]
+    ProjectAlreadyAssociated {
+        client_uuid: Uuid,
+        project_uuid: Uuid,
+    },
 
-    #[error("phone '{phone}' already exists")]
-    PhoneAlreadyExists { phone: String },
+    #[error("project {project_uuid} not associated with client {client_uuid}")]
+    ProjectNotAssociated {
+        client_uuid: Uuid,
+        project_uuid: Uuid,
+    },
+
+    #[error("client contact not found for client: {client_uuid}")]
+    ContactNotFound { client_uuid: Uuid },
+
+    #[error("client location not found for client: {client_uuid}")]
+    LocationNotFound { client_uuid: Uuid },
+
+    #[error("phone '{phone}' not found for contact: {contact_uuid}")]
+    PhoneNotFound { phone: String, contact_uuid: Uuid },
 
     #[error(transparent)]
-    InvalidDoc(#[from] DocError),
+    InvalidDocument(#[from] DocError),
 
     #[error(transparent)]
-    InvalidEmail(#[from] EmailError),
+    Location(#[from] LocationError),
 
     #[error(transparent)]
-    InvalidPhone(#[from] PhoneError),
-
-    #[error(transparent)]
-    InvalidCep(#[from] CepError),
+    Contact(#[from] ContactError),
 
     #[error(transparent)]
     ViaCep(#[from] ViaCepError),

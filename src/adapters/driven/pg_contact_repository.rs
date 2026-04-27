@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::domain::errors::contact_error::ContactError;
 use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::repositories::contact_repository::*;
 
 pub struct PgContactRepository {
@@ -92,6 +93,24 @@ impl FindAllContacts for PgContactRepository {
         .fetch_all(&self.pool)
         .await
         .map_err(sqlx_err("list contacts"))
+    }
+}
+
+#[async_trait]
+impl FindAllContactPhones for PgContactRepository {
+    async fn find_all_phones(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError> {
+        sqlx::query_as!(
+            PhoneRow,
+            r#"
+            SELECT *
+            FROM contacts.tb_phone
+            WHERE fk_contact = $1
+            "#,
+            &contact_id,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("list contact phones"))
     }
 }
 

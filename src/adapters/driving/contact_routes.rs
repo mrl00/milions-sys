@@ -109,7 +109,7 @@ async fn update_phone(
     ValidatedJson(body): ValidatedJson<UpdatePhoneRequest>,
 ) -> HttpResponse {
     let uuid = path.into_inner();
-    match UpdatePhoneUseCase::execute(&**service, uuid, body.phone.clone()).await {
+    match UpdatePhoneUseCase::execute(&**service, uuid, body.phone, body.new_phone).await {
         Ok(row) => HttpResponse::Ok().json(PhoneResponse::from(row)),
         Err(e) => HttpResponse::from(e),
     }

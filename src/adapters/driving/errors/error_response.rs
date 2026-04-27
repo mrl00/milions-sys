@@ -120,6 +120,11 @@ impl From<ContactError> for HttpResponse {
                 "not_found",
                 format!("phone not found: {uuid}"),
             ),
+            PhoneNumberNotFound { number } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("phone number not found: {number}"),
+            ),
             InvalidPhone(e) => {
                 ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
             }
@@ -159,43 +164,50 @@ impl From<ClientError> for HttpResponse {
                 "conflict",
                 format!("client is already inactive: {uuid}"),
             ),
-            ContactNotFound { uuid } => ErrorResponse::response(
-                StatusCode::NOT_FOUND,
-                "not_found",
-                format!("contact not found: {uuid}"),
-            ),
-            LocationNotFound { uuid } => ErrorResponse::response(
-                StatusCode::NOT_FOUND,
-                "not_found",
-                format!("address not found: {uuid}"),
-            ),
             DocumentAlreadyExists { doc } => ErrorResponse::response(
                 StatusCode::CONFLICT,
                 "conflict",
                 format!("document '{doc}' already registered"),
             ),
-            EmailAlreadyExists { email } => ErrorResponse::response(
+            ProjectAlreadyAssociated {
+                client_uuid,
+                project_uuid,
+            } => ErrorResponse::response(
                 StatusCode::CONFLICT,
                 "conflict",
-                format!("email '{email}' already registered"),
+                format!("project {project_uuid} already associated with client {client_uuid}"),
             ),
-            PhoneAlreadyExists { phone } => ErrorResponse::response(
-                StatusCode::CONFLICT,
-                "conflict",
-                format!("phone '{phone}' already exists"),
+            ProjectNotAssociated {
+                client_uuid,
+                project_uuid,
+            } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("project {project_uuid} not associated with client {client_uuid}"),
             ),
-            InvalidDoc(e) => {
+            ContactNotFound { client_uuid } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("client contact not found for client: {client_uuid}"),
+            ),
+            LocationNotFound { client_uuid } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("client location not found for client: {client_uuid}"),
+            ),
+            PhoneNotFound {
+                phone,
+                contact_uuid,
+            } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("phone '{phone}' not found for contact: {contact_uuid}"),
+            ),
+            InvalidDocument(e) => {
                 ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
             }
-            InvalidEmail(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
-            InvalidPhone(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
-            InvalidCep(e) => {
-                ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
-            }
+            Location(e) => HttpResponse::from(e),
+            Contact(e) => HttpResponse::from(e),
             ViaCep(_e) => {
                 //log::error!("viacep error: {e}");
                 ErrorResponse::response(

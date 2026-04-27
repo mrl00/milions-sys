@@ -50,10 +50,6 @@ pub trait FindPhoneByNumber: Send + Sync {
     async fn find_by_number(&self, number: String) -> Result<Option<PhoneRow>, ContactError>;
 }
 
-pub trait FindAndCreatePhone: FindPhoneByContactId + CreatePhone {}
-pub trait FindAndUpdatePhone: FindPhoneById + UpdatePhone {}
-pub trait FindAndDeletePhone: FindPhoneById + DeletePhone {}
-
 pub trait PhoneRepository:
     FindPhoneById
     + FindPhoneByContactId
