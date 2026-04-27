@@ -9,9 +9,9 @@ use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::repositories::contact_repository::ContactRepository;
 use crate::domain::ports::repositories::phone_repository::PhoneRepository;
 use crate::domain::ports::use_cases::contact_use_cases::{
-    AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase, ListContactsUseCase,
-    ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase, RemovePhoneUseCase,
-    UpdateContactEmailUseCase, UpdatePhoneUseCase,
+    AddPhoneUseCase, AddPhonesUseCase, AddPhonesUseCaseOutput, FindContactUseCase,
+    FindPhoneUseCase, ListContactsUseCase, ListPhonesUseCase, RegisterContactInput,
+    RegisterContactUseCase, RemovePhoneUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
 
 pub type PgContactService = ContactService<PgContactRepository, PgPhoneRepository>;
@@ -31,7 +31,6 @@ impl<C: ContactRepository, P: PhoneRepository> ContactService<C, P> {
 }
 
 // --- Contact ---
-
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> RegisterContactUseCase for ContactService<C, P> {
     async fn execute(&self, input: RegisterContactInput) -> Result<ContactRow, ContactError> {
@@ -136,42 +135,60 @@ impl<C: ContactRepository, P: PhoneRepository> AddPhonesUseCase for ContactServi
         &self,
         contact_id: Uuid,
         phones: Vec<String>,
-    ) -> Result<Vec<PhoneRow>, ContactError> {
-        let nonexistent = self
+    ) -> Result<AddPhonesUseCaseOutput, ContactError> {
+        let nonexistent_phones = self
             .phone_repo
             .find_nonexistent_phones(phones.clone())
             .await?;
 
-        if nonexistent.len() != phones.len()
-            && let Some(phone) = phones.iter().find(|p| !nonexistent.contains(p))
-        {
-            return Err(ContactError::PhoneAlreadyExists {
-                phone: phone.clone(),
-            });
-        }
+        let existent_phones = phones
+            .into_iter()
+            .filter(|p| !nonexistent_phones.contains(p))
+            .clone()
+            .collect::<Vec<String>>();
 
-        self.phone_repo.create_many(contact_id, phones).await
+        let o = AddPhonesUseCaseOutput {
+            added_phones: self
+                .phone_repo
+                .create_many(contact_id, nonexistent_phones)
+                .await?,
+            non_added_phones: existent_phones,
+        };
+
+        Ok(o)
     }
 }
 
 #[async_trait]
 impl<C: ContactRepository, P: PhoneRepository> UpdatePhoneUseCase for ContactService<C, P> {
-    async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError> {
+    async fn execute(
+        &self,
+        uuid: Uuid,
+        phone: String,
+        new_phone: String,
+    ) -> Result<PhoneRow, ContactError> {
+        let contact_phones = self.contact_repo.find_all_phones(uuid).await?;
+        let contact_phones = contact_phones
+            .iter()
+            .filter(|p| p.tx_phone == phone)
+            .collect::<Vec<&PhoneRow>>();
+
+        if contact_phones.is_empty() {
+            return Err(ContactError::PhoneNumberNotFound { number: phone });
+        }
+
         if self
             .phone_repo
-            .find_by_number(phone.clone())
+            .find_by_number(new_phone.clone())
             .await?
             .is_some()
         {
-            return Err(ContactError::PhoneAlreadyExists { phone });
-        }
+            return Err(ContactError::PhoneAlreadyExists { phone: new_phone });
+        };
 
         self.phone_repo
-            .find_by_id(uuid)
-            .await?
-            .ok_or(ContactError::PhoneNotFound { uuid })?;
-
-        self.phone_repo.update(uuid, phone).await
+            .update(contact_phones[0].pk_phone, new_phone)
+            .await
     }
 }
 
@@ -194,16 +211,17 @@ mod tests {
     use crate::domain::models::db::contact_row::{ContactRow, CreateContactRow};
     use crate::domain::models::db::phone_row::PhoneRow;
     use crate::domain::ports::repositories::contact_repository::{
-        CreateContact, FindAllContacts, FindContactByEmail, FindContactById, UpdateContactEmail,
+        CreateContact, FindAllContactPhones, FindAllContacts, FindContactByEmail, FindContactById,
+        UpdateContactEmail,
     };
     use crate::domain::ports::repositories::phone_repository::{
         CreateManyPhones, CreatePhone, DeletePhone, FindNonexistentPhones, FindPhoneByContactId,
         FindPhoneById, FindPhoneByNumber, UpdatePhone,
     };
     use crate::domain::ports::use_cases::contact_use_cases::{
-        AddPhoneUseCase, AddPhonesUseCase, FindContactUseCase, FindPhoneUseCase,
-        ListContactsUseCase, ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase,
-        RemovePhoneUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
+        AddPhoneUseCase, FindContactUseCase, FindPhoneUseCase, ListContactsUseCase,
+        ListPhonesUseCase, RegisterContactInput, RegisterContactUseCase, RemovePhoneUseCase,
+        UpdateContactEmailUseCase,
     };
 
     #[derive(Default)]
@@ -211,6 +229,7 @@ mod tests {
         find_by_id_result: Option<ContactRow>,
         find_by_email_result: Option<ContactRow>,
         find_all_result: Vec<ContactRow>,
+        find_all_phones_result: Vec<PhoneRow>,
     }
 
     impl MockContactRepo {
@@ -402,6 +421,13 @@ mod tests {
         }
     }
 
+    #[async_trait]
+    impl FindAllContactPhones for MockContactRepo {
+        async fn find_all_phones(&self, _contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError> {
+            Ok(self.find_all_phones_result.clone())
+        }
+    }
+
     #[tokio::test]
     async fn register_contact_succeeds_when_email_is_new() {
         let repo = MockContactRepo::new();
@@ -568,44 +594,143 @@ mod tests {
     #[tokio::test]
     async fn add_phones_succeeds_when_all_new() {
         let contact_id = Uuid::now_v7();
+        let input = vec![
+            "+5511999999999".to_string(),
+            "+5511888888888".to_string(),
+            "+5511777777777".to_string(),
+        ];
+
         let mut phone_repo = MockPhoneRepo::new();
+        // simula que apenas 2 dos 3 não existem no banco
         phone_repo.find_nonexistent_result =
             vec!["+5511999999999".to_string(), "+5511888888888".to_string()];
+
         let repo = MockContactRepo::new();
         let service = ContactService::new(repo, phone_repo);
-        let result = AddPhonesUseCase::execute(
-            &service,
-            contact_id,
-            vec!["+5511999999999".to_string(), "+5511888888888".to_string()],
-        )
-        .await
-        .unwrap();
-        assert_eq!(result.len(), 2);
+
+        let result = AddPhonesUseCase::execute(&service, contact_id, input)
+            .await
+            .unwrap();
+
+        assert_eq!(result.added_phones.len(), 2);
+        assert_eq!(result.non_added_phones.len(), 1);
+        assert_eq!(result.non_added_phones[0], "+5511777777777");
+    }
+
+    #[tokio::test]
+    async fn add_phones_when_all_already_exist() {
+        let contact_id = Uuid::now_v7();
+        let input = vec!["+5511999999999".to_string(), "+5511888888888".to_string()];
+
+        let phone_repo = MockPhoneRepo::new(); // find_nonexistent_result = [] por default
+        let repo = MockContactRepo::new();
+        let service = ContactService::new(repo, phone_repo);
+
+        let result = AddPhonesUseCase::execute(&service, contact_id, input)
+            .await
+            .unwrap();
+
+        assert_eq!(result.added_phones.len(), 0);
+        assert_eq!(result.non_added_phones.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn add_phones_when_none_exist() {
+        let contact_id = Uuid::now_v7();
+        let input = vec!["+5511999999999".to_string(), "+5511888888888".to_string()];
+
+        let mut phone_repo = MockPhoneRepo::new();
+        phone_repo.find_nonexistent_result = input.clone(); // todos são novos
+
+        let repo = MockContactRepo::new();
+        let service = ContactService::new(repo, phone_repo);
+
+        let result = AddPhonesUseCase::execute(&service, contact_id, input)
+            .await
+            .unwrap();
+
+        assert_eq!(result.added_phones.len(), 2);
+        assert_eq!(result.non_added_phones.len(), 0);
     }
 
     #[tokio::test]
     async fn update_phone_succeeds_when_exists() {
-        let phone = make_phone();
-        let uuid = phone.pk_phone;
-        let mut phone_repo = MockPhoneRepo::new();
-        phone_repo.find_by_id_result = Some(phone);
-        let repo = MockContactRepo::new();
+        let contact_id = Uuid::now_v7();
+
+        let mut existing_phone = make_phone();
+        existing_phone.fk_contact = contact_id;
+        existing_phone.tx_phone = "+5511999999999".to_string();
+
+        let mut repo = MockContactRepo::new();
+        repo.find_all_phones_result = vec![existing_phone];
+
+        let phone_repo = MockPhoneRepo::new(); // find_by_number_result = None por default
+
         let service = ContactService::new(repo, phone_repo);
-        let result = UpdatePhoneUseCase::execute(&service, uuid, "+5511888888888".to_string())
-            .await
-            .unwrap();
+
+        let result = UpdatePhoneUseCase::execute(
+            &service,
+            contact_id,
+            "+5511999999999".to_string(),
+            "+5511888888888".to_string(),
+        )
+        .await
+        .unwrap();
+
         assert_eq!(result.tx_phone, "+5511888888888");
     }
 
     #[tokio::test]
     async fn update_phone_fails_when_not_found() {
-        let uuid = Uuid::now_v7();
-        let repo = MockContactRepo::new();
+        let contact_id = Uuid::now_v7();
+
+        let repo = MockContactRepo::new(); // find_all_phones_result = [] por default
         let phone_repo = MockPhoneRepo::new();
+
         let service = ContactService::new(repo, phone_repo);
-        let result =
-            UpdatePhoneUseCase::execute(&service, uuid, "+5511999999999".to_string()).await;
-        assert!(matches!(result, Err(ContactError::PhoneNotFound { .. })));
+
+        let result = UpdatePhoneUseCase::execute(
+            &service,
+            contact_id,
+            "+5511999999999".to_string(),
+            "+5511888888888".to_string(),
+        )
+        .await;
+
+        assert!(matches!(
+            result,
+            Err(ContactError::PhoneNumberNotFound { .. })
+        ));
+    }
+
+    #[tokio::test]
+    async fn update_phone_fails_when_new_number_already_exists() {
+        let contact_id = Uuid::now_v7();
+
+        let mut existing_phone = make_phone();
+        existing_phone.fk_contact = contact_id;
+        existing_phone.tx_phone = "+5511999999999".to_string();
+
+        let mut repo = MockContactRepo::new();
+        repo.find_all_phones_result = vec![existing_phone];
+
+        let mut phone_repo = MockPhoneRepo::new();
+        phone_repo.find_by_number_result = Some(make_phone()); // new_phone já existe no banco
+
+        let service = ContactService::new(repo, phone_repo);
+
+        let result = UpdatePhoneUseCase::execute(
+            &service,
+            contact_id,
+            "+5511999999999".to_string(),
+            "+5511888888888".to_string(),
+        )
+        .await;
+
+        assert!(matches!(
+            result,
+            Err(ContactError::PhoneAlreadyExists { .. })
+        ));
     }
 
     #[tokio::test]
