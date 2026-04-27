@@ -6,6 +6,7 @@ use crate::domain::errors::client_error::ClientError;
 use crate::domain::errors::infra_error::InfraError;
 use crate::domain::models::db::client_address_row::ClientAddressRow;
 use crate::domain::models::db::client_contact_row::ClientContactRow;
+use crate::domain::models::db::client_project_row::{ClientProjectRow, CreateClientProjectRow};
 use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
 use crate::domain::ports::repositories::client_repository::*;
 
@@ -287,5 +288,82 @@ impl FindLocationByClientId for PgClientRepository {
         .fetch_optional(&self.pool)
         .await
         .map_err(sqlx_err("find location by client id"))
+    }
+}
+
+#[async_trait]
+impl CreateClientProject for PgClientRepository {
+    async fn create_client_project(
+        &self,
+        input: CreateClientProjectRow,
+    ) -> Result<ClientProjectRow, ClientError> {
+        sqlx::query_as!(
+            ClientProjectRow,
+            r#"
+            INSERT INTO clients.tb_client_project (pk_client_project, fk_client, fk_project)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            Uuid::now_v7(),
+            &input.fk_client,
+            &input.fk_project,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| match &e {
+            sqlx::Error::Database(db_err) if db_err.code().as_deref() == Some("23505") => {
+                ClientError::ProjectAlreadyAssociated {
+                    client_uuid: input.fk_client,
+                    project_uuid: input.fk_project,
+                }
+            }
+            _ => sqlx_err("create client project")(e),
+        })
+    }
+}
+
+#[async_trait]
+impl FindProjectsByClientId for PgClientRepository {
+    async fn find_projects_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Vec<ClientProjectRow>, ClientError> {
+        sqlx::query_as!(
+            ClientProjectRow,
+            r#"
+            SELECT * FROM clients.tb_client_project WHERE fk_client = $1
+            "#,
+            &client_id,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(sqlx_err("find projects by client id"))
+    }
+}
+
+#[async_trait]
+impl DeleteClientProject for PgClientRepository {
+    async fn delete_client_project(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError> {
+        sqlx::query_as!(
+            ClientProjectRow,
+            r#"
+            DELETE FROM clients.tb_client_project
+            WHERE fk_client = $1 AND fk_project = $2
+            RETURNING *
+            "#,
+            &client_id,
+            &project_id,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("delete client project"))?
+        .ok_or(ClientError::ProjectNotAssociated {
+            client_uuid: client_id,
+            project_uuid: project_id,
+        })
     }
 }
