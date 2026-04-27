@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_row::{ClientRow, ClientStatus, CreateClientRow};
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::use_cases::contact_use_cases::RegisterContactInput;
 use crate::domain::ports::use_cases::location_use_cases::CreateLocationInput;
 
@@ -113,7 +114,7 @@ pub trait UpdateClientUseCase: Send + Sync {
 // --- Contact ---
 #[async_trait]
 pub trait UpdateClientEmailUseCase: Send + Sync {
-    async fn execute(&self, uuid: Uuid, email: String) -> Result<ClientRow, ClientError>;
+    async fn execute(&self, client_uuid: Uuid, email: String) -> Result<ClientRow, ClientError>;
 }
 
 #[async_trait]
@@ -123,12 +124,12 @@ pub trait UpdateClientPhoneUseCase: Send + Sync {
         uuid: Uuid,
         phone: String,
         new_phone: String,
-    ) -> Result<ClientRow, ClientError>;
+    ) -> Result<PhoneRow, ClientError>;
 }
 
 #[async_trait]
-pub trait AddClientPhoneUseCase: Send + Sync {
-    async fn execute(&self, uuid: Uuid, phone: String) -> Result<ClientRow, ClientError>;
+pub trait AddClientPhonesUseCase: Send + Sync {
+    async fn execute(&self, uuid: Uuid, phones: Vec<String>) -> Result<ClientRow, ClientError>;
 }
 
 // --- Update Location ---
