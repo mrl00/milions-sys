@@ -120,6 +120,11 @@ impl From<ContactError> for HttpResponse {
                 "not_found",
                 format!("phone not found: {uuid}"),
             ),
+            PhoneNumberNotFound { number } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("phone number not found: {number}"),
+            ),
             InvalidPhone(e) => {
                 ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
             }
@@ -163,6 +168,24 @@ impl From<ClientError> for HttpResponse {
                 StatusCode::CONFLICT,
                 "conflict",
                 format!("document '{doc}' already registered"),
+            ),
+            ContactNotFound { client_uuid } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("client contact not found for client: {client_uuid}"),
+            ),
+            LocationNotFound { client_uuid } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("client location not found for client: {client_uuid}"),
+            ),
+            PhoneNotFound {
+                phone,
+                contact_uuid,
+            } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("phone '{phone}' not found for contact: {contact_uuid}"),
             ),
             InvalidDocument(e) => {
                 ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
