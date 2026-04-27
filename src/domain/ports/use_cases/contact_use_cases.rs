@@ -47,18 +47,29 @@ pub trait AddPhoneUseCase: Send + Sync {
     async fn execute(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
 }
 
+#[derive(Debug, Clone)]
+pub struct AddPhonesUseCaseOutput {
+    pub added_phones: Vec<PhoneRow>,
+    pub non_added_phones: Vec<String>,
+}
+
 #[async_trait]
 pub trait AddPhonesUseCase: Send + Sync {
     async fn execute(
         &self,
         contact_id: Uuid,
         phones: Vec<String>,
-    ) -> Result<Vec<PhoneRow>, ContactError>;
+    ) -> Result<AddPhonesUseCaseOutput, ContactError>;
 }
 
 #[async_trait]
 pub trait UpdatePhoneUseCase: Send + Sync {
-    async fn execute(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
+    async fn execute(
+        &self,
+        contact_uuid: Uuid,
+        phone: String,
+        new_phone: String,
+    ) -> Result<PhoneRow, ContactError>;
 }
 
 #[async_trait]

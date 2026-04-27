@@ -16,6 +16,9 @@ pub enum ContactError {
     #[error("phone not found: {uuid}")]
     PhoneNotFound { uuid: Uuid },
 
+    #[error("phone number not found: {number}")]
+    PhoneNumberNotFound { number: String },
+
     #[error(transparent)]
     InvalidPhone(#[from] PhoneError),
 

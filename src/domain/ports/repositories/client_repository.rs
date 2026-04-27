@@ -63,6 +63,15 @@ pub trait FindProjectsByClientId: Send + Sync {
 }
 
 #[async_trait]
+pub trait DeleteClientProject: Send + Sync {
+    async fn delete_client_project(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError>;
+}
+
+#[async_trait]
 pub trait LinkCreatedLocationToClient: Send + Sync {
     async fn link_created_location_to_client(
         &self,
@@ -80,6 +89,22 @@ pub trait LinkCreatedContactToClient: Send + Sync {
     ) -> Result<ClientContactRow, ClientError>;
 }
 
+#[async_trait]
+pub trait FindContactByClientId: Send + Sync {
+    async fn find_contact_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientContactRow>, ClientError>;
+}
+
+#[async_trait]
+pub trait FindLocationByClientId: Send + Sync {
+    async fn find_location_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientAddressRow>, ClientError>;
+}
+
 pub trait ClientRepository:
     FindById
     + FindByDocument
@@ -89,6 +114,11 @@ pub trait ClientRepository:
     + DeleteClient
     + LinkCreatedLocationToClient
     + LinkCreatedContactToClient
+    + FindContactByClientId
+    + FindLocationByClientId
+    + CreateClientProject
+    + FindProjectsByClientId
+    + DeleteClientProject
     + Send
     + Sync
 {
@@ -102,6 +132,11 @@ impl<T> ClientRepository for T where
         + DeleteClient
         + LinkCreatedLocationToClient
         + LinkCreatedContactToClient
+        + FindContactByClientId
+        + FindLocationByClientId
+        + CreateClientProject
+        + FindProjectsByClientId
+        + DeleteClientProject
         + Send
         + Sync
 {

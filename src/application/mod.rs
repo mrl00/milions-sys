@@ -44,7 +44,7 @@ pub fn pg_client_serv_build(
     location_service: crate::application::location_service::PgLocationService,
     contact_service: crate::application::contact_service::PgContactService,
 ) -> crate::application::client_service::PgClientService {
-    crate::application::client_service::PgClientService::new(
+    crate::application::client_service::ClientService::new(
         crate::adapters::driven::pg_client_repository::PgClientRepository::new(pool.clone()),
         location_service,
         contact_service,
