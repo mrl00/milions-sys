@@ -7,9 +7,6 @@ use viacep::domain::ports::viacep_port::ViaCepError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientError {
-    #[error("not implemented")]
-    NotImplemented,
-
     #[error("client '{name}' already exists")]
     AlreadyExists { name: String },
 
