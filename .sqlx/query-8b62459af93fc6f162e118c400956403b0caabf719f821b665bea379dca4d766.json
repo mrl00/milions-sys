@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM clients.tb_client_project\n            WHERE fk_client = $1 AND fk_project = $2\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_client_project",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_client_project",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_client",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "fk_project",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_client_project_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_client_project_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8b62459af93fc6f162e118c400956403b0caabf719f821b665bea379dca4d766"
+}
