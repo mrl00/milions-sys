@@ -251,3 +251,41 @@ impl LinkCreatedContactToClient for PgClientRepository {
         .map_err(sqlx_err("link created contact to client"))
     }
 }
+
+#[async_trait]
+impl FindContactByClientId for PgClientRepository {
+    async fn find_contact_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientContactRow>, ClientError> {
+        sqlx::query_as!(
+            ClientContactRow,
+            r#"
+            SELECT * FROM clients.tb_client_contact WHERE fk_client = $1
+            "#,
+            &client_id,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("find contact by client id"))
+    }
+}
+
+#[async_trait]
+impl FindLocationByClientId for PgClientRepository {
+    async fn find_location_by_client_id(
+        &self,
+        client_id: Uuid,
+    ) -> Result<Option<ClientAddressRow>, ClientError> {
+        sqlx::query_as!(
+            ClientAddressRow,
+            r#"
+            SELECT * FROM clients.tb_client_address WHERE fk_client = $1
+            "#,
+            &client_id,
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(sqlx_err("find location by client id"))
+    }
+}
