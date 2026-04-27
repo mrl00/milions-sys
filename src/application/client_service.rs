@@ -8,19 +8,24 @@ use crate::domain::errors::client_error::ClientError;
 use crate::domain::models::db::client_row::{
     ClientRow, ClientStatus, CreateClientRow, UpdateClientRow,
 };
+use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::repositories::client_repository::{
     ClientRepository, CreateClient, DeleteClient, FindAll, FindByDocument, FindById,
-    LinkCreatedContactToClient, LinkCreatedLocationToClient, UpdateClient as UpdateClientRepo,
+    FindContactByClientId, FindLocationByClientId, LinkCreatedContactToClient,
+    LinkCreatedLocationToClient, UpdateClient as UpdateClientRepo,
 };
 use crate::domain::ports::use_cases::client_use_cases::{
-    ActivateClientUseCase, DeactivateClientUseCase, DeleteClientUseCase,
+    ActivateClientUseCase, AddClientPhonesUseCase, DeactivateClientUseCase, DeleteClientUseCase,
     FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
-    RegisterClientUseCase, UpdateClientInput, UpdateClientUseCase,
+    RegisterClientLocationInput, RegisterClientUseCase, UpdateClientEmailUseCase,
+    UpdateClientInput, UpdateClientLocationUseCase, UpdateClientPhoneUseCase, UpdateClientUseCase,
 };
 use crate::domain::ports::use_cases::contact_use_cases::{
-    AddPhonesUseCase, RegisterContactUseCase,
+    AddPhonesUseCase, RegisterContactUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
 };
-use crate::domain::ports::use_cases::location_use_cases::CreateLocationUseCase;
+use crate::domain::ports::use_cases::location_use_cases::{
+    CreateLocationUseCase, UpdateLocationInput, UpdateLocationUseCase,
+};
 use crate::domain::value_objects::doc::Doc;
 
 #[derive(Clone)]
@@ -229,6 +234,128 @@ impl DeleteClientUseCase for PgClientService {
             .ok_or(ClientError::NotFound { uuid })?;
 
         self.client_repo.delete(uuid).await
+    }
+}
+
+#[async_trait]
+impl UpdateClientEmailUseCase for PgClientService {
+    async fn execute(&self, client_uuid: Uuid, email: String) -> Result<ClientRow, ClientError> {
+        let client = self
+            .client_repo
+            .find_by_id(client_uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid: client_uuid })?;
+
+        let client_contact = self
+            .client_repo
+            .find_contact_by_client_id(client_uuid)
+            .await?
+            .ok_or(ClientError::ContactNotFound { client_uuid })?;
+
+        UpdateContactEmailUseCase::execute(&self.contact_service, client_contact.fk_contact, email)
+            .await?;
+
+        Ok(client)
+    }
+}
+
+#[async_trait]
+impl UpdateClientPhoneUseCase for PgClientService {
+    async fn execute(
+        &self,
+        uuid: Uuid,
+        phone: String,
+        new_phone: String,
+    ) -> Result<PhoneRow, ClientError> {
+        let _ = self
+            .client_repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        let client_contact = self
+            .client_repo
+            .find_contact_by_client_id(uuid)
+            .await?
+            .ok_or(ClientError::ContactNotFound { client_uuid: uuid })?;
+
+        UpdatePhoneUseCase::execute(
+            &self.contact_service,
+            client_contact.fk_contact,
+            phone,
+            new_phone,
+        )
+        .await
+        .map_err(ClientError::from)
+    }
+}
+
+#[async_trait]
+impl AddClientPhonesUseCase for PgClientService {
+    async fn execute(&self, uuid: Uuid, phones: Vec<String>) -> Result<ClientRow, ClientError> {
+        let client = self
+            .client_repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        let client_contact = self
+            .client_repo
+            .find_contact_by_client_id(uuid)
+            .await?
+            .ok_or(ClientError::ContactNotFound { client_uuid: uuid })?;
+
+        AddPhonesUseCase::execute(&self.contact_service, client_contact.fk_contact, phones).await?;
+
+        Ok(client)
+    }
+}
+
+#[async_trait]
+impl UpdateClientLocationUseCase for PgClientService {
+    async fn execute(
+        &self,
+        uuid: Uuid,
+        input: RegisterClientLocationInput,
+    ) -> Result<ClientRow, ClientError> {
+        let client = self
+            .client_repo
+            .find_by_id(uuid)
+            .await?
+            .ok_or(ClientError::NotFound { uuid })?;
+
+        let client_address = self
+            .client_repo
+            .find_location_by_client_id(uuid)
+            .await?
+            .ok_or(ClientError::LocationNotFound { client_uuid: uuid })?;
+
+        let update_input: UpdateLocationInput = UpdateLocationInput {
+            street: Some(input.street),
+            number: Some(input.number),
+            city: Some(input.city),
+            state: Some(input.state),
+            zipcode: Some(input.zipcode),
+            complement: Some(input.complement),
+            public_space: Some(input.public_space),
+            unit: Some(input.unit),
+            neighborhood: Some(input.neighborhood),
+            locality: Some(input.locality),
+            region: Some(input.region),
+            ibge: input.ibge,
+            gia: input.gia,
+            ddd: Some(input.ddd),
+            siafi: input.siafi,
+        };
+
+        UpdateLocationUseCase::execute(
+            &self.location_service,
+            client_address.fk_address,
+            update_input,
+        )
+        .await?;
+
+        Ok(client)
     }
 }
 
@@ -499,6 +626,40 @@ mod tests {
                 ts_client_contact_created_at: now(),
                 ts_client_contact_updated_at: now(),
             })
+        }
+    }
+
+    #[async_trait]
+    impl FindContactByClientId for MockRepo {
+        async fn find_contact_by_client_id(
+            &self,
+            client_id: Uuid,
+        ) -> Result<Option<ClientContactRow>, ClientError> {
+            Ok(Some(ClientContactRow {
+                pk_client_contact: Uuid::now_v7(),
+                idx_client_contact: 0,
+                fk_client: client_id,
+                fk_contact: Uuid::now_v7(),
+                ts_client_contact_created_at: now(),
+                ts_client_contact_updated_at: now(),
+            }))
+        }
+    }
+
+    #[async_trait]
+    impl FindLocationByClientId for MockRepo {
+        async fn find_location_by_client_id(
+            &self,
+            client_id: Uuid,
+        ) -> Result<Option<ClientAddressRow>, ClientError> {
+            Ok(Some(ClientAddressRow {
+                pk_client_address: Uuid::now_v7(),
+                idx_client_address: 0,
+                fk_client: client_id,
+                fk_address: Uuid::now_v7(),
+                ts_client_address_created_at: now(),
+                ts_client_address_updated_at: now(),
+            }))
         }
     }
 
