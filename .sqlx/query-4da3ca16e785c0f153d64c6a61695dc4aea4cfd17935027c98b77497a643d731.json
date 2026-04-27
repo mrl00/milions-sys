@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * FROM clients.tb_client_address WHERE fk_client = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_client_address",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "idx_client_address",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "fk_client",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "fk_address",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "ts_client_address_created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "ts_client_address_updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4da3ca16e785c0f153d64c6a61695dc4aea4cfd17935027c98b77497a643d731"
+}

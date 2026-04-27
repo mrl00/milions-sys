@@ -1,0 +1,78 @@
+use crate::domain::errors::contact_error::ContactError;
+use crate::domain::models::db::phone_row::PhoneRow;
+use async_trait::async_trait;
+use uuid::Uuid;
+
+#[async_trait]
+pub trait FindPhoneById: Send + Sync {
+    async fn find_by_id(&self, uuid: Uuid) -> Result<Option<PhoneRow>, ContactError>;
+}
+
+#[async_trait]
+pub trait FindPhoneByContactId: Send + Sync {
+    async fn find_by_contact_id(&self, contact_id: Uuid) -> Result<Vec<PhoneRow>, ContactError>;
+}
+
+#[async_trait]
+pub trait CreatePhone: Send + Sync {
+    async fn create(&self, contact_id: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
+}
+
+#[async_trait]
+pub trait CreateManyPhones: Send + Sync {
+    async fn create_many(
+        &self,
+        contact_id: Uuid,
+        phones: Vec<String>,
+    ) -> Result<Vec<PhoneRow>, ContactError>;
+}
+
+#[async_trait]
+pub trait UpdatePhone: Send + Sync {
+    async fn update(&self, uuid: Uuid, phone: String) -> Result<PhoneRow, ContactError>;
+}
+
+#[async_trait]
+pub trait DeletePhone: Send + Sync {
+    async fn delete(&self, uuid: Uuid) -> Result<PhoneRow, ContactError>;
+}
+
+#[async_trait]
+pub trait FindNonexistentPhones: Send + Sync {
+    async fn find_nonexistent_phones(
+        &self,
+        phones: Vec<String>,
+    ) -> Result<Vec<String>, ContactError>;
+}
+
+#[async_trait]
+pub trait FindPhoneByNumber: Send + Sync {
+    async fn find_by_number(&self, number: String) -> Result<Option<PhoneRow>, ContactError>;
+}
+
+pub trait PhoneRepository:
+    FindPhoneById
+    + FindPhoneByContactId
+    + CreatePhone
+    + CreateManyPhones
+    + UpdatePhone
+    + DeletePhone
+    + FindNonexistentPhones
+    + FindPhoneByNumber
+    + Send
+    + Sync
+{
+}
+impl<T> PhoneRepository for T where
+    T: FindPhoneById
+        + FindPhoneByContactId
+        + CreatePhone
+        + CreateManyPhones
+        + UpdatePhone
+        + DeletePhone
+        + FindNonexistentPhones
+        + FindPhoneByNumber
+        + Send
+        + Sync
+{
+}
