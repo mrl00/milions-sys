@@ -181,3 +181,30 @@ pub trait DeactivateClientUseCase: Send + Sync {
 pub trait DeleteClientUseCase: Send + Sync {
     async fn execute(&self, uuid: Uuid) -> Result<ClientRow, ClientError>;
 }
+
+// --- Client/Project association ---
+
+use crate::domain::models::db::client_project_row::ClientProjectRow;
+
+#[async_trait]
+pub trait AssociateClientProjectUseCase: Send + Sync {
+    async fn execute(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError>;
+}
+
+#[async_trait]
+pub trait ListClientProjectsUseCase: Send + Sync {
+    async fn execute(&self, client_id: Uuid) -> Result<Vec<ClientProjectRow>, ClientError>;
+}
+
+#[async_trait]
+pub trait DissociateClientProjectUseCase: Send + Sync {
+    async fn execute(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError>;
+}

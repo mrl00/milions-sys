@@ -22,6 +22,18 @@ pub enum ClientError {
     #[error("document already registered")]
     DocumentAlreadyExists { doc: String },
 
+    #[error("project {project_uuid} already associated with client {client_uuid}")]
+    ProjectAlreadyAssociated {
+        client_uuid: Uuid,
+        project_uuid: Uuid,
+    },
+
+    #[error("project {project_uuid} not associated with client {client_uuid}")]
+    ProjectNotAssociated {
+        client_uuid: Uuid,
+        project_uuid: Uuid,
+    },
+
     #[error("client contact not found for client: {client_uuid}")]
     ContactNotFound { client_uuid: Uuid },
 
