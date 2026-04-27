@@ -190,14 +190,8 @@ impl From<ClientError> for HttpResponse {
             InvalidDocument(e) => {
                 ErrorResponse::response(StatusCode::UNPROCESSABLE_ENTITY, "validation_error", e)
             }
-            Location(_location_error) => ErrorResponse::response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "internal_error",
-                "internal server error",
-            ),
-            Contact(_contact_error) => {
-                ErrorResponse::response(StatusCode::BAD_REQUEST, "bad_request", "contact error")
-            }
+            Location(e) => HttpResponse::from(e),
+            Contact(e) => HttpResponse::from(e),
             ViaCep(_e) => {
                 //log::error!("viacep error: {e}");
                 ErrorResponse::response(
@@ -214,11 +208,6 @@ impl From<ClientError> for HttpResponse {
                     "internal server error",
                 )
             }
-            NotImplemented => ErrorResponse::response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "internal_error",
-                "internal server error",
-            ),
         }
     }
 }
