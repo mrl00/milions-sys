@@ -5,6 +5,7 @@ use crate::adapters::driven::pg_client_repository::PgClientRepository;
 use crate::application::contact_service::PgContactService;
 use crate::application::location_service::PgLocationService;
 use crate::domain::errors::client_error::ClientError;
+use crate::domain::models::db::client_project_row::ClientProjectRow;
 use crate::domain::models::db::client_row::{
     ClientRow, ClientStatus, CreateClientRow, UpdateClientRow,
 };
@@ -12,10 +13,12 @@ use crate::domain::models::db::location_row::LocationRow;
 use crate::domain::models::db::phone_row::PhoneRow;
 use crate::domain::ports::repositories::client_repository::ClientRepository;
 use crate::domain::ports::use_cases::client_use_cases::{
-    ActivateClientUseCase, AddClientPhonesUseCase, DeactivateClientUseCase, DeleteClientUseCase,
-    FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientsUseCase, RegisterClientInput,
-    RegisterClientLocationInput, RegisterClientUseCase, UpdateClientEmailUseCase,
-    UpdateClientInput, UpdateClientLocationUseCase, UpdateClientPhoneUseCase, UpdateClientUseCase,
+    ActivateClientUseCase, AddClientPhonesUseCase, AssociateClientProjectUseCase,
+    DeactivateClientUseCase, DeleteClientUseCase, DissociateClientProjectUseCase,
+    FindClientByDocumentUseCase, FindClientByIdUseCase, ListClientProjectsUseCase,
+    ListClientsUseCase, RegisterClientInput, RegisterClientLocationInput, RegisterClientUseCase,
+    UpdateClientEmailUseCase, UpdateClientInput, UpdateClientLocationUseCase,
+    UpdateClientPhoneUseCase, UpdateClientUseCase,
 };
 use crate::domain::ports::use_cases::contact_use_cases::{
     AddPhonesUseCase, RegisterContactUseCase, UpdateContactEmailUseCase, UpdatePhoneUseCase,
@@ -403,6 +406,74 @@ where
     }
 }
 
+// --- Client/Project association (CRUD — only R needed) ---
+
+#[async_trait]
+impl<R, L, C> AssociateClientProjectUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError> {
+        self.repo
+            .find_by_id(client_id)
+            .await?
+            .ok_or(ClientError::NotFound { uuid: client_id })?;
+
+        self.repo
+            .create_client_project(
+                crate::domain::models::db::client_project_row::CreateClientProjectRow {
+                    fk_client: client_id,
+                    fk_project: project_id,
+                },
+            )
+            .await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> ListClientProjectsUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(&self, client_id: Uuid) -> Result<Vec<ClientProjectRow>, ClientError> {
+        self.repo
+            .find_by_id(client_id)
+            .await?
+            .ok_or(ClientError::NotFound { uuid: client_id })?;
+
+        self.repo.find_projects_by_client_id(client_id).await
+    }
+}
+
+#[async_trait]
+impl<R, L, C> DissociateClientProjectUseCase for ClientService<R, L, C>
+where
+    R: ClientRepository,
+    L: Send + Sync,
+    C: Send + Sync,
+{
+    async fn execute(
+        &self,
+        client_id: Uuid,
+        project_id: Uuid,
+    ) -> Result<ClientProjectRow, ClientError> {
+        self.repo
+            .find_by_id(client_id)
+            .await?
+            .ok_or(ClientError::NotFound { uuid: client_id })?;
+
+        self.repo.delete_client_project(client_id, project_id).await
+    }
+}
+
 // =============================================================================
 // Tests
 // =============================================================================
@@ -412,10 +483,12 @@ mod tests {
     use super::*;
     use crate::domain::models::db::client_address_row::ClientAddressRow;
     use crate::domain::models::db::client_contact_row::ClientContactRow;
+    use crate::domain::models::db::client_project_row::{ClientProjectRow, CreateClientProjectRow};
     use crate::domain::models::db::client_row::{ClientRow, CreateClientRow, UpdateClientRow};
     use crate::domain::ports::repositories::client_repository::{
-        CreateClient, DeleteClient, FindAll, FindByDocument, FindById, FindContactByClientId,
-        FindLocationByClientId, LinkCreatedContactToClient, LinkCreatedLocationToClient,
+        CreateClient, CreateClientProject, DeleteClient, DeleteClientProject, FindAll,
+        FindByDocument, FindById, FindContactByClientId, FindLocationByClientId,
+        FindProjectsByClientId, LinkCreatedContactToClient, LinkCreatedLocationToClient,
         UpdateClient as UpdateClientRepo,
     };
     use crate::domain::ports::use_cases::client_use_cases::{
@@ -594,6 +667,51 @@ mod tests {
                 ts_client_address_created_at: now(),
                 ts_client_address_updated_at: now(),
             }))
+        }
+    }
+
+    #[async_trait]
+    impl CreateClientProject for MockRepo {
+        async fn create_client_project(
+            &self,
+            input: CreateClientProjectRow,
+        ) -> Result<ClientProjectRow, ClientError> {
+            Ok(ClientProjectRow {
+                pk_client_project: Uuid::now_v7(),
+                idx_client_project: 0,
+                fk_client: input.fk_client,
+                fk_project: input.fk_project,
+                ts_client_project_created_at: now(),
+                ts_client_project_updated_at: now(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl FindProjectsByClientId for MockRepo {
+        async fn find_projects_by_client_id(
+            &self,
+            _client_id: Uuid,
+        ) -> Result<Vec<ClientProjectRow>, ClientError> {
+            Ok(vec![])
+        }
+    }
+
+    #[async_trait]
+    impl DeleteClientProject for MockRepo {
+        async fn delete_client_project(
+            &self,
+            client_id: Uuid,
+            project_id: Uuid,
+        ) -> Result<ClientProjectRow, ClientError> {
+            Ok(ClientProjectRow {
+                pk_client_project: Uuid::now_v7(),
+                idx_client_project: 0,
+                fk_client: client_id,
+                fk_project: project_id,
+                ts_client_project_created_at: now(),
+                ts_client_project_updated_at: now(),
+            })
         }
     }
 
