@@ -169,6 +169,22 @@ impl From<ClientError> for HttpResponse {
                 "conflict",
                 format!("document '{doc}' already registered"),
             ),
+            ProjectAlreadyAssociated {
+                client_uuid,
+                project_uuid,
+            } => ErrorResponse::response(
+                StatusCode::CONFLICT,
+                "conflict",
+                format!("project {project_uuid} already associated with client {client_uuid}"),
+            ),
+            ProjectNotAssociated {
+                client_uuid,
+                project_uuid,
+            } => ErrorResponse::response(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("project {project_uuid} not associated with client {client_uuid}"),
+            ),
             ContactNotFound { client_uuid } => ErrorResponse::response(
                 StatusCode::NOT_FOUND,
                 "not_found",

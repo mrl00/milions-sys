@@ -12,9 +12,11 @@ use crate::adapters::driving::models::dtos::client_dto::{
 use crate::application::client_service::PgClientService;
 use crate::domain::ports;
 use crate::domain::ports::use_cases::client_use_cases::{
-    ActivateClientUseCase, AddClientPhonesUseCase, DeactivateClientUseCase, DeleteClientUseCase,
-    FindClientByIdUseCase, ListClientsUseCase, RegisterClientUseCase, UpdateClientEmailUseCase,
-    UpdateClientLocationUseCase, UpdateClientPhoneUseCase, UpdateClientUseCase,
+    ActivateClientUseCase, AddClientPhonesUseCase, AssociateClientProjectUseCase,
+    DeactivateClientUseCase, DeleteClientUseCase, DissociateClientProjectUseCase,
+    FindClientByIdUseCase, ListClientProjectsUseCase, ListClientsUseCase, RegisterClientUseCase,
+    UpdateClientEmailUseCase, UpdateClientLocationUseCase, UpdateClientPhoneUseCase,
+    UpdateClientUseCase,
 };
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -40,7 +42,16 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         web::resource("/clients/{uuid}/contact/phones/{phone}")
             .route(web::put().to(update_client_phone)),
     )
-    .service(web::resource("/clients/{uuid}/address").route(web::put().to(update_client_address)));
+    .service(web::resource("/clients/{uuid}/address").route(web::put().to(update_client_address)))
+    .service(
+        web::resource("/clients/{uuid}/projects")
+            .route(web::post().to(associate_project))
+            .route(web::get().to(list_projects)),
+    )
+    .service(
+        web::resource("/clients/{uuid}/projects/{project_uuid}")
+            .route(web::delete().to(dissociate_project)),
+    );
 }
 
 async fn register_client(
@@ -216,6 +227,70 @@ async fn update_client_address(
     };
     match UpdateClientLocationUseCase::execute(&**service, uuid, input).await {
         Ok(row) => HttpResponse::Ok().json(LocationResponse::from(row)),
+        Err(e) => HttpResponse::from(e),
+    }
+}
+
+// --- Client/Project association ---
+
+#[derive(Debug, serde::Deserialize, garde::Validate)]
+struct AssociateProjectRequest {
+    #[garde(skip)]
+    pub project_id: Uuid,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct ClientProjectResponse {
+    pub id: Uuid,
+    pub client_id: Uuid,
+    pub project_id: Uuid,
+    pub created_at: sqlx::types::chrono::NaiveDateTime,
+}
+
+impl From<crate::domain::models::db::client_project_row::ClientProjectRow>
+    for ClientProjectResponse
+{
+    fn from(row: crate::domain::models::db::client_project_row::ClientProjectRow) -> Self {
+        Self {
+            id: row.pk_client_project,
+            client_id: row.fk_client,
+            project_id: row.fk_project,
+            created_at: row.ts_client_project_created_at,
+        }
+    }
+}
+
+async fn associate_project(
+    service: web::Data<PgClientService>,
+    path: web::Path<Uuid>,
+    ValidatedJson(body): ValidatedJson<AssociateProjectRequest>,
+) -> HttpResponse {
+    let client_uuid = path.into_inner();
+    match AssociateClientProjectUseCase::execute(&**service, client_uuid, body.project_id).await {
+        Ok(row) => HttpResponse::Created().json(ClientProjectResponse::from(row)),
+        Err(e) => HttpResponse::from(e),
+    }
+}
+
+async fn list_projects(service: web::Data<PgClientService>, path: web::Path<Uuid>) -> HttpResponse {
+    let client_uuid = path.into_inner();
+    match ListClientProjectsUseCase::execute(&**service, client_uuid).await {
+        Ok(rows) => {
+            let resp: Vec<ClientProjectResponse> =
+                rows.into_iter().map(ClientProjectResponse::from).collect();
+            HttpResponse::Ok().json(resp)
+        }
+        Err(e) => HttpResponse::from(e),
+    }
+}
+
+async fn dissociate_project(
+    service: web::Data<PgClientService>,
+    path: web::Path<(Uuid, Uuid)>,
+) -> HttpResponse {
+    let (client_uuid, project_uuid) = path.into_inner();
+    match DissociateClientProjectUseCase::execute(&**service, client_uuid, project_uuid).await {
+        Ok(row) => HttpResponse::Ok().json(ClientProjectResponse::from(row)),
         Err(e) => HttpResponse::from(e),
     }
 }
@@ -420,6 +495,43 @@ mod tests {
                 "city": "São Paulo",
                 "state": "SP"
             }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn associate_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::post()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001/projects")
+            .set_json(serde_json::json!({ "project_id": "01900000-0000-7000-0000-000000000002" }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn list_client_projects_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001/projects")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_ne!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn dissociate_project_route_exists() {
+        let app =
+            test::init_service(App::new().service(web::scope("/api").configure(route_config)))
+                .await;
+        let req = test::TestRequest::delete()
+            .uri("/api/clients/01900000-0000-7000-0000-000000000001/projects/01900000-0000-7000-0000-000000000002")
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_ne!(resp.status(), 404);
